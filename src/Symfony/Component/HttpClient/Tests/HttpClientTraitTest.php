@@ -199,6 +199,15 @@ class HttpClientTraitTest extends TestCase
         self::prepareRequest('POST', 'http://example.com', ['auth_bearer' => 'foo', 'auth_basic' => 'foo:bar'], HttpClientInterface::OPTIONS_DEFAULTS);
     }
 
+    /**
+     * @expectedException \Symfony\Component\HttpClient\Exception\InvalidArgumentException
+     * @expectedExceptionMessage Define either the "json" or the "body" option, setting both is not supported
+     */
+    public function testSetJSONAndBodyOptions()
+    {
+        self::prepareRequest('POST', 'http://example.com', ['json' => ['foo' => 'bar'], 'body' => '<html/>'], HttpClientInterface::OPTIONS_DEFAULTS);
+    }
+
     public function providePrepareAuthBasic()
     {
         yield ['foo:bar', 'Zm9vOmJhcg=='];
@@ -214,5 +223,43 @@ class HttpClientTraitTest extends TestCase
     {
         [, $options] = $this->prepareRequest('POST', 'http://example.com', ['auth_basic' => $arg], HttpClientInterface::OPTIONS_DEFAULTS);
         $this->assertSame('Basic '.$result, $options['headers']['authorization'][0]);
+    }
+
+    public function provideFingerprints()
+    {
+        foreach (['md5', 'sha1', 'sha256'] as $algo) {
+            $hash = \hash($algo, $algo);
+            yield [$hash, [$algo => $hash]];
+        }
+
+        yield ['AAAA:BBBB:CCCC:DDDD:EEEE:FFFF:GGGG:HHHH:IIII:JJJJ:KKKK', ['pin-sha256' => ['AAAABBBBCCCCDDDDEEEEFFFFGGGGHHHHIIIIJJJJKKKK']]];
+    }
+
+    /**
+     * @dataProvider provideFingerprints
+     */
+    public function testNormalizePeerFingerprint($fingerprint, $expected)
+    {
+        self::assertSame($expected, $this->normalizePeerFingerprint($fingerprint));
+    }
+
+    /**
+     * @expectedException \Symfony\Component\HttpClient\Exception\InvalidArgumentException
+     * @expectedExceptionMessage Cannot auto-detect fingerprint algorithm for "foo".
+     */
+    public function testNormalizePeerFingerprintException()
+    {
+        $this->normalizePeerFingerprint('foo');
+    }
+
+    /**
+     * @expectedException \Symfony\Component\HttpClient\Exception\InvalidArgumentException
+     * @expectedExceptionMessage Option "peer_fingerprint" must be string or array, object given.
+     */
+    public function testNormalizePeerFingerprintTypeException()
+    {
+        $fingerprint = new \stdClass();
+
+        $this->normalizePeerFingerprint($fingerprint);
     }
 }

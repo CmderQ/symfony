@@ -17,6 +17,8 @@ use Symfony\Component\Intl\Locale;
 
 /**
  * @author Bernhard Schussek <bschussek@gmail.com>
+ *
+ * @group legacy
  */
 abstract class AbstractLocaleDataProviderTest extends AbstractDataProviderTest
 {

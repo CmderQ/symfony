@@ -31,6 +31,7 @@ CHANGELOG
  * Added the `messenger:setup-transports` command to setup messenger transports
  * Added a `InMemoryTransport` to Messenger. Use it with a DSN starting with `in-memory://`.
  * Added `framework.property_access.throw_exception_on_invalid_property_path` config option.
+ * Added `cache:pool:list` command to list all available cache pools.
 
 4.2.0
 -----
@@ -165,7 +166,7 @@ CHANGELOG
    The default value will be `state_machine` in Symfony 4.0.
  * Deprecated the `CompilerDebugDumpPass` class
  * Deprecated the "framework.trusted_proxies" configuration option and the corresponding "kernel.trusted_proxies" parameter
- * Added a new new version strategy option called json_manifest_path
+ * Added a new version strategy option called "json_manifest_path"
    that allows you to use the `JsonManifestVersionStrategy`.
  * Added `Symfony\Bundle\FrameworkBundle\Controller\AbstractController`. It provides
    the same helpers as the `Controller` class, but does not allow accessing the dependency

@@ -107,9 +107,11 @@ use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
 use Symfony\Component\Stopwatch\Stopwatch;
 use Symfony\Component\Translation\Command\XliffLintCommand as BaseXliffLintCommand;
 use Symfony\Component\Translation\Translator;
+use Symfony\Component\Translation\TranslatorInterface;
 use Symfony\Component\Validator\ConstraintValidatorInterface;
 use Symfony\Component\Validator\Mapping\Loader\PropertyInfoLoader;
 use Symfony\Component\Validator\ObjectInitializerInterface;
+use Symfony\Component\Validator\Util\LegacyTranslatorProxy;
 use Symfony\Component\WebLink\HttpHeaderSerializer;
 use Symfony\Component\Workflow;
 use Symfony\Component\Workflow\WorkflowInterface;
@@ -487,6 +489,11 @@ class FrameworkExtension extends Extension
 
             return;
         }
+        if ($container->hasParameter('fragment.renderer.hinclude.global_template') && null !== $container->getParameter('fragment.renderer.hinclude.global_template') && null !== $config['hinclude_default_template']) {
+            throw new \LogicException('You cannot set both "templating.hinclude_default_template" and "fragments.hinclude_default_template", please only use "fragments.hinclude_default_template".');
+        }
+
+        $container->setParameter('fragment.renderer.hinclude.global_template', $config['hinclude_default_template']);
 
         $loader->load('fragment_listener.xml');
         $container->setParameter('fragment.path', $config['path']);
@@ -1203,6 +1210,12 @@ class FrameworkExtension extends Extension
 
         $validatorBuilder = $container->getDefinition('validator.builder');
 
+        if (interface_exists(TranslatorInterface::class) && class_exists(LegacyTranslatorProxy::class)) {
+            $calls = $validatorBuilder->getMethodCalls();
+            $calls[1] = ['setTranslator', [new Definition(LegacyTranslatorProxy::class, [new Reference('translator')])]];
+            $validatorBuilder->setMethodCalls($calls);
+        }
+
         $container->setParameter('validator.translation_domain', $config['translation_domain']);
 
         $files = ['xml' => [], 'yml' => []];
@@ -1505,11 +1518,16 @@ class FrameworkExtension extends Extension
         }
 
         if (isset($config['circular_reference_handler']) && $config['circular_reference_handler']) {
-            $container->getDefinition('serializer.normalizer.object')->addMethodCall('setCircularReferenceHandler', [new Reference($config['circular_reference_handler'])]);
+            $arguments = $container->getDefinition('serializer.normalizer.object')->getArguments();
+            $context = ($arguments[6] ?? []) + ['circular_reference_handler' => new Reference($config['circular_reference_handler'])];
+            $container->getDefinition('serializer.normalizer.object')->setArgument(5, null);
+            $container->getDefinition('serializer.normalizer.object')->setArgument(6, $context);
         }
 
         if ($config['max_depth_handler'] ?? false) {
-            $container->getDefinition('serializer.normalizer.object')->addMethodCall('setMaxDepthHandler', [new Reference($config['max_depth_handler'])]);
+            $defaultContext = $container->getDefinition('serializer.normalizer.object')->getArgument(6);
+            $defaultContext += ['max_depth_handler' => new Reference($config['max_depth_handler'])];
+            $container->getDefinition('serializer.normalizer.object')->replaceArgument(6, $defaultContext);
         }
     }
 
@@ -1684,9 +1702,9 @@ class FrameworkExtension extends Extension
             $container->removeDefinition('messenger.transport.amqp.factory');
         } else {
             $container->getDefinition('messenger.transport.symfony_serializer')
-                ->replaceArgument(1, $config['symfony_serializer']['format'])
-                ->replaceArgument(2, $config['symfony_serializer']['context']);
-            $container->setAlias('messenger.default_serializer', $config['default_serializer']);
+                ->replaceArgument(1, $config['serializer']['symfony_serializer']['format'])
+                ->replaceArgument(2, $config['serializer']['symfony_serializer']['context']);
+            $container->setAlias('messenger.default_serializer', $config['serializer']['default_serializer']);
         }
 
         $senderAliases = [];

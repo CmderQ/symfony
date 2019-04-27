@@ -25,6 +25,7 @@ Config
  * The `Processor` class has been made final
  * Removed `FileLoaderLoadException`, use `LoaderLoadException` instead.
  * Using environment variables with `cannotBeEmpty()` if the value is validated with `validate()` will throw an exception.
+ * Removed the `root()` method in `TreeBuilder`, pass the root node information to the constructor instead
 
 Console
 -------
@@ -68,6 +69,11 @@ DomCrawler
 ----------
 
  * The `Crawler::children()` method has a new `$selector` argument.
+
+Dotenv
+------
+
+ * First parameter `$usePutenv` of `Dotenv::__construct()` now default to `false`.
 
 EventDispatcher
 ---------------
@@ -237,6 +243,15 @@ HttpKernel
  * Removed `PostResponseEvent`, use `TerminateEvent` instead
  * Removed `TranslatorListener` in favor of `LocaleAwareListener`
 
+Intl
+----
+
+ * Removed `ResourceBundle` namespace
+ * Removed `Intl::getLanguageBundle()`, use `Languages` or `Scripts` instead
+ * Removed `Intl::getCurrencyBundle()`, use `Currencies` instead
+ * Removed `Intl::getLocaleBundle()`, use `Locales` instead
+ * Removed `Intl::getRegionBundle()`, use `Regions` instead
+
 Messenger
 ---------
 
@@ -296,7 +311,7 @@ Security
  * The `Firewall::handleRequest()` method has been removed, use `Firewall::callListeners()` instead.
  * `\Serializable` interface has been removed from `AbstractToken` and `AuthenticationException`,
    thus `serialize()` and `unserialize()` aren't available.
-   Use `getState()` and `setState()` instead.
+   Use `__serialize()` and `__unserialize()` instead.
 
    Before:
    ```php
@@ -314,17 +329,22 @@ Security
 
    After:
    ```php
-   protected function getState(): array
+   public function __serialize(): array
    {
-       return [$this->myLocalVar, parent::getState()];
+       return [$this->myLocalVar, parent::__serialize()];
    }
 
-   protected function setState(array $data)
+   public function __unserialize(array $data): void
    {
        [$this->myLocalVar, $parentData] = $data;
-       parent::setState($parentData);
+       parent::__unserialize($parentData);
    }
    ```
+
+ * The `Argon2iPasswordEncoder` class has been removed, use `SodiumPasswordEncoder` instead.
+ * The `BCryptPasswordEncoder` class has been removed, use `NativePasswordEncoder` instead.
+ * Classes implementing the `TokenInterface` must implement the two new methods
+   `__serialize` and `__unserialize`
 
 SecurityBundle
 --------------
@@ -345,6 +365,7 @@ SecurityBundle
    changed to underscores.
    Before: `my-cookie` deleted the `my_cookie` cookie (with an underscore).
    After: `my-cookie` deletes the `my-cookie` cookie (with a dash).
+ * Configuring encoders using `argon2i` or `bcrypt` as algorithm is not supported anymore, use `auto` instead.
 
 Serializer
 ----------

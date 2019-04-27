@@ -20,6 +20,7 @@ Config
 ------
 
  * Deprecated using environment variables with `cannotBeEmpty()` if the value is validated with `validate()`
+ * Deprecated the `root()` method in `TreeBuilder`, pass the root node information to the constructor instead
 
 DependencyInjection
 -------------------
@@ -43,6 +44,12 @@ Doctrine Bridge
 
  * Passing an `IdReader` to the `DoctrineChoiceLoader` when the query cannot be optimized with single id field has been deprecated, pass `null` instead
  * Not passing an `IdReader` to the `DoctrineChoiceLoader` when the query can be optimized with single id field has been deprecated
+
+Dotenv
+------
+
+ * First parameter of `Dotenv::__construct()` will be changed from `true` to `false` in Symfony 5.0. A deprecation warning
+   is triggered if no parameter is provided. Use `$usePutenv = true` to upgrade without breaking changes.
 
 EventDispatcher
 ---------------
@@ -94,6 +101,15 @@ HttpKernel
  * Renamed `PostResponseEvent` to `TerminateEvent`
  * Deprecated `TranslatorListener` in favor of `LocaleAwareListener`
 
+Intl
+----
+
+ * Deprecated `ResourceBundle` namespace
+ * Deprecated `Intl::getCurrencyBundle()`, use `Currencies` instead
+ * Deprecated `Intl::getLanguageBundle()`, use `Languages` or `Scripts` instead
+ * Deprecated `Intl::getLocaleBundle()`, use `Locales` instead
+ * Deprecated `Intl::getRegionBundle()`, use `Regions` instead
+
 Messenger
 ---------
 
@@ -121,7 +137,7 @@ Security
  * The `Firewall::handleRequest()` method is deprecated, use `Firewall::callListeners()` instead.
  * The `AbstractToken::serialize()`, `AbstractToken::unserialize()`,
    `AuthenticationException::serialize()` and `AuthenticationException::unserialize()`
-   methods are now final, use `getState()` and `setState()` instead.
+   methods are now final, use `__serialize()` and `__unserialize()` instead.
 
    Before:
    ```php
@@ -139,29 +155,39 @@ Security
 
    After:
    ```php
-   protected function getState(): array
+   public function __serialize(): array
    {
-       return [$this->myLocalVar, parent::getState()];
+       return [$this->myLocalVar, parent::__serialize()];
    }
 
-   protected function setState(array $data)
+   public function __unserialize(array $data): void
    {
        [$this->myLocalVar, $parentData] = $data;
-       parent::setState($parentData);
+       parent::__unserialize($parentData);
    }
    ```
 
-TwigBridge
-==========
+ * The `Argon2iPasswordEncoder` class has been deprecated, use `SodiumPasswordEncoder` instead.
+ * The `BCryptPasswordEncoder` class has been deprecated, use `NativePasswordEncoder` instead.
+ * Not implementing the methods `__serialize` and `__unserialize` in classes implementing
+   the `TokenInterface` is deprecated
 
- * deprecated the `$requestStack` and `$requestContext` arguments of the 
+SecurityBundle
+--------------
+
+ * Configuring encoders using `argon2i` or `bcrypt` as algorithm has been deprecated, use `auto` instead.
+
+TwigBridge
+----------
+
+ * deprecated the `$requestStack` and `$requestContext` arguments of the
    `HttpFoundationExtension`, pass a `Symfony\Component\HttpFoundation\UrlHelper`
    instance as the only argument instead
 
 Workflow
 --------
 
- * `initial_place` is deprecated in favour of `initial_places`.
+ * `initial_place` is deprecated in favour of `initial_marking`.
 
    Before:
    ```yaml
@@ -176,11 +202,8 @@ Workflow
    framework:
       workflows:
           article:
-              initial_places: [draft]
+              initial_marking: [draft]
    ```
-
-Workflow
---------
 
  * `MarkingStoreInterface::setMarking()` will have a third argument in Symfony 5.0.
 

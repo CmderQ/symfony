@@ -32,6 +32,8 @@
 
         <!-- Normalizer -->
         <service id="serializer.normalizer.constraint_violation_list" class="Symfony\Component\Serializer\Normalizer\ConstraintViolationListNormalizer">
+            <argument type="collection" />
+            <argument type="service" id="serializer.name_converter.metadata_aware" />
             <!-- Run before serializer.normalizer.object -->
             <tag name="serializer.normalizer" priority="-915" />
         </service>
@@ -63,6 +65,8 @@
             <argument type="service" id="serializer.property_accessor" />
             <argument type="service" id="property_info" on-invalid="ignore" />
             <argument type="service" id="serializer.mapping.class_discriminator_resolver" on-invalid="ignore" />
+            <argument>null</argument>
+            <argument type="collection" />
 
             <!-- Run after all custom normalizers -->
             <tag name="serializer.normalizer" priority="-1000" />

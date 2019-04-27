@@ -4,6 +4,8 @@ CHANGELOG
 4.3.0
 -----
 
+ * Added methods `__serialize` and `__unserialize` to the `TokenInterface`
+ * Added `SodiumPasswordEncoder` and `NativePasswordEncoder`
  * The `Role` and `SwitchUserRole` classes are deprecated and will be removed in 5.0. Use strings for roles
    instead.
  * The `getReachableRoles()` method of the `RoleHierarchyInterface` is deprecated and will be removed in 5.0.
@@ -11,7 +13,7 @@ CHANGELOG
  * The `getRoles()` method of the `TokenInterface` is deprecated. Tokens must implement the `getRoleNames()`
    method instead and return roles as strings.
  * Made the `serialize()` and `unserialize()` methods of `AbstractToken` and
-  `AuthenticationException` final, use `getState()`/`setState()` instead
+  `AuthenticationException` final, use `__serialize()`/`__unserialize()` instead
  * `AuthenticationException` doesn't implement `Serializable` anymore
  * Deprecated the `ListenerInterface`, turn your listeners into callables instead
  * Deprecated `Firewall::handleRequest()`, use `Firewall::callListeners()` instead
@@ -19,6 +21,8 @@ CHANGELOG
  * Dispatch `AuthenticationFailureEvent` on `security.authentication.failure`
  * Dispatch `InteractiveLoginEvent` on `security.interactive_login`
  * Dispatch `SwitchUserEvent` on `security.switch_user`
+ * Deprecated `Argon2iPasswordEncoder`, use `SodiumPasswordEncoder` instead
+ * Deprecated `BCryptPasswordEncoder`, use `NativePasswordEncoder` instead
 
 4.2.0
 -----

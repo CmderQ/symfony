@@ -209,6 +209,7 @@ class ConfigurationTest extends TestCase
             'fragments' => [
                 'enabled' => false,
                 'path' => '/_fragment',
+                'hinclude_default_template' => null,
             ],
             'profiler' => [
                 'enabled' => false,
@@ -327,10 +328,12 @@ class ConfigurationTest extends TestCase
                 'enabled' => !class_exists(FullStack::class) && interface_exists(MessageBusInterface::class),
                 'routing' => [],
                 'transports' => [],
-                'default_serializer' => 'messenger.transport.native_php_serializer',
-                'symfony_serializer' => [
-                    'format' => 'json',
-                    'context' => [],
+                'serializer' => [
+                    'default_serializer' => 'messenger.transport.native_php_serializer',
+                    'symfony_serializer' => [
+                        'format' => 'json',
+                        'context' => [],
+                    ],
                 ],
                 'default_bus' => null,
                 'buses' => ['messenger.bus.default' => ['default_middleware' => true, 'middleware' => []]],
