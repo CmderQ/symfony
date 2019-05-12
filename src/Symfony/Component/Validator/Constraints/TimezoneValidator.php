@@ -11,6 +11,8 @@
 
 namespace Symfony\Component\Validator\Constraints;
 
+use Symfony\Component\Intl\Exception\MissingResourceException;
+use Symfony\Component\Intl\Timezones;
 use Symfony\Component\Validator\Constraint;
 use Symfony\Component\Validator\ConstraintValidator;
 use Symfony\Component\Validator\Exception\UnexpectedTypeException;
@@ -43,14 +45,19 @@ class TimezoneValidator extends ConstraintValidator
 
         $value = (string) $value;
 
-        // @see: https://bugs.php.net/bug.php?id=75928
-        if ($constraint->countryCode) {
-            $timezoneIds = \DateTimeZone::listIdentifiers($constraint->zone, $constraint->countryCode);
-        } else {
-            $timezoneIds = \DateTimeZone::listIdentifiers($constraint->zone);
+        if ($constraint->intlCompatible && 'Etc/Unknown' === \IntlTimeZone::createTimeZone($value)->getID()) {
+            $this->context->buildViolation($constraint->message)
+                ->setParameter('{{ value }}', $this->formatValue($value))
+                ->setCode(Timezone::TIMEZONE_IDENTIFIER_INTL_ERROR)
+                ->addViolation();
+
+            return;
         }
 
-        if ($timezoneIds && \in_array($value, $timezoneIds, true)) {
+        if (
+            \in_array($value, self::getPhpTimezones($constraint->zone, $constraint->countryCode), true) ||
+            \in_array($value, self::getIntlTimezones($constraint->zone, $constraint->countryCode), true)
+        ) {
             return;
         }
 
@@ -63,9 +70,9 @@ class TimezoneValidator extends ConstraintValidator
         }
 
         $this->context->buildViolation($constraint->message)
-                      ->setParameter('{{ value }}', $this->formatValue($value))
-                      ->setCode($code)
-                      ->addViolation();
+              ->setParameter('{{ value }}', $this->formatValue($value))
+              ->setCode($code)
+              ->addViolation();
     }
 
     /**
@@ -88,5 +95,48 @@ class TimezoneValidator extends ConstraintValidator
         }
 
         return array_search($value, (new \ReflectionClass(\DateTimeZone::class))->getConstants(), true) ?: $value;
+    }
+
+    private static function getPhpTimezones(int $zone, string $countryCode = null): array
+    {
+        if (null !== $countryCode) {
+            return @\DateTimeZone::listIdentifiers($zone, $countryCode) ?: [];
+        }
+
+        return \DateTimeZone::listIdentifiers($zone);
+    }
+
+    private static function getIntlTimezones(int $zone, string $countryCode = null): array
+    {
+        if (!class_exists(Timezones::class)) {
+            return [];
+        }
+
+        if (null !== $countryCode) {
+            try {
+                return Timezones::forCountryCode($countryCode);
+            } catch (MissingResourceException $e) {
+                return [];
+            }
+        }
+
+        $timezones = Timezones::getIds();
+
+        if (\DateTimeZone::ALL === (\DateTimeZone::ALL & $zone)) {
+            return $timezones;
+        }
+
+        $filtered = [];
+        foreach ((new \ReflectionClass(\DateTimeZone::class))->getConstants() as $const => $flag) {
+            if ($flag !== ($flag & $zone)) {
+                continue;
+            }
+
+            $filtered[] = array_filter($timezones, static function ($id) use ($const) {
+                return 0 === stripos($id, $const.'/');
+            });
+        }
+
+        return $filtered ? array_merge(...$filtered) : [];
     }
 }

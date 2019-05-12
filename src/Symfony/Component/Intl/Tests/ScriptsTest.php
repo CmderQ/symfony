@@ -11,7 +11,6 @@
 
 namespace Symfony\Component\Intl\Tests;
 
-use Symfony\Component\Intl\Locale;
 use Symfony\Component\Intl\Scripts;
 
 /**
@@ -211,10 +210,9 @@ class ScriptsTest extends ResourceBundleTestCase
         'Zsym',
         'Zxxx',
         'Zyyy',
-        'Zzzz',
     ];
 
-    public function testGetScripts()
+    public function testGetScriptCodes()
     {
         $this->assertSame(self::$scripts, Scripts::getScriptCodes());
     }
@@ -236,7 +234,7 @@ class ScriptsTest extends ResourceBundleTestCase
 
     public function testGetNamesDefaultLocale()
     {
-        Locale::setDefault('de_AT');
+        \Locale::setDefault('de_AT');
 
         $this->assertSame(Scripts::getNames('de_AT'), Scripts::getNames());
     }
@@ -266,7 +264,7 @@ class ScriptsTest extends ResourceBundleTestCase
 
     public function testGetNameDefaultLocale()
     {
-        Locale::setDefault('de_AT');
+        \Locale::setDefault('de_AT');
 
         $names = Scripts::getNames('de_AT');
 
@@ -286,6 +284,6 @@ class ScriptsTest extends ResourceBundleTestCase
     public function testExists()
     {
         $this->assertTrue(Scripts::exists('Hans'));
-        $this->assertTrue(Scripts::exists('Zzzz'));
+        $this->assertFalse(Scripts::exists('Zzzz'));
     }
 }

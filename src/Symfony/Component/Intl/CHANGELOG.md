@@ -8,8 +8,10 @@ CHANGELOG
  * added `Currencies` in favor of `Intl::getCurrencyBundle()`
  * added `Languages` and `Scripts` in favor of `Intl::getLanguageBundle()`
  * added `Locales` in favor of `Intl::getLocaleBundle()`
- * added `Regions` in favor of `Intl::getRegionBundle()`
+ * added `Countries` in favor of `Intl::getRegionBundle()`
  * added `Timezones`
+ * made country codes ISO 3166 compliant
+ * excluded script code `Zzzz`
 
 4.2.0
 -----

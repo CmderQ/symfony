@@ -15,10 +15,10 @@ use Psr\Log\LoggerAwareTrait;
 use Psr\Log\NullLogger;
 use Symfony\Component\Messenger\Envelope;
 use Symfony\Component\Messenger\Event\SendMessageToTransportsEvent;
-use Symfony\Component\Messenger\Stamp\ForceCallHandlersStamp;
 use Symfony\Component\Messenger\Stamp\ReceivedStamp;
 use Symfony\Component\Messenger\Stamp\RedeliveryStamp;
 use Symfony\Component\Messenger\Stamp\SentStamp;
+use Symfony\Component\Messenger\Transport\Sender\SenderInterface;
 use Symfony\Component\Messenger\Transport\Sender\SendersLocatorInterface;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
@@ -65,12 +65,7 @@ class SendMessageMiddleware implements MiddlewareInterface
 
                 // dispatch event unless this is a redelivery
                 $shouldDispatchEvent = null === $redeliveryStamp;
-                foreach ($this->sendersLocator->getSenders($envelope, $handle) as $alias => $sender) {
-                    // on redelivery, only deliver to the given sender
-                    if (null !== $redeliveryStamp && !$redeliveryStamp->shouldRedeliverToSender(\get_class($sender), $alias)) {
-                        continue;
-                    }
-
+                foreach ($this->getSenders($envelope, $handle, $redeliveryStamp) as $alias => $sender) {
                     if (null !== $this->eventDispatcher && $shouldDispatchEvent) {
                         $event = new SendMessageToTransportsEvent($envelope);
                         $this->eventDispatcher->dispatch($event);
@@ -80,12 +75,6 @@ class SendMessageMiddleware implements MiddlewareInterface
 
                     $this->logger->info('Sending message "{class}" with "{sender}"', $context + ['sender' => \get_class($sender)]);
                     $envelope = $sender->send($envelope->with(new SentStamp(\get_class($sender), \is_string($alias) ? $alias : null)));
-                }
-
-                // if the message was marked (usually by SyncTransport) that it handlers
-                // MUST be called, mark them to be handled.
-                if (null !== $envelope->last(ForceCallHandlersStamp::class)) {
-                    $handle = true;
                 }
 
                 // on a redelivery, only send back to queue: never call local handlers
@@ -106,5 +95,19 @@ class SendMessageMiddleware implements MiddlewareInterface
 
         // message should only be sent and not be handled by the next middleware
         return $envelope;
+    }
+
+    /**
+     * * @return iterable|SenderInterface[]
+     */
+    private function getSenders(Envelope $envelope, &$handle, ?RedeliveryStamp $redeliveryStamp): iterable
+    {
+        if (null !== $redeliveryStamp) {
+            return [
+                $redeliveryStamp->getSenderClassOrAlias() => $this->sendersLocator->getSenderByAlias($redeliveryStamp->getSenderClassOrAlias()),
+            ];
+        }
+
+        return $this->sendersLocator->getSenders($envelope, $handle);
     }
 }

@@ -4,6 +4,14 @@ CHANGELOG
 4.3.0
 -----
 
+ * [BC BREAK] `SendersLocatorInterface` has an additional method:
+   `getSenderByAlias()`.
+ * A new `ListableReceiverInterface` was added, which a receiver
+   can implement (when applicable) to enable listing and fetching
+   individual messages by id (used in the new "Failed Messages" commands).
+ * Both `SenderInterface::send()` and `ReceiverInterface::get()`
+   should now (when applicable) add a `TransportMessageIdStamp`.
+ * Added `WorkerStoppedEvent` dispatched when a worker is stopped.
  * Added optional `MessageCountAwareInterface` that receivers can implement
    to give information about how many messages are waiting to be processed.
  * [BC BREAK] The `Envelope::__construct()` signature changed:
@@ -16,8 +24,7 @@ CHANGELOG
    to stop all `messenger:consume` workers.
  * [BC BREAK] The `TransportFactoryInterface::createTransport()` signature
    changed: a required 3rd `SerializerInterface` argument was added.
- * Added a new `SyncTransport` along with `ForceCallHandlersStamp` to
-   explicitly handle messages synchronously.
+ * Added a new `SyncTransport` to explicitly handle messages synchronously.
  * Added `AmqpStamp` allowing to provide a routing key, flags and attributes on message publishing.
  * [BC BREAK] Removed publishing with a `routing_key` option from queue configuration, for
    AMQP. Use exchange `default_publish_routing_key` or `AmqpStamp` instead.
@@ -80,6 +87,12 @@ CHANGELOG
  * Added a Doctrine transport. For example, use the `doctrine://default` DSN (this uses the `default` Doctrine entity manager)
  * [BC BREAK] The `getConnectionConfiguration` method on Amqp's `Connection` has been removed. 
  * [BC BREAK] A `HandlerFailedException` exception will be thrown if one or more handler fails.
+ * [BC BREAK] The `HandlersLocationInterface::getHandlers` method needs to return `HandlerDescriptor`
+   instances instead of callables.
+ * [BC BREAK] The `HandledStamp` stamp has changed: `handlerAlias` has been renamed to `handlerName`,
+   `getCallableName` has been removed and its constructor only has 2 arguments now.
+ * [BC BREAK] The `ReceivedStamp` needs to exposes the name of the transport from which the message
+   has been received.
 
 4.2.0
 -----

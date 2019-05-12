@@ -673,6 +673,7 @@ abstract class FrameworkExtensionTest extends TestCase
         $this->assertTrue($container->hasAlias('messenger.default_bus'));
         $this->assertTrue($container->getAlias('messenger.default_bus')->isPublic());
         $this->assertFalse($container->hasDefinition('messenger.transport.amqp.factory'));
+        $this->assertFalse($container->hasDefinition('messenger.transport.redis.factory'));
         $this->assertTrue($container->hasDefinition('messenger.transport_factory'));
         $this->assertSame(TransportFactory::class, $container->getDefinition('messenger.transport_factory')->getClass());
     }
@@ -697,6 +698,16 @@ abstract class FrameworkExtensionTest extends TestCase
         $this->assertEquals(new Reference('messenger.transport.native_php_serializer'), $transportArguments[2]);
 
         $this->assertTrue($container->hasDefinition('messenger.transport.amqp.factory'));
+
+        $this->assertTrue($container->hasDefinition('messenger.transport.redis'));
+        $transportFactory = $container->getDefinition('messenger.transport.redis')->getFactory();
+        $transportArguments = $container->getDefinition('messenger.transport.redis')->getArguments();
+
+        $this->assertEquals([new Reference('messenger.transport_factory'), 'createTransport'], $transportFactory);
+        $this->assertCount(3, $transportArguments);
+        $this->assertSame('redis://127.0.0.1:6379/messages', $transportArguments[0]);
+
+        $this->assertTrue($container->hasDefinition('messenger.transport.redis.factory'));
     }
 
     public function testMessengerRouting()
@@ -710,12 +721,16 @@ abstract class FrameworkExtensionTest extends TestCase
             '*' => false,
         ];
 
-        $this->assertSame($messageToSendAndHandleMapping, $senderLocatorDefinition->getArgument(1));
+        $this->assertSame($messageToSendAndHandleMapping, $senderLocatorDefinition->getArgument(2));
         $sendersMapping = $senderLocatorDefinition->getArgument(0);
         $this->assertEquals([
-            'amqp' => new Reference('messenger.transport.amqp'),
-            'audit' => new Reference('audit'),
-        ], $sendersMapping[DummyMessage::class]->getValues());
+            'amqp',
+            'audit',
+        ], $sendersMapping[DummyMessage::class]);
+        $sendersLocator = $container->getDefinition((string) $senderLocatorDefinition->getArgument(1));
+        $this->assertSame(['amqp', 'audit'], array_keys($sendersLocator->getArgument(0)));
+        $this->assertEquals(new Reference('messenger.transport.amqp'), $sendersLocator->getArgument(0)['amqp']->getValues()[0]);
+        $this->assertEquals(new Reference('audit'), $sendersLocator->getArgument(0)['audit']->getValues()[0]);
     }
 
     public function testMessengerTransportConfiguration()
@@ -1478,19 +1493,17 @@ abstract class FrameworkExtensionTest extends TestCase
 
         $this->assertSame(['foo' => 'bar'], $container->getDefinition('http_client')->getArgument(0)['headers']);
         $this->assertSame(4, $container->getDefinition('http_client')->getArgument(1));
+        $this->assertSame('http://example.com', $container->getDefinition('foo')->getArgument(1));
 
         $expected = [
-            'http\://example\.com/' => [
-                'base_uri' => 'http://example.com',
-                'headers' => [
-                    'bar' => 'baz',
-                ],
-                'query' => [],
-                'resolve' => [],
+            'base_uri' => 'http://example.com',
+            'headers' => [
+                'bar' => 'baz',
             ],
+            'query' => [],
+            'resolve' => [],
         ];
-
-        $this->assertSame($expected, $container->getDefinition('foo')->getArgument(1));
+        $this->assertSame($expected, $container->getDefinition('foo')->getArgument(2));
     }
 
     public function testHttpClientFullDefaultOptions()

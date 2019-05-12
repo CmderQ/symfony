@@ -12,14 +12,13 @@
 namespace Symfony\Component\Intl\Data\Provider;
 
 use Symfony\Component\Intl\Data\Bundle\Reader\BundleEntryReaderInterface;
-use Symfony\Component\Intl\Locale;
 
 /**
  * Data provider for language-related ICU data.
  *
  * @author Bernhard Schussek <bschussek@gmail.com>
  *
- * @internal to be removed in 5.0.
+ * @internal
  */
 class LanguageDataProvider
 {
@@ -38,11 +37,17 @@ class LanguageDataProvider
         $this->reader = $reader;
     }
 
+    /**
+     * @internal to be removed in 5.0.
+     */
     public function getLanguages()
     {
         return $this->reader->readEntry($this->path, 'meta', ['Languages']);
     }
 
+    /**
+     * @internal to be removed in 5.0.
+     */
     public function getAliases()
     {
         return $this->reader->readEntry($this->path, 'root', ['Aliases']);
@@ -51,16 +56,19 @@ class LanguageDataProvider
     public function getName($language, $displayLocale = null)
     {
         if (null === $displayLocale) {
-            $displayLocale = Locale::getDefault();
+            $displayLocale = \Locale::getDefault();
         }
 
         return $this->reader->readEntry($this->path, $displayLocale, ['Names', $language]);
     }
 
+    /**
+     * @internal to be removed in 5.0.
+     */
     public function getNames($displayLocale = null)
     {
         if (null === $displayLocale) {
-            $displayLocale = Locale::getDefault();
+            $displayLocale = \Locale::getDefault();
         }
 
         $languages = $this->reader->readEntry($this->path, $displayLocale, ['Names']);
@@ -75,6 +83,9 @@ class LanguageDataProvider
         return $languages;
     }
 
+    /**
+     * @internal to be removed in 5.0.
+     */
     public function getAlpha3Code($language)
     {
         return $this->reader->readEntry($this->path, 'meta', ['Alpha2ToAlpha3', $language]);

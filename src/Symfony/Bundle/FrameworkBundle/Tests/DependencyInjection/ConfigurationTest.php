@@ -235,7 +235,10 @@ class ConfigurationTest extends TestCase
                     'paths' => [],
                 ],
                 'auto_mapping' => [],
-                'disable_not_compromised_password' => false,
+                'not_compromised_password' => [
+                    'enabled' => true,
+                    'endpoint' => null,
+                ],
             ],
             'annotations' => [
                 'cache' => 'php_array',
@@ -328,6 +331,7 @@ class ConfigurationTest extends TestCase
                 'enabled' => !class_exists(FullStack::class) && interface_exists(MessageBusInterface::class),
                 'routing' => [],
                 'transports' => [],
+                'failure_transport' => null,
                 'serializer' => [
                     'default_serializer' => 'messenger.transport.native_php_serializer',
                     'symfony_serializer' => [

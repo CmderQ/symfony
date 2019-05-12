@@ -22,7 +22,6 @@ use Symfony\Component\Config\Definition\ConfigurationInterface;
 use Symfony\Component\DependencyInjection\Exception\LogicException;
 use Symfony\Component\Form\Form;
 use Symfony\Component\HttpClient\HttpClient;
-use Symfony\Component\HttpClient\HttpClientTrait;
 use Symfony\Component\HttpFoundation\Cookie;
 use Symfony\Component\Lock\Lock;
 use Symfony\Component\Lock\Store\SemaphoreStore;
@@ -835,9 +834,18 @@ class Configuration implements ConfigurationInterface
                                 ->end()
                             ->end()
                         ->end()
-                        ->booleanNode('disable_not_compromised_password')
-                            ->defaultFalse()
-                            ->info('Disable NotCompromisedPassword Validator: the value will always be valid.')
+                        ->arrayNode('not_compromised_password')
+                            ->canBeDisabled()
+                            ->children()
+                                ->booleanNode('enabled')
+                                    ->defaultTrue()
+                                    ->info('When disabled, compromised passwords will be accepted as valid.')
+                                ->end()
+                                ->scalarNode('endpoint')
+                                    ->defaultNull()
+                                    ->info('API endpoint for the NotCompromisedPassword Validator.')
+                                ->end()
+                            ->end()
                         ->end()
                         ->arrayNode('auto_mapping')
                             ->useAttributeAsKey('namespace')
@@ -1201,6 +1209,10 @@ class Configuration implements ConfigurationInterface
                                 ->end()
                             ->end()
                         ->end()
+                        ->scalarNode('failure_transport')
+                            ->defaultNull()
+                            ->info('Transport name to send failed messages to (after all retries have failed).')
+                        ->end()
                         ->scalarNode('default_bus')->defaultNull()->end()
                         ->arrayNode('buses')
                             ->defaultValue(['messenger.bus.default' => ['default_middleware' => true, 'middleware' => []]])
@@ -1371,29 +1383,16 @@ class Configuration implements ConfigurationInterface
                                 ->beforeNormalization()
                                     ->always()
                                     ->then(function ($config) {
-                                        if (!trait_exists(HttpClientTrait::class)) {
+                                        if (!class_exists(HttpClient::class)) {
                                             throw new LogicException('HttpClient support cannot be enabled as the component is not installed. Try running "composer require symfony/http-client".');
                                         }
 
-                                        $config = \is_array($config) ? $config : ['base_uri' => $config];
-
-                                        if (!isset($config['scope']) && isset($config['base_uri'])) {
-                                            $urlResolver = new class() {
-                                                use HttpClientTrait {
-                                                    resolveUrl as public;
-                                                    parseUrl as public;
-                                                }
-                                            };
-
-                                            $config['scope'] = preg_quote(implode('', $urlResolver->resolveUrl($urlResolver->parseUrl('.'), $urlResolver->parseUrl($config['base_uri']))));
-                                        }
-
-                                        return $config;
+                                        return \is_array($config) ? $config : ['base_uri' => $config];
                                     })
                                 ->end()
                                 ->validate()
-                                    ->ifTrue(function ($v) { return !isset($v['scope']); })
-                                    ->thenInvalid('either "scope" or "base_uri" should be defined.')
+                                    ->ifTrue(function ($v) { return !isset($v['scope']) && !isset($v['base_uri']); })
+                                    ->thenInvalid('Either "scope" or "base_uri" should be defined.')
                                 ->end()
                                 ->validate()
                                     ->ifTrue(function ($v) { return isset($v['query']) && !isset($v['base_uri']); })

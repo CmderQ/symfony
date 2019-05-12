@@ -134,6 +134,14 @@ class Deprecation
     }
 
     /**
+     * @return string
+     */
+    public function getMessage()
+    {
+        return $this->message;
+    }
+
+    /**
      * @param string $utilPrefix
      *
      * @return bool

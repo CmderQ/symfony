@@ -44,13 +44,24 @@ final class Locales extends ResourceBundle
 
             return true;
         } catch (MissingResourceException $e) {
-            return false;
+            return \in_array($locale, self::getAliases(), true);
         }
     }
 
+    /**
+     * @throws MissingResourceException if the locale does not exists
+     */
     public static function getName(string $locale, string $displayLocale = null): string
     {
-        return self::readEntry(['Names', $locale], $displayLocale);
+        try {
+            return self::readEntry(['Names', $locale], $displayLocale);
+        } catch (MissingResourceException $e) {
+            if (false === $aliased = array_search($locale, self::getAliases(), true)) {
+                throw $e;
+            }
+
+            return self::readEntry(['Names', $aliased], $displayLocale);
+        }
     }
 
     /**

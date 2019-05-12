@@ -12,14 +12,13 @@
 namespace Symfony\Component\Intl\Data\Provider;
 
 use Symfony\Component\Intl\Data\Bundle\Reader\BundleEntryReaderInterface;
-use Symfony\Component\Intl\Locale;
 
 /**
  * Data provider for script-related ICU data.
  *
  * @author Bernhard Schussek <bschussek@gmail.com>
  *
- * @internal to be removed in 5.0.
+ * @internal
  */
 class ScriptDataProvider
 {
@@ -38,6 +37,9 @@ class ScriptDataProvider
         $this->reader = $reader;
     }
 
+    /**
+     * @internal to be removed in 5.0.
+     */
     public function getScripts()
     {
         return $this->reader->readEntry($this->path, 'meta', ['Scripts']);
@@ -46,16 +48,19 @@ class ScriptDataProvider
     public function getName($script, $displayLocale = null)
     {
         if (null === $displayLocale) {
-            $displayLocale = Locale::getDefault();
+            $displayLocale = \Locale::getDefault();
         }
 
         return $this->reader->readEntry($this->path, $displayLocale, ['Names', $script]);
     }
 
+    /**
+     * @internal to be removed in 5.0.
+     */
     public function getNames($displayLocale = null)
     {
         if (null === $displayLocale) {
-            $displayLocale = Locale::getDefault();
+            $displayLocale = \Locale::getDefault();
         }
 
         $names = $this->reader->readEntry($this->path, $displayLocale, ['Names']);

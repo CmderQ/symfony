@@ -40,9 +40,9 @@ use Symfony\Component\Config\ResourceCheckerInterface;
 use Symfony\Component\Console\Application;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\DependencyInjection\Alias;
-use Symfony\Component\DependencyInjection\Argument\IteratorArgument;
 use Symfony\Component\DependencyInjection\Argument\ServiceClosureArgument;
 use Symfony\Component\DependencyInjection\ChildDefinition;
+use Symfony\Component\DependencyInjection\Compiler\ServiceLocatorTagPass;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\DependencyInjection\Definition;
@@ -208,6 +208,8 @@ class FrameworkExtension extends Extension
                     'vscode' => 'vscode://file/%%f:%%l',
                 ];
                 $ide = $config['ide'];
+                // mark any env vars found in the ide setting as used
+                $container->resolveEnvPlaceholders($ide);
 
                 $container->setParameter('templating.helper.code.file_link_format', str_replace('%', '%%', ini_get('xdebug.file_link_format') ?: get_cfg_var('xdebug.file_link_format')) ?: (isset($links[$ide]) ? $links[$ide] : $ide));
             }
@@ -284,6 +286,9 @@ class FrameworkExtension extends Extension
             $container->removeDefinition('console.command.messenger_debug');
             $container->removeDefinition('console.command.messenger_stop_workers');
             $container->removeDefinition('console.command.messenger_setup_transports');
+            $container->removeDefinition('console.command.messenger_failed_messages_retry');
+            $container->removeDefinition('console.command.messenger_failed_messages_show');
+            $container->removeDefinition('console.command.messenger_failed_messages_remove');
         }
 
         $propertyInfoEnabled = $this->isConfigEnabled($container, $config['property_info']);
@@ -1257,7 +1262,8 @@ class FrameworkExtension extends Extension
 
         $container
             ->getDefinition('validator.not_compromised_password')
-            ->setArgument(2, $config['disable_not_compromised_password'])
+            ->setArgument(2, $config['not_compromised_password']['enabled'])
+            ->setArgument(3, $config['not_compromised_password']['endpoint'])
         ;
     }
 
@@ -1700,6 +1706,7 @@ class FrameworkExtension extends Extension
         if (empty($config['transports'])) {
             $container->removeDefinition('messenger.transport.symfony_serializer');
             $container->removeDefinition('messenger.transport.amqp.factory');
+            $container->removeDefinition('messenger.transport.redis.factory');
         } else {
             $container->getDefinition('messenger.transport.symfony_serializer')
                 ->replaceArgument(1, $config['serializer']['symfony_serializer']['format'])
@@ -1742,22 +1749,48 @@ class FrameworkExtension extends Extension
             if ('*' !== $message && !class_exists($message) && !interface_exists($message, false)) {
                 throw new LogicException(sprintf('Invalid Messenger routing configuration: class or interface "%s" not found.', $message));
             }
-            $senders = [];
+
+            // make sure senderAliases contains all senders
             foreach ($messageConfiguration['senders'] as $sender) {
-                $senders[$sender] = new Reference($senderAliases[$sender] ?? $sender);
+                if (!isset($senderAliases[$sender])) {
+                    $senderAliases[$sender] = $sender;
+                }
             }
 
-            $messageToSendersMapping[$message] = new IteratorArgument($senders);
+            $messageToSendersMapping[$message] = $messageConfiguration['senders'];
             $messagesToSendAndHandle[$message] = $messageConfiguration['send_and_handle'];
+        }
+
+        $senderReferences = [];
+        foreach ($senderAliases as $alias => $serviceId) {
+            $senderReferences[$alias] = new Reference($serviceId);
         }
 
         $container->getDefinition('messenger.senders_locator')
             ->replaceArgument(0, $messageToSendersMapping)
-            ->replaceArgument(1, $messagesToSendAndHandle)
+            ->replaceArgument(1, ServiceLocatorTagPass::register($container, $senderReferences))
+            ->replaceArgument(2, $messagesToSendAndHandle)
         ;
 
         $container->getDefinition('messenger.retry_strategy_locator')
             ->replaceArgument(0, $transportRetryReferences);
+
+        if ($config['failure_transport']) {
+            $container->getDefinition('messenger.failure.send_failed_message_to_failure_transport_listener')
+                ->replaceArgument(1, $config['failure_transport']);
+            $container->getDefinition('console.command.messenger_failed_messages_retry')
+                ->replaceArgument(0, $config['failure_transport'])
+                ->replaceArgument(4, $transportRetryReferences[$config['failure_transport']] ?? null);
+            $container->getDefinition('console.command.messenger_failed_messages_show')
+                ->replaceArgument(0, $config['failure_transport']);
+            $container->getDefinition('console.command.messenger_failed_messages_remove')
+                ->replaceArgument(0, $config['failure_transport']);
+        } else {
+            $container->removeDefinition('messenger.failure.send_failed_message_to_failure_transport_listener');
+            $container->removeDefinition('console.command.messenger_failed_messages_retry');
+            $container->removeDefinition('console.command.messenger_failed_messages_show');
+            $container->removeDefinition('console.command.messenger_failed_messages_remove');
+        }
     }
 
     private function registerCacheConfiguration(array $config, ContainerBuilder $container)
@@ -1853,11 +1886,17 @@ class FrameworkExtension extends Extension
                 throw new InvalidArgumentException(sprintf('Invalid scope name: "%s" is reserved.', $name));
             }
 
-            $scope = $scopeConfig['scope'];
+            $scope = $scopeConfig['scope'] ?? null;
             unset($scopeConfig['scope']);
 
-            $container->register($name, ScopingHttpClient::class)
-                ->setArguments([new Reference('http_client'), [$scope => $scopeConfig], $scope]);
+            if (null === $scope) {
+                $container->register($name, ScopingHttpClient::class)
+                    ->setFactory([ScopingHttpClient::class, 'forBaseUri'])
+                    ->setArguments([new Reference('http_client'), $scopeConfig['base_uri'], $scopeConfig]);
+            } else {
+                $container->register($name, ScopingHttpClient::class)
+                    ->setArguments([new Reference('http_client'), [$scope => $scopeConfig], $scope]);
+            }
 
             $container->registerAliasForArgument($name, HttpClientInterface::class);
 

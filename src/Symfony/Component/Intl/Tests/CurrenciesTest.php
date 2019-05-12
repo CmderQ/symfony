@@ -12,7 +12,6 @@
 namespace Symfony\Component\Intl\Tests;
 
 use Symfony\Component\Intl\Currencies;
-use Symfony\Component\Intl\Locale;
 
 /**
  * @group intl-data
@@ -585,7 +584,7 @@ class CurrenciesTest extends ResourceBundleTestCase
         'USS' => 998,
     ];
 
-    public function testGetCurrencies()
+    public function testGetCurrencyCodes()
     {
         $this->assertSame(self::$currencies, Currencies::getCurrencyCodes());
     }
@@ -613,7 +612,7 @@ class CurrenciesTest extends ResourceBundleTestCase
 
     public function testGetNamesDefaultLocale()
     {
-        Locale::setDefault('de_AT');
+        \Locale::setDefault('de_AT');
 
         $this->assertSame(Currencies::getNames('de_AT'), Currencies::getNames());
     }
@@ -646,7 +645,7 @@ class CurrenciesTest extends ResourceBundleTestCase
 
     public function testGetNameDefaultLocale()
     {
-        Locale::setDefault('de_AT');
+        \Locale::setDefault('de_AT');
 
         $expected = Currencies::getNames('de_AT');
         $actual = [];
@@ -683,7 +682,10 @@ class CurrenciesTest extends ResourceBundleTestCase
      */
     public function testGetFractionDigits($currency)
     {
-        $this->assertInternalType('numeric', Currencies::getFractionDigits($currency));
+        // ensure each currency code has a corresponding fraction digit
+        Currencies::getFractionDigits($currency);
+
+        $this->addToAssertionCount(1);
     }
 
     /**

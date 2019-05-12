@@ -55,6 +55,19 @@ DependencyInjection
 
  * Removed the `TypedReference::canBeAutoregistered()` and  `TypedReference::getRequiringClass()` methods.
  * Removed support for auto-discovered extension configuration class which does not implement `ConfigurationInterface`.
+ * Removed support for non-string default env() parameters
+
+   Before:
+   ```yaml
+   parameters:
+        env(NAME): 1.5
+   ```
+
+   After:
+   ```yaml
+   parameters:
+        env(NAME): '1.5'
+   ```
 
 DoctrineBridge
 --------------
@@ -81,23 +94,6 @@ EventDispatcher
  * The `TraceableEventDispatcherInterface` has been removed.
  * The signature of the `EventDispatcherInterface::dispatch()` method has been updated to `dispatch($event, string $eventName = null)`
  * The `Event` class has been removed, use `Symfony\Contracts\EventDispatcher\Event` instead
-
-DependencyInjection
--------------------
-
- * Removed support for non-string default env() parameters
-
-   Before:
-   ```yaml
-   parameters:
-       env(NAME): 1.5
-   ```
-
-   After:
-   ```yaml
-   parameters:
-          env(NAME): '1.5'
-   ```
 
 Filesystem
 ----------
@@ -250,7 +246,7 @@ Intl
  * Removed `Intl::getLanguageBundle()`, use `Languages` or `Scripts` instead
  * Removed `Intl::getCurrencyBundle()`, use `Currencies` instead
  * Removed `Intl::getLocaleBundle()`, use `Locales` instead
- * Removed `Intl::getRegionBundle()`, use `Regions` instead
+ * Removed `Intl::getRegionBundle()`, use `Countries` instead
 
 Messenger
 ---------

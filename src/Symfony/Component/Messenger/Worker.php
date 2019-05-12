@@ -15,6 +15,7 @@ use Psr\Log\LoggerInterface;
 use Symfony\Component\Messenger\Event\WorkerMessageFailedEvent;
 use Symfony\Component\Messenger\Event\WorkerMessageHandledEvent;
 use Symfony\Component\Messenger\Event\WorkerMessageReceivedEvent;
+use Symfony\Component\Messenger\Event\WorkerStoppedEvent;
 use Symfony\Component\Messenger\Exception\HandlerFailedException;
 use Symfony\Component\Messenger\Exception\LogicException;
 use Symfony\Component\Messenger\Exception\UnrecoverableMessageHandlingException;
@@ -43,10 +44,10 @@ class Worker implements WorkerInterface
     private $shouldStop = false;
 
     /**
-     * @param ReceiverInterface[]      $receivers       Where the key will be used as the string "identifier"
+     * @param ReceiverInterface[]      $receivers       Where the key is the transport name
      * @param RetryStrategyInterface[] $retryStrategies Retry strategies for each receiver (array keys must match)
      */
-    public function __construct(array $receivers, MessageBusInterface $bus, $retryStrategies = [], EventDispatcherInterface $eventDispatcher = null, LoggerInterface $logger = null)
+    public function __construct(array $receivers, MessageBusInterface $bus, array $retryStrategies = [], EventDispatcherInterface $eventDispatcher = null, LoggerInterface $logger = null)
     {
         $this->receivers = $receivers;
         $this->bus = $bus;
@@ -85,13 +86,13 @@ class Worker implements WorkerInterface
 
         while (false === $this->shouldStop) {
             $envelopeHandled = false;
-            foreach ($this->receivers as $receiverName => $receiver) {
+            foreach ($this->receivers as $transportName => $receiver) {
                 $envelopes = $receiver->get();
 
                 foreach ($envelopes as $envelope) {
                     $envelopeHandled = true;
 
-                    $this->handleMessage($envelope, $receiver, $receiverName, $this->retryStrategies[$receiverName] ?? null);
+                    $this->handleMessage($envelope, $receiver, $transportName, $this->retryStrategies[$transportName] ?? null);
                     $onHandled($envelope);
                 }
 
@@ -109,11 +110,18 @@ class Worker implements WorkerInterface
                 usleep($options['sleep']);
             }
         }
+
+        $this->dispatchEvent(new WorkerStoppedEvent());
     }
 
-    private function handleMessage(Envelope $envelope, ReceiverInterface $receiver, string $receiverName, ?RetryStrategyInterface $retryStrategy)
+    private function handleMessage(Envelope $envelope, ReceiverInterface $receiver, string $transportName, ?RetryStrategyInterface $retryStrategy): void
     {
-        $this->dispatchEvent(new WorkerMessageReceivedEvent($envelope, $receiverName));
+        $event = new WorkerMessageReceivedEvent($envelope, $transportName);
+        $this->dispatchEvent($event);
+
+        if (!$event->shouldHandle()) {
+            return;
+        }
 
         $message = $envelope->getMessage();
         $context = [
@@ -122,22 +130,17 @@ class Worker implements WorkerInterface
         ];
 
         try {
-            $envelope = $this->bus->dispatch($envelope->with(new ReceivedStamp()));
+            $envelope = $this->bus->dispatch($envelope->with(new ReceivedStamp($transportName)));
         } catch (\Throwable $throwable) {
             if ($throwable instanceof HandlerFailedException) {
                 $envelope = $throwable->getEnvelope();
             }
 
-            $shouldRetry = $this->shouldRetry($throwable, $envelope, $retryStrategy);
+            $shouldRetry = $retryStrategy && $this->shouldRetry($throwable, $envelope, $retryStrategy);
 
-            $this->dispatchEvent(new WorkerMessageFailedEvent($envelope, $receiverName, $throwable, $shouldRetry));
+            $this->dispatchEvent(new WorkerMessageFailedEvent($envelope, $transportName, $throwable, $shouldRetry));
 
             if ($shouldRetry) {
-                if (null === $retryStrategy) {
-                    // not logically allowed, but check just in case
-                    throw new LogicException('Retrying is not supported without a retry strategy.');
-                }
-
                 $retryCount = $this->getRetryCount($envelope) + 1;
                 if (null !== $this->logger) {
                     $this->logger->error('Retrying {class} - retry #{retryCount}.', $context + ['retryCount' => $retryCount, 'error' => $throwable]);
@@ -145,7 +148,7 @@ class Worker implements WorkerInterface
 
                 // add the delay and retry stamp info + remove ReceivedStamp
                 $retryEnvelope = $envelope->with(new DelayStamp($retryStrategy->getWaitingTime($envelope)))
-                    ->with(new RedeliveryStamp($retryCount, $this->getSenderAlias($envelope)))
+                    ->with(new RedeliveryStamp($retryCount, $this->getSenderClassOrAlias($envelope)))
                     ->withoutAll(ReceivedStamp::class);
 
                 // re-send the message
@@ -163,7 +166,7 @@ class Worker implements WorkerInterface
             return;
         }
 
-        $this->dispatchEvent(new WorkerMessageHandledEvent($envelope, $receiverName));
+        $this->dispatchEvent(new WorkerMessageHandledEvent($envelope, $transportName));
 
         if (null !== $this->logger) {
             $this->logger->info('{class} was handled successfully (acknowledging to transport).', $context);
@@ -186,13 +189,18 @@ class Worker implements WorkerInterface
         $this->eventDispatcher->dispatch($event);
     }
 
-    private function shouldRetry(\Throwable $e, Envelope $envelope, ?RetryStrategyInterface $retryStrategy): bool
+    private function shouldRetry(\Throwable $e, Envelope $envelope, RetryStrategyInterface $retryStrategy): bool
     {
         if ($e instanceof UnrecoverableMessageHandlingException) {
             return false;
         }
 
-        if (null === $retryStrategy) {
+        $sentStamp = $envelope->last(SentStamp::class);
+        if (null === $sentStamp) {
+            if (null !== $this->logger) {
+                $this->logger->warning('Message will not be retried because the SentStamp is missing and so the target sender cannot be determined.');
+            }
+
             return false;
         }
 
@@ -207,11 +215,16 @@ class Worker implements WorkerInterface
         return $retryMessageStamp ? $retryMessageStamp->getRetryCount() : 0;
     }
 
-    private function getSenderAlias(Envelope $envelope): ?string
+    private function getSenderClassOrAlias(Envelope $envelope): string
     {
         /** @var SentStamp|null $sentStamp */
         $sentStamp = $envelope->last(SentStamp::class);
 
-        return $sentStamp ? $sentStamp->getSenderAlias() : null;
+        if (null === $sentStamp) {
+            // should not happen, because of the check in shouldRetry()
+            throw new LogicException('Could not find SentStamp.');
+        }
+
+        return $sentStamp->getSenderAlias() ?: $sentStamp->getSenderClass();
     }
 }
