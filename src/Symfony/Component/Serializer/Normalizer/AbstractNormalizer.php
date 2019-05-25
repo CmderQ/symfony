@@ -486,7 +486,13 @@ abstract class AbstractNormalizer implements NormalizerInterface, DenormalizerIn
                             throw new RuntimeException(sprintf('Cannot create an instance of %s from serialized data because the variadic parameter %s can only accept an array.', $class, $constructorParameter->name));
                         }
 
-                        $params = array_merge($params, $data[$paramName]);
+                        $variadicParameters = [];
+                        foreach ($data[$paramName] as $parameterData) {
+                            $variadicParameters[] = $this->denormalizeParameter($reflectionClass, $constructorParameter, $paramName, $parameterData, $context, $format);
+                        }
+
+                        $params = array_merge($params, $variadicParameters);
+                        unset($data[$key]);
                     }
                 } elseif ($allowed && !$ignored && (isset($data[$key]) || \array_key_exists($key, $data))) {
                     $parameterData = $data[$key];
@@ -555,8 +561,12 @@ abstract class AbstractNormalizer implements NormalizerInterface, DenormalizerIn
      *
      * @internal
      */
-    protected function createChildContext(array $parentContext, $attribute/*, string $format = null */)
+    protected function createChildContext(array $parentContext, $attribute/*, ?string $format */)
     {
+        if (\func_num_args() < 3) {
+            @trigger_error(sprintf('Method "%s::%s()" will have a third "?string $format" argument in version 5.0; not defining it is deprecated since Symfony 4.3.', \get_class($this), __FUNCTION__), E_USER_DEPRECATED);
+            $format = null;
+        }
         if (isset($parentContext[self::ATTRIBUTES][$attribute])) {
             $parentContext[self::ATTRIBUTES] = $parentContext[self::ATTRIBUTES][$attribute];
         } else {
