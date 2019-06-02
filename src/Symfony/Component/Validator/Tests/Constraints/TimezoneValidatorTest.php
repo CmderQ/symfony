@@ -76,7 +76,7 @@ class TimezoneValidatorTest extends ConstraintValidatorTestCase
         yield ['PST8PDT'];
         yield ['America/Montreal'];
 
-        // expired in ICU
+        // previously expired in ICU
         yield ['Europe/Saratov'];
 
         // standard
@@ -267,9 +267,7 @@ class TimezoneValidatorTest extends ConstraintValidatorTestCase
      */
     public function testDeprecatedTimezonesAreValidWithBC(string $timezone)
     {
-        $constraint = new Timezone([
-            'zone' => \DateTimeZone::ALL_WITH_BC,
-        ]);
+        $constraint = new Timezone(\DateTimeZone::ALL_WITH_BC);
 
         $this->validator->validate($timezone, $constraint);
 
@@ -316,6 +314,17 @@ class TimezoneValidatorTest extends ConstraintValidatorTestCase
      */
     public function testIntlCompatibility()
     {
+        $reflector = new \ReflectionExtension('intl');
+        ob_start();
+        $reflector->info();
+        $output = strip_tags(ob_get_clean());
+        preg_match('/^ICU TZData version (?:=>)?(.*)$/m', $output, $matches);
+        $tzDbVersion = isset($matches[1]) ? (int) trim($matches[1]) : 0;
+
+        if (!$tzDbVersion || 2017 <= $tzDbVersion) {
+            $this->markTestSkipped('"Europe/Saratov" is expired until 2017, current version is '.$tzDbVersion);
+        }
+
         $constraint = new Timezone([
             'message' => 'myMessage',
             'intlCompatible' => true,

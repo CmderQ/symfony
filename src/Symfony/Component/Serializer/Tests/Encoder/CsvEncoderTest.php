@@ -100,26 +100,12 @@ CSV
 
     public function testEncodeCustomSettings()
     {
-        $this->doTestEncodeCustomSettings();
-    }
-
-    public function testLegacyEncodeCustomSettings()
-    {
-        $this->doTestEncodeCustomSettings(true);
-    }
-
-    private function doTestEncodeCustomSettings(bool $legacy = false)
-    {
-        if ($legacy) {
-            $this->encoder = new CsvEncoder(';', "'", '|', '-');
-        } else {
-            $this->encoder = new CsvEncoder([
-                CsvEncoder::DELIMITER_KEY => ';',
-                CsvEncoder::ENCLOSURE_KEY => "'",
-                CsvEncoder::ESCAPE_CHAR_KEY => '|',
-                CsvEncoder::KEY_SEPARATOR_KEY => '-',
-            ]);
-        }
+        $this->encoder = new CsvEncoder([
+            CsvEncoder::DELIMITER_KEY => ';',
+            CsvEncoder::ENCLOSURE_KEY => "'",
+            CsvEncoder::ESCAPE_CHAR_KEY => '|',
+            CsvEncoder::KEY_SEPARATOR_KEY => '-',
+        ]);
 
         $value = ['a' => 'he\'llo', 'c' => ['d' => 'foo']];
 
@@ -194,21 +180,7 @@ CSV;
 
     public function testEncodeFormulas()
     {
-        $this->doTestEncodeFormulas();
-    }
-
-    public function testLegacyEncodeFormulas()
-    {
-        $this->doTestEncodeFormulas(true);
-    }
-
-    private function doTestEncodeFormulas(bool $legacy = false)
-    {
-        if ($legacy) {
-            $this->encoder = new CsvEncoder(',', '"', '\\', '.', true);
-        } else {
-            $this->encoder = new CsvEncoder([CsvEncoder::ESCAPE_FORMULAS_KEY => true]);
-        }
+        $this->encoder = new CsvEncoder([CsvEncoder::ESCAPE_FORMULAS_KEY => true]);
 
         $this->assertSame(<<<'CSV'
 0
@@ -327,21 +299,6 @@ CSV
         $this->assertFalse($this->encoder->supportsDecoding('foo'));
     }
 
-    /**
-     * @group legacy
-     * @expectedDeprecation Relying on the default value (false) of the "as_collection" option is deprecated since 4.2. You should set it to false explicitly instead as true will be the default value in 5.0.
-     */
-    public function testDecodeLegacy()
-    {
-        $expected = ['foo' => 'a', 'bar' => 'b'];
-
-        $this->assertEquals($expected, $this->encoder->decode(<<<'CSV'
-foo,bar
-a,b
-CSV
-        , 'csv'));
-    }
-
     public function testDecodeAsSingle()
     {
         $expected = ['foo' => 'a', 'bar' => 'b'];
@@ -382,9 +339,7 @@ foo
 a
 
 CSV
-        , 'csv', [
-            CsvEncoder::AS_COLLECTION_KEY => true, // Can be removed in 5.0
-        ]));
+        , 'csv'));
     }
 
     public function testDecodeToManyRelation()
@@ -423,35 +378,19 @@ CSV
 
     public function testDecodeCustomSettings()
     {
-        $this->doTestDecodeCustomSettings();
-    }
-
-    public function testLegacyDecodeCustomSettings()
-    {
-        $this->doTestDecodeCustomSettings(true);
-    }
-
-    private function doTestDecodeCustomSettings(bool $legacy = false)
-    {
-        if ($legacy) {
-            $this->encoder = new CsvEncoder(';', "'", '|', '-');
-        } else {
-            $this->encoder = new CsvEncoder([
-                CsvEncoder::DELIMITER_KEY => ';',
-                CsvEncoder::ENCLOSURE_KEY => "'",
-                CsvEncoder::ESCAPE_CHAR_KEY => '|',
-                CsvEncoder::KEY_SEPARATOR_KEY => '-',
-            ]);
-        }
+        $this->encoder = new CsvEncoder([
+            CsvEncoder::DELIMITER_KEY => ';',
+            CsvEncoder::ENCLOSURE_KEY => "'",
+            CsvEncoder::ESCAPE_CHAR_KEY => '|',
+            CsvEncoder::KEY_SEPARATOR_KEY => '-',
+        ]);
 
         $expected = [['a' => 'hell\'o', 'bar' => ['baz' => 'b']]];
         $this->assertEquals($expected, $this->encoder->decode(<<<'CSV'
 a;bar-baz
 'hell''o';b;c
 CSV
-        , 'csv', [
-            CsvEncoder::AS_COLLECTION_KEY => true, // Can be removed in 5.0
-        ]));
+        , 'csv'));
     }
 
     public function testDecodeCustomSettingsPassedInContext()
@@ -466,7 +405,6 @@ CSV
             CsvEncoder::ENCLOSURE_KEY => "'",
             CsvEncoder::ESCAPE_CHAR_KEY => '|',
             CsvEncoder::KEY_SEPARATOR_KEY => '-',
-            CsvEncoder::AS_COLLECTION_KEY => true, // Can be removed in 5.0
         ]));
     }
 

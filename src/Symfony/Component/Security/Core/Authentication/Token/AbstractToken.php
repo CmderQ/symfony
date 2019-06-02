@@ -11,8 +11,6 @@
 
 namespace Symfony\Component\Security\Core\Authentication\Token;
 
-use Symfony\Component\Security\Core\Role\Role;
-use Symfony\Component\Security\Core\User\AdvancedUserInterface;
 use Symfony\Component\Security\Core\User\EquatableInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
 
@@ -25,7 +23,6 @@ use Symfony\Component\Security\Core\User\UserInterface;
 abstract class AbstractToken implements TokenInterface
 {
     private $user;
-    private $roles = [];
     private $roleNames = [];
     private $authenticated = false;
     private $attributes = [];
@@ -38,32 +35,16 @@ abstract class AbstractToken implements TokenInterface
     public function __construct(array $roles = [])
     {
         foreach ($roles as $role) {
-            if (\is_string($role)) {
-                $role = new Role($role, false);
-            } elseif (!$role instanceof Role) {
-                throw new \InvalidArgumentException(sprintf('$roles must be an array of strings, or Role instances, but got %s.', \gettype($role)));
-            }
-
-            $this->roles[] = $role;
-            $this->roleNames[] = (string) $role;
+            $this->roleNames[] = $role;
         }
-    }
-
-    public function getRoleNames(): array
-    {
-        return $this->roleNames;
     }
 
     /**
      * {@inheritdoc}
      */
-    public function getRoles()
+    public function getRoleNames(): array
     {
-        if (0 === \func_num_args() || func_get_arg(0)) {
-            @trigger_error(sprintf('The %s() method is deprecated since Symfony 4.3. Use the getRoleNames() method instead.', __METHOD__), E_USER_DEPRECATED);
-        }
-
-        return $this->roles;
+        return $this->roleNames;
     }
 
     /**
@@ -159,7 +140,7 @@ abstract class AbstractToken implements TokenInterface
      */
     public function __serialize(): array
     {
-        return [$this->user, $this->authenticated, $this->roles, $this->attributes, $this->roleNames];
+        return [$this->user, $this->authenticated, null, $this->attributes, $this->roleNames];
     }
 
     /**
@@ -199,7 +180,7 @@ abstract class AbstractToken implements TokenInterface
      */
     public function __unserialize(array $data): void
     {
-        [$this->user, $this->authenticated, $this->roles, $this->attributes, $this->roleNames] = $data;
+        [$this->user, $this->authenticated, , $this->attributes, $this->roleNames] = $data;
     }
 
     /**
@@ -284,8 +265,8 @@ abstract class AbstractToken implements TokenInterface
         $class = substr($class, strrpos($class, '\\') + 1);
 
         $roles = [];
-        foreach ($this->roles as $role) {
-            $roles[] = $role->getRole();
+        foreach ($this->roleNames as $role) {
+            $roles[] = $role;
         }
 
         return sprintf('%s(user="%s", authenticated=%s, roles="%s")', $class, $this->getUsername(), json_encode($this->authenticated), implode(', ', $roles));
@@ -310,29 +291,6 @@ abstract class AbstractToken implements TokenInterface
         }
 
         if ($this->user->getUsername() !== $user->getUsername()) {
-            return true;
-        }
-
-        if ($this->user instanceof AdvancedUserInterface && $user instanceof AdvancedUserInterface) {
-            @trigger_error(sprintf('Checking for the AdvancedUserInterface in "%s()" is deprecated since Symfony 4.1 and support for it will be removed in 5.0. Implement the %s to check if the user has been changed,', __METHOD__, EquatableInterface::class), E_USER_DEPRECATED);
-            if ($this->user->isAccountNonExpired() !== $user->isAccountNonExpired()) {
-                return true;
-            }
-
-            if ($this->user->isAccountNonLocked() !== $user->isAccountNonLocked()) {
-                return true;
-            }
-
-            if ($this->user->isCredentialsNonExpired() !== $user->isCredentialsNonExpired()) {
-                return true;
-            }
-
-            if ($this->user->isEnabled() !== $user->isEnabled()) {
-                return true;
-            }
-        } elseif ($this->user instanceof AdvancedUserInterface xor $user instanceof AdvancedUserInterface) {
-            @trigger_error(sprintf('Checking for the AdvancedUserInterface in "%s()" is deprecated since Symfony 4.1 and support for it will be removed in 5.0. Implement the %s to check if the user has been changed,', __METHOD__, EquatableInterface::class), E_USER_DEPRECATED);
-
             return true;
         }
 

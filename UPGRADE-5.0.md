@@ -254,6 +254,7 @@ HttpKernel
  * Removed `GetResponseForExceptionEvent`, use `ExceptionEvent` instead
  * Removed `PostResponseEvent`, use `TerminateEvent` instead
  * Removed `TranslatorListener` in favor of `LocaleAwareListener`
+ * The `DebugHandlersListener` class has been made `final`
 
 Intl
 ----
@@ -273,6 +274,11 @@ Monolog
 -------
 
  * The methods `DebugProcessor::getLogs()`, `DebugProcessor::countErrors()`, `Logger::getLogs()` and `Logger::countErrors()` have a new `$request` argument.
+
+MonologBridge
+--------------
+
+* The `RouteProcessor` class is final.
 
 Process
 -------
@@ -382,6 +388,25 @@ SecurityBundle
 Serializer
 ----------
 
+ * The default value of the `CsvEncoder` "as_collection" option was changed to `true`.
+ * Individual encoders & normalizers options as constructor arguments were removed. 
+   Use the default context instead.
+ * The following method and properties:
+     - `AbstractNormalizer::$circularReferenceLimit`
+     - `AbstractNormalizer::$circularReferenceHandler`
+     - `AbstractNormalizer::$callbacks`
+     - `AbstractNormalizer::$ignoredAttributes`
+     - `AbstractNormalizer::$camelizedAttributes` 
+     - `AbstractNormalizer::setCircularReferenceLimit()`
+     - `AbstractNormalizer::setCircularReferenceHandler()` 
+     - `AbstractNormalizer::setCallbacks()`
+     - `AbstractNormalizer::setIgnoredAttributes()`
+     - `AbstractObjectNormalizer::$maxDepthHandler`
+     - `AbstractObjectNormalizer::setMaxDepthHandler()`
+     - `XmlEncoder::setRootNodeName()`
+     - `XmlEncoder::getRootNodeName()`
+
+   were removed, use the default context instead.
  * The `AbstractNormalizer::handleCircularReference()` method has two new `$format` and `$context` arguments.
 
 Translation
@@ -404,6 +429,7 @@ TwigBundle
 TwigBridge
 ----------
 
+ * Removed argument `$rootDir` from the `DebugCommand::__construct()` method and the 5th argument must be an instance of `FileLinkFormatter`
  * removed the `$requestStack` and `$requestContext` arguments of the 
    `HttpFoundationExtension`, pass a `Symfony\Component\HttpFoundation\UrlHelper`
    instance as the only argument instead

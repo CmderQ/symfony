@@ -17,7 +17,7 @@ use Symfony\Component\Messenger\Exception\MessageDecodingFailedException;
 /**
  * @author Samuel Roze <samuel.roze@gmail.com>
  *
- * @experimental in 4.2
+ * @experimental in 4.3
  */
 interface SerializerInterface
 {
@@ -38,6 +38,9 @@ interface SerializerInterface
     /**
      * Encodes an envelope content (message & stamps) to a common format understandable by transports.
      * The encoded array should only contain scalars and arrays.
+     *
+     * Stamps that implement NonSendableStampInterface should
+     * not be encoded.
      *
      * The most common keys of the encoded array are:
      * - `body` (string) - the message body

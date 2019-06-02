@@ -15,21 +15,9 @@ use PHPUnit\Framework\TestCase;
 use Symfony\Component\Security\Core\Authentication\Token\AbstractToken;
 use Symfony\Component\Security\Core\Authorization\Voter\RoleVoter;
 use Symfony\Component\Security\Core\Authorization\Voter\VoterInterface;
-use Symfony\Component\Security\Core\Role\Role;
 
 class RoleVoterTest extends TestCase
 {
-    /**
-     * @group legacy
-     * @dataProvider getVoteTests
-     */
-    public function testVote($roles, $attributes, $expected)
-    {
-        $voter = new RoleVoter();
-
-        $this->assertSame($expected, $voter->vote($this->getToken($roles), null, $attributes));
-    }
-
     /**
      * @dataProvider getVoteTests
      */
@@ -56,44 +44,12 @@ class RoleVoterTest extends TestCase
         ];
     }
 
-    /**
-     * @group legacy
-     * @dataProvider getLegacyVoteOnRoleObjectsTests
-     */
-    public function testVoteOnRoleObjects($roles, $attributes, $expected)
-    {
-        $voter = new RoleVoter();
-
-        $this->assertSame($expected, $voter->vote($this->getToken($roles), null, $attributes));
-    }
-
-    public function getLegacyVoteOnRoleObjectsTests()
-    {
-        return [
-            [['ROLE_BAR'], [new Role('ROLE_BAR')], VoterInterface::ACCESS_GRANTED],
-            [['ROLE_BAR'], [new Role('ROLE_FOO')], VoterInterface::ACCESS_DENIED],
-        ];
-    }
-
-    protected function getToken(array $roles)
-    {
-        foreach ($roles as $i => $role) {
-            $roles[$i] = new Role($role);
-        }
-        $token = $this->getMockBuilder('Symfony\Component\Security\Core\Authentication\Token\TokenInterface')->getMock();
-        $token->expects($this->once())
-              ->method('getRoles')
-              ->will($this->returnValue($roles));
-
-        return $token;
-    }
-
     protected function getTokenWithRoleNames(array $roles)
     {
         $token = $this->getMockBuilder(AbstractToken::class)->getMock();
         $token->expects($this->once())
               ->method('getRoleNames')
-              ->will($this->returnValue($roles));
+              ->willReturn($roles);
 
         return $token;
     }

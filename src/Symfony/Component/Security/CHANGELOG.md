@@ -1,6 +1,22 @@
 CHANGELOG
 =========
 
+5.0.0
+-----
+
+* Removed the `AdvancedUserInterface`, use a custom user checker instead.
+* Removed `Argon2iPasswordEncoder`, use `SodiumPasswordEncoder` instead
+* Removed `BcryptPasswordEncoder`, use `NativePasswordEncoder` instead
+* Removed the `has_role()` function from security expressions, use `is_granted()` instead.
+* `SimpleAuthenticatorInterface`, `SimpleFormAuthenticatorInterface`, `SimplePreAuthenticatorInterface`,
+  `SimpleAuthenticationProvider`, `SimpleAuthenticationHandler`, `SimpleFormAuthenticationListener` and
+  `SimplePreAuthenticationListener` have been removed. Use Guard instead.
+* Removed the `Role` and `SwitchUserRole` classes. Use strings for roles instead.
+* Removed the `getReachableRoles()` method from the `RoleHierarchyInterface`. Role hierarchies must implement
+  the `getReachableRoleNames()` method instead and return roles as strings.
+* Removed the `getRoles()` method from the `TokenInterface`. Tokens must implement the `getRoleNames()` method
+  instead and return roles as strings.
+
 4.3.0
 -----
 

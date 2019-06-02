@@ -28,6 +28,7 @@ final class CurlResponse implements ResponseInterface
 
     private static $performing = false;
     private $multi;
+    private $debugBuffer;
 
     /**
      * @internal
@@ -38,6 +39,9 @@ final class CurlResponse implements ResponseInterface
 
         if (\is_resource($ch)) {
             $this->handle = $ch;
+            $this->debugBuffer = fopen('php://temp', 'w+');
+            curl_setopt($ch, CURLOPT_VERBOSE, true);
+            curl_setopt($ch, CURLOPT_STDERR, $this->debugBuffer);
         } else {
             $this->info['url'] = $ch;
             $ch = $this->handle;
@@ -143,6 +147,13 @@ final class CurlResponse implements ResponseInterface
     {
         if (!$info = $this->finalInfo) {
             self::perform($this->multi);
+
+            if ('debug' === $type) {
+                rewind($this->debugBuffer);
+
+                return stream_get_contents($this->debugBuffer);
+            }
+
             $info = array_merge($this->info, curl_getinfo($this->handle));
             $info['url'] = $this->info['url'] ?? $info['url'];
             $info['redirect_url'] = $this->info['redirect_url'] ?? null;
@@ -154,6 +165,10 @@ final class CurlResponse implements ResponseInterface
             }
 
             if (!\in_array(curl_getinfo($this->handle, CURLINFO_PRIVATE), ['headers', 'content'], true)) {
+                rewind($this->debugBuffer);
+                $info['debug'] = stream_get_contents($this->debugBuffer);
+                fclose($this->debugBuffer);
+                $this->debugBuffer = null;
                 $this->finalInfo = $info;
             }
         }
@@ -245,7 +260,7 @@ final class CurlResponse implements ResponseInterface
 
             while ($info = curl_multi_info_read($multi->handle)) {
                 $multi->handlesActivity[(int) $info['handle']][] = null;
-                $multi->handlesActivity[(int) $info['handle']][] = \in_array($info['result'], [\CURLE_OK, \CURLE_TOO_MANY_REDIRECTS], true) || (\CURLE_WRITE_ERROR === $info['result'] && 'destruct' === @curl_getinfo($info['handle'], CURLINFO_PRIVATE)) ? null : new TransportException(curl_error($info['handle']));
+                $multi->handlesActivity[(int) $info['handle']][] = \in_array($info['result'], [\CURLE_OK, \CURLE_TOO_MANY_REDIRECTS], true) || (\CURLE_WRITE_ERROR === $info['result'] && 'destruct' === @curl_getinfo($info['handle'], CURLINFO_PRIVATE)) ? null : new TransportException(sprintf('%s for "%s".', curl_strerror($info['result']), curl_getinfo($info['handle'], CURLINFO_EFFECTIVE_URL)));
             }
         } finally {
             self::$performing = false;

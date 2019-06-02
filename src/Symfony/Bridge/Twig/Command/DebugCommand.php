@@ -38,11 +38,10 @@ class DebugCommand extends Command
     private $projectDir;
     private $bundlesMetadata;
     private $twigDefaultPath;
-    private $rootDir;
     private $filesystemLoaders;
     private $fileLinkFormatter;
 
-    public function __construct(Environment $twig, string $projectDir = null, array $bundlesMetadata = [], string $twigDefaultPath = null, string $rootDir = null, FileLinkFormatter $fileLinkFormatter = null)
+    public function __construct(Environment $twig, string $projectDir = null, array $bundlesMetadata = [], string $twigDefaultPath = null, FileLinkFormatter $fileLinkFormatter = null)
     {
         parent::__construct();
 
@@ -50,7 +49,6 @@ class DebugCommand extends Command
         $this->projectDir = $projectDir;
         $this->bundlesMetadata = $bundlesMetadata;
         $this->twigDefaultPath = $twigDefaultPath;
-        $this->rootDir = $rootDir;
         $this->fileLinkFormatter = $fileLinkFormatter;
     }
 
@@ -384,22 +382,6 @@ EOF
     {
         $alternatives = [];
         $bundleNames = [];
-
-        if ($this->rootDir && $this->projectDir) {
-            $folders = glob($this->rootDir.'/Resources/*/views', GLOB_ONLYDIR);
-            $relativePath = ltrim(substr($this->rootDir.\DIRECTORY_SEPARATOR.'Resources/', \strlen($this->projectDir)), \DIRECTORY_SEPARATOR);
-            $bundleNames = array_reduce($folders, function ($carry, $absolutePath) use ($relativePath) {
-                if (0 === strpos($absolutePath, $this->projectDir)) {
-                    $name = basename(\dirname($absolutePath));
-                    $path = ltrim($relativePath.$name, \DIRECTORY_SEPARATOR);
-                    $carry[$name] = $path;
-
-                    @trigger_error(sprintf('Loading Twig templates from the "%s" directory is deprecated since Symfony 4.2, use "%s" instead.', $absolutePath, $this->twigDefaultPath.'/bundles/'.$name), E_USER_DEPRECATED);
-                }
-
-                return $carry;
-            }, $bundleNames);
-        }
 
         if ($this->twigDefaultPath && $this->projectDir) {
             $folders = glob($this->twigDefaultPath.'/bundles/*', GLOB_ONLYDIR);

@@ -28,7 +28,7 @@ use Symfony\Component\Messenger\Transport\Receiver\ReceiverInterface;
 /**
  * @author Samuel Roze <samuel.roze@gmail.com>
  *
- * @experimental in 4.2
+ * @experimental in 4.3
  */
 class MessengerPass implements CompilerPassInterface
 {
@@ -260,7 +260,6 @@ class MessengerPass implements CompilerPassInterface
 
         if ($container->hasDefinition('console.command.messenger_consume_messages')) {
             $container->getDefinition('console.command.messenger_consume_messages')
-                ->replaceArgument(0, ServiceLocatorTagPass::register($container, $buses))
                 ->replaceArgument(3, array_values($receiverNames));
         }
 

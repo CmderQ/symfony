@@ -18,7 +18,7 @@ use Symfony\Component\Messenger\Stamp\StampInterface;
  *
  * @author Maxime Steinhausser <maxime.steinhausser@gmail.com>
  *
- * @experimental in 4.2
+ * @experimental in 4.3
  */
 final class Envelope
 {
@@ -76,6 +76,22 @@ final class Envelope
         $cloned = clone $this;
 
         unset($cloned->stamps[$stampFqcn]);
+
+        return $cloned;
+    }
+
+    /**
+     * Removes all stamps that implement the given type.
+     */
+    public function withoutStampsOfType(string $type): self
+    {
+        $cloned = clone $this;
+
+        foreach ($cloned->stamps as $class => $stamps) {
+            if ($class === $type || \is_subclass_of($class, $type)) {
+                unset($cloned->stamps[$class]);
+            }
+        }
 
         return $cloned;
     }

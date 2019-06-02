@@ -1,9 +1,17 @@
 CHANGELOG
 =========
 
+5.0.0
+-----
+
+ * The `LoggingMiddleware` class has been removed, pass a logger to `SendMessageMiddleware` instead.
+
 4.3.0
 -----
 
+ * Added `NonSendableStampInterface` that a stamp can implement if
+   it should not be sent to a transport. Transport serializers
+   must now check for these stamps and not encode them.
  * [BC BREAK] `SendersLocatorInterface` has an additional method:
    `getSenderByAlias()`.
  * Removed argument `?bool &$handle = false` from `SendersLocatorInterface::getSenders`

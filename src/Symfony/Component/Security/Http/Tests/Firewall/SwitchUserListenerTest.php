@@ -18,7 +18,6 @@ use Symfony\Component\HttpKernel\HttpKernelInterface;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorage;
 use Symfony\Component\Security\Core\Authentication\Token\SwitchUserToken;
 use Symfony\Component\Security\Core\Authentication\Token\UsernamePasswordToken;
-use Symfony\Component\Security\Core\Role\SwitchUserRole;
 use Symfony\Component\Security\Core\User\User;
 use Symfony\Component\Security\Http\Event\SwitchUserEvent;
 use Symfony\Component\Security\Http\Firewall\SwitchUserListener;
@@ -95,7 +94,7 @@ class SwitchUserListenerTest extends TestCase
     public function testExitUserUpdatesToken()
     {
         $originalToken = new UsernamePasswordToken('username', '', 'key', []);
-        $this->tokenStorage->setToken(new SwitchUserToken('username', '', 'key', [new SwitchUserRole('ROLE_PREVIOUS', $originalToken, false)], $originalToken));
+        $this->tokenStorage->setToken(new SwitchUserToken('username', '', 'key', ['ROLE_USER'], $originalToken));
 
         $this->request->query->set('_switch_user', SwitchUserListener::EXIT_VALUE);
 
@@ -106,22 +105,6 @@ class SwitchUserListenerTest extends TestCase
         $this->assertSame('', $this->request->server->get('QUERY_STRING'));
         $this->assertInstanceOf('Symfony\Component\HttpFoundation\RedirectResponse', $this->event->getResponse());
         $this->assertSame($this->request->getUri(), $this->event->getResponse()->getTargetUrl());
-        $this->assertSame($originalToken, $this->tokenStorage->getToken());
-    }
-
-    /**
-     * @group legacy
-     */
-    public function testExitUserBasedOnSwitchUserRoleUpdatesToken()
-    {
-        $originalToken = new UsernamePasswordToken('username', '', 'key', []);
-        $this->tokenStorage->setToken(new UsernamePasswordToken('username', '', 'key', [new SwitchUserRole('ROLE_PREVIOUS', $originalToken, false)], $originalToken));
-
-        $this->request->query->set('_switch_user', SwitchUserListener::EXIT_VALUE);
-
-        $listener = new SwitchUserListener($this->tokenStorage, $this->userProvider, $this->userChecker, 'provider123', $this->accessDecisionManager);
-        $listener($this->event);
-
         $this->assertSame($originalToken, $this->tokenStorage->getToken());
     }
 
@@ -136,7 +119,7 @@ class SwitchUserListenerTest extends TestCase
             ->with($originalUser)
             ->willReturn($refreshedUser);
         $originalToken = new UsernamePasswordToken($originalUser, '', 'key');
-        $this->tokenStorage->setToken(new SwitchUserToken('username', '', 'key', [new SwitchUserRole('ROLE_PREVIOUS', $originalToken, false)], $originalToken));
+        $this->tokenStorage->setToken(new SwitchUserToken('username', '', 'key', ['ROLE_USER'], $originalToken));
         $this->request->query->set('_switch_user', SwitchUserListener::EXIT_VALUE);
 
         $dispatcher = $this->getMockBuilder(EventDispatcherInterface::class)->getMock();
@@ -163,7 +146,7 @@ class SwitchUserListenerTest extends TestCase
             ->expects($this->never())
             ->method('refreshUser');
         $originalToken = new UsernamePasswordToken($originalUser, '', 'key');
-        $this->tokenStorage->setToken(new SwitchUserToken('username', '', 'key', [new SwitchUserRole('ROLE_PREVIOUS', $originalToken, false)], $originalToken));
+        $this->tokenStorage->setToken(new SwitchUserToken('username', '', 'key', ['ROLE_USER'], $originalToken));
         $this->request->query->set('_switch_user', SwitchUserListener::EXIT_VALUE);
 
         $dispatcher = $this->getMockBuilder(EventDispatcherInterface::class)->getMock();
@@ -188,7 +171,7 @@ class SwitchUserListenerTest extends TestCase
 
         $this->accessDecisionManager->expects($this->once())
             ->method('decide')->with($token, ['ROLE_ALLOWED_TO_SWITCH'])
-            ->will($this->returnValue(false));
+            ->willReturn(false);
 
         $listener = new SwitchUserListener($this->tokenStorage, $this->userProvider, $this->userChecker, 'provider123', $this->accessDecisionManager);
         $listener($this->event);
@@ -204,11 +187,11 @@ class SwitchUserListenerTest extends TestCase
 
         $this->accessDecisionManager->expects($this->once())
             ->method('decide')->with($token, ['ROLE_ALLOWED_TO_SWITCH'], $user)
-            ->will($this->returnValue(true));
+            ->willReturn(true);
 
         $this->userProvider->expects($this->once())
             ->method('loadUserByUsername')->with('kuba')
-            ->will($this->returnValue($user));
+            ->willReturn($user);
         $this->userChecker->expects($this->once())
             ->method('checkPostAuth')->with($user);
 
@@ -234,11 +217,11 @@ class SwitchUserListenerTest extends TestCase
 
         $this->accessDecisionManager->expects($this->once())
             ->method('decide')->with($token, ['ROLE_ALLOWED_TO_SWITCH'], $user)
-            ->will($this->returnValue(true));
+            ->willReturn(true);
 
         $this->userProvider->expects($this->once())
             ->method('loadUserByUsername')->with('kuba')
-            ->will($this->returnValue($user));
+            ->willReturn($user);
         $this->userChecker->expects($this->once())
             ->method('checkPostAuth')->with($user);
 
@@ -262,11 +245,11 @@ class SwitchUserListenerTest extends TestCase
 
         $this->accessDecisionManager->expects($this->any())
             ->method('decide')->with($token, ['ROLE_ALLOWED_TO_SWITCH'], $user)
-            ->will($this->returnValue(true));
+            ->willReturn(true);
 
         $this->userProvider->expects($this->any())
             ->method('loadUserByUsername')->with('kuba')
-            ->will($this->returnValue($user));
+            ->willReturn($user);
 
         $dispatcher = $this->getMockBuilder(EventDispatcherInterface::class)->getMock();
         $dispatcher
@@ -311,11 +294,11 @@ class SwitchUserListenerTest extends TestCase
 
         $this->accessDecisionManager->expects($this->once())
             ->method('decide')->with($token, ['ROLE_ALLOWED_TO_SWITCH'], $user)
-            ->will($this->returnValue(true));
+            ->willReturn(true);
 
         $this->userProvider->expects($this->once())
             ->method('loadUserByUsername')->with('kuba')
-            ->will($this->returnValue($user));
+            ->willReturn($user);
         $this->userChecker->expects($this->once())
             ->method('checkPostAuth')->with($user);
 
