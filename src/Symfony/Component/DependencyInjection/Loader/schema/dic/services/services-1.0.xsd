@@ -264,7 +264,7 @@
       <xsd:enumeration value="constant" />
       <xsd:enumeration value="iterator" />
       <xsd:enumeration value="service_locator" />
-      <xsd:enumeration value="tagged" />
+      <xsd:enumeration value="tagged_iterator" />
       <xsd:enumeration value="tagged_locator" />
     </xsd:restriction>
   </xsd:simpleType>

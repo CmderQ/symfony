@@ -21,7 +21,7 @@ use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
  *
  * @author Jérémy Romey <jeremy@free-agent.fr>
  *
- * @final since Symfony 4.3
+ * @final
  */
 class FileLinkFormatter
 {
@@ -47,7 +47,7 @@ class FileLinkFormatter
         $this->urlFormat = $urlFormat;
     }
 
-    public function format($file, $line)
+    public function format(string $file, int $line)
     {
         if ($fmt = $this->getFileLinkFormat()) {
             for ($i = 1; isset($fmt[$i]); ++$i) {
@@ -68,7 +68,7 @@ class FileLinkFormatter
      */
     public function __sleep(): array
     {
-        $this->getFileLinkFormat();
+        $this->fileLinkFormat = $this->getFileLinkFormat();
 
         return ['fileLinkFormat'];
     }
@@ -87,17 +87,19 @@ class FileLinkFormatter
 
     private function getFileLinkFormat()
     {
+        if ($this->fileLinkFormat) {
+            return $this->fileLinkFormat;
+        }
+
         if ($this->requestStack && $this->baseDir && $this->urlFormat) {
             $request = $this->requestStack->getMasterRequest();
 
             if ($request instanceof Request && (!$this->urlFormat instanceof \Closure || $this->urlFormat = ($this->urlFormat)())) {
-                $this->fileLinkFormat = [
+                return [
                     $request->getSchemeAndHttpHost().$request->getBasePath().$this->urlFormat,
                     $this->baseDir.\DIRECTORY_SEPARATOR, '',
                 ];
             }
         }
-
-        return $this->fileLinkFormat;
     }
 }

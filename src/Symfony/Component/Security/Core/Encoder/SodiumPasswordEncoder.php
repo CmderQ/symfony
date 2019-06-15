@@ -48,11 +48,15 @@ final class SodiumPasswordEncoder implements PasswordEncoderInterface, SelfSalti
 
     public static function isSupported(): bool
     {
-        if (\class_exists('ParagonIE_Sodium_Compat') && \method_exists('ParagonIE_Sodium_Compat', 'crypto_pwhash_is_available')) {
+        if (\extension_loaded('libsodium') || \function_exists('sodium_crypto_pwhash_str')) {
+            return true;
+        }
+
+        if (class_exists('ParagonIE_Sodium_Compat') && method_exists('ParagonIE_Sodium_Compat', 'crypto_pwhash_is_available')) {
             return \ParagonIE_Sodium_Compat::crypto_pwhash_is_available();
         }
 
-        return \function_exists('sodium_crypto_pwhash_str') || \extension_loaded('libsodium');
+        return false;
     }
 
     /**
@@ -65,7 +69,7 @@ final class SodiumPasswordEncoder implements PasswordEncoderInterface, SelfSalti
         }
 
         if (\function_exists('sodium_crypto_pwhash_str')) {
-            return \sodium_crypto_pwhash_str($raw, $this->opsLimit, $this->memLimit);
+            return sodium_crypto_pwhash_str($raw, $this->opsLimit, $this->memLimit);
         }
 
         if (\extension_loaded('libsodium')) {
@@ -90,11 +94,27 @@ final class SodiumPasswordEncoder implements PasswordEncoderInterface, SelfSalti
         }
 
         if (\function_exists('sodium_crypto_pwhash_str_verify')) {
-            return \sodium_crypto_pwhash_str_verify($encoded, $raw);
+            return sodium_crypto_pwhash_str_verify($encoded, $raw);
         }
 
         if (\extension_loaded('libsodium')) {
             return \Sodium\crypto_pwhash_str_verify($encoded, $raw);
+        }
+
+        throw new LogicException('Libsodium is not available. You should either install the sodium extension, upgrade to PHP 7.2+ or use a different encoder.');
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function needsRehash(string $encoded): bool
+    {
+        if (\function_exists('sodium_crypto_pwhash_str_needs_rehash')) {
+            return sodium_crypto_pwhash_str_needs_rehash($encoded, $this->opsLimit, $this->memLimit);
+        }
+
+        if (\extension_loaded('libsodium')) {
+            return \Sodium\crypto_pwhash_str_needs_rehash($encoded, $this->opsLimit, $this->memLimit);
         }
 
         throw new LogicException('Libsodium is not available. You should either install the sodium extension, upgrade to PHP 7.2+ or use a different encoder.');

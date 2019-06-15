@@ -11,7 +11,6 @@
 
 namespace Symfony\Component\Validator\Violation;
 
-use Symfony\Component\Translation\TranslatorInterface as LegacyTranslatorInterface;
 use Symfony\Component\Validator\Constraint;
 use Symfony\Component\Validator\ConstraintViolation;
 use Symfony\Component\Validator\ConstraintViolationList;
@@ -47,11 +46,8 @@ class ConstraintViolationBuilder implements ConstraintViolationBuilderInterface
     /**
      * @param TranslatorInterface $translator
      */
-    public function __construct(ConstraintViolationList $violations, Constraint $constraint, $message, array $parameters, $root, $propertyPath, $invalidValue, $translator, $translationDomain = null)
+    public function __construct(ConstraintViolationList $violations, Constraint $constraint, $message, array $parameters, $root, $propertyPath, $invalidValue, TranslatorInterface $translator, $translationDomain = null)
     {
-        if (!$translator instanceof LegacyTranslatorInterface && !$translator instanceof TranslatorInterface) {
-            throw new \TypeError(sprintf('Argument 8 passed to %s() must be an instance of %s, %s given.', __METHOD__, TranslatorInterface::class, \is_object($translator) ? \get_class($translator) : \gettype($translator)));
-        }
         $this->violations = $violations;
         $this->message = $message;
         $this->parameters = $parameters;
@@ -154,27 +150,12 @@ class ConstraintViolationBuilder implements ConstraintViolationBuilderInterface
                 $this->parameters,
                 $this->translationDomain
             );
-        } elseif ($this->translator instanceof TranslatorInterface) {
+        } else {
             $translatedMessage = $this->translator->trans(
                 $this->message,
                 ['%count%' => $this->plural] + $this->parameters,
                 $this->translationDomain
             );
-        } else {
-            try {
-                $translatedMessage = $this->translator->transChoice(
-                    $this->message,
-                    $this->plural,
-                    $this->parameters,
-                    $this->translationDomain
-                );
-            } catch (\InvalidArgumentException $e) {
-                $translatedMessage = $this->translator->trans(
-                    $this->message,
-                    $this->parameters,
-                    $this->translationDomain
-                );
-            }
         }
 
         $this->violations->add(new ConstraintViolation(

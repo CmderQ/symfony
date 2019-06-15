@@ -12,7 +12,6 @@
 namespace Symfony\Component\Mailer;
 
 use Psr\Log\LoggerInterface;
-use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\Mailer\Bridge\Amazon;
 use Symfony\Component\Mailer\Bridge\Google;
 use Symfony\Component\Mailer\Bridge\Mailchimp;
@@ -22,6 +21,7 @@ use Symfony\Component\Mailer\Bridge\Sendgrid;
 use Symfony\Component\Mailer\Exception\InvalidArgumentException;
 use Symfony\Component\Mailer\Exception\LogicException;
 use Symfony\Component\Mailer\Transport\TransportInterface;
+use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 /**
@@ -68,9 +68,9 @@ class Transport
             throw new InvalidArgumentException(sprintf('The "%s" mailer DSN must contain a mailer name.', $dsn));
         }
 
-        $user = \urldecode($parsedDsn['user'] ?? '');
-        $pass = \urldecode($parsedDsn['pass'] ?? '');
-        \parse_str($parsedDsn['query'] ?? '', $query);
+        $user = urldecode($parsedDsn['user'] ?? '');
+        $pass = urldecode($parsedDsn['pass'] ?? '');
+        parse_str($parsedDsn['query'] ?? '', $query);
 
         switch ($parsedDsn['host']) {
             case 'null':

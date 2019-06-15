@@ -175,13 +175,13 @@ class TraceableEventDispatcher implements EventDispatcherInterface, ResetInterfa
      *
      * @param Request|null $request The request to get listeners for
      */
-    public function getCalledListeners(/* Request $request = null */)
+    public function getCalledListeners(Request $request = null)
     {
         if (null === $this->callStack) {
             return [];
         }
 
-        $hash = 1 <= \func_num_args() && null !== ($request = \func_get_arg(0)) ? spl_object_hash($request) : null;
+        $hash = 1 <= \func_num_args() && null !== ($request = func_get_arg(0)) ? spl_object_hash($request) : null;
         $called = [];
         foreach ($this->callStack as $listener) {
             list($eventName, $requestHash) = $this->callStack->getInfo();
@@ -198,7 +198,7 @@ class TraceableEventDispatcher implements EventDispatcherInterface, ResetInterfa
      *
      * @param Request|null $request The request to get listeners for
      */
-    public function getNotCalledListeners(/* Request $request = null */)
+    public function getNotCalledListeners(Request $request = null)
     {
         try {
             $allListeners = $this->getListeners();
@@ -211,23 +211,23 @@ class TraceableEventDispatcher implements EventDispatcherInterface, ResetInterfa
             return [];
         }
 
-        $hash = 1 <= \func_num_args() && null !== ($request = \func_get_arg(0)) ? spl_object_hash($request) : null;
+        $hash = 1 <= \func_num_args() && null !== ($request = func_get_arg(0)) ? spl_object_hash($request) : null;
+        $calledListeners = [];
+
+        if (null !== $this->callStack) {
+            foreach ($this->callStack as $calledListener) {
+                list(, $requestHash) = $this->callStack->getInfo();
+
+                if (null === $hash || $hash === $requestHash) {
+                    $calledListeners[] = $calledListener->getWrappedListener();
+                }
+            }
+        }
+
         $notCalled = [];
         foreach ($allListeners as $eventName => $listeners) {
             foreach ($listeners as $listener) {
-                $called = false;
-                if (null !== $this->callStack) {
-                    foreach ($this->callStack as $calledListener) {
-                        list(, $requestHash) = $this->callStack->getInfo();
-                        if ((null === $hash || $hash === $requestHash) && $calledListener->getWrappedListener() === $listener) {
-                            $called = true;
-
-                            break;
-                        }
-                    }
-                }
-
-                if (!$called) {
+                if (!\in_array($listener, $calledListeners, true)) {
                     if (!$listener instanceof WrappedListener) {
                         $listener = new WrappedListener($listener, null, $this->stopwatch, $this);
                     }
@@ -244,9 +244,9 @@ class TraceableEventDispatcher implements EventDispatcherInterface, ResetInterfa
     /**
      * @param Request|null $request The request to get orphaned events for
      */
-    public function getOrphanedEvents(/* Request $request = null */): array
+    public function getOrphanedEvents(Request $request = null): array
     {
-        if (1 <= \func_num_args() && null !== $request = \func_get_arg(0)) {
+        if (1 <= \func_num_args() && null !== $request = func_get_arg(0)) {
             return $this->orphanedEvents[spl_object_hash($request)] ?? [];
         }
 

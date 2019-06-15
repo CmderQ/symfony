@@ -671,7 +671,7 @@ class Filesystem
     public function dumpFile($filename, $content)
     {
         if (\is_array($content)) {
-            @trigger_error(sprintf('Calling "%s()" with an array in the $content argument is deprecated since Symfony 4.3.', __METHOD__), E_USER_DEPRECATED);
+            throw new \TypeError(sprintf('Argument 2 passed to %s() must be string or resource, %s given.', __METHOD__, $content));
         }
 
         $dir = \dirname($filename);
@@ -708,7 +708,7 @@ class Filesystem
     public function appendToFile($filename, $content)
     {
         if (\is_array($content)) {
-            @trigger_error(sprintf('Calling "%s()" with an array in the $content argument is deprecated since Symfony 4.3.', __METHOD__), E_USER_DEPRECATED);
+            throw new \TypeError(sprintf('Argument 2 passed to %s() must be string or resource, %s given.', __METHOD__, $content));
         }
 
         $dir = \dirname($filename);
@@ -744,16 +744,15 @@ class Filesystem
     private static function box($func)
     {
         self::$lastError = null;
-        \set_error_handler(__CLASS__.'::handleError');
+        set_error_handler(__CLASS__.'::handleError');
         try {
             $result = $func(...\array_slice(\func_get_args(), 1));
-            \restore_error_handler();
+            restore_error_handler();
 
             return $result;
         } catch (\Throwable $e) {
-        } catch (\Exception $e) {
         }
-        \restore_error_handler();
+        restore_error_handler();
 
         throw $e;
     }

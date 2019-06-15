@@ -12,8 +12,6 @@
 namespace Symfony\Component\Serializer\Normalizer;
 
 use Symfony\Component\HttpFoundation\File\File;
-use Symfony\Component\HttpFoundation\File\MimeType\MimeTypeGuesser;
-use Symfony\Component\HttpFoundation\File\MimeType\MimeTypeGuesserInterface as DeprecatedMimeTypeGuesserInterface;
 use Symfony\Component\Mime\MimeTypeGuesserInterface;
 use Symfony\Component\Mime\MimeTypes;
 use Symfony\Component\Serializer\Exception\InvalidArgumentException;
@@ -34,26 +32,14 @@ class DataUriNormalizer implements NormalizerInterface, DenormalizerInterface, C
     ];
 
     /**
-     * @var MimeTypeGuesserInterface
+     * @var MimeTypeGuesserInterface|null
      */
     private $mimeTypeGuesser;
 
-    /**
-     * @param MimeTypeGuesserInterface
-     */
-    public function __construct($mimeTypeGuesser = null)
+    public function __construct(MimeTypeGuesserInterface $mimeTypeGuesser = null)
     {
-        if ($mimeTypeGuesser instanceof DeprecatedMimeTypeGuesserInterface) {
-            @trigger_error(sprintf('Passing a %s to "%s()" is deprecated since Symfony 4.3, pass a "%s" instead.', DeprecatedMimeTypeGuesserInterface::class, __METHOD__, MimeTypeGuesserInterface::class), E_USER_DEPRECATED);
-        } elseif (null === $mimeTypeGuesser) {
-            if (class_exists(MimeTypes::class)) {
-                $mimeTypeGuesser = MimeTypes::getDefault();
-            } else {
-                @trigger_error(sprintf('Passing null to "%s()" without symfony/mime installed is deprecated since Symfony 4.3, install symfony/mime.', __METHOD__), E_USER_DEPRECATED);
-                $mimeTypeGuesser = MimeTypeGuesser::getInstance();
-            }
-        } elseif (!$mimeTypeGuesser instanceof MimeTypes) {
-            throw new \TypeError(sprintf('Argument 1 passed to "%s()" must be an instance of "%s" or null, %s given.', __METHOD__, MimeTypes::class, \is_object($mimeTypeGuesser) ? \get_class($mimeTypeGuesser) : \gettype($mimeTypeGuesser)));
+        if (!$mimeTypeGuesser && class_exists(MimeTypes::class)) {
+            $mimeTypeGuesser = MimeTypes::getDefault();
         }
 
         $this->mimeTypeGuesser = $mimeTypeGuesser;
@@ -112,6 +98,10 @@ class DataUriNormalizer implements NormalizerInterface, DenormalizerInterface, C
         try {
             switch ($class) {
                 case 'Symfony\Component\HttpFoundation\File\File':
+                    if (!class_exists(File::class)) {
+                        throw new InvalidArgumentException(sprintf('Cannot denormalize to a "%s" without the HttpFoundation component installed. Try running "composer require symfony/http-foundation".', File::class));
+                    }
+
                     return new File($data, false);
 
                 case 'SplFileObject':
@@ -154,9 +144,7 @@ class DataUriNormalizer implements NormalizerInterface, DenormalizerInterface, C
             return $object->getMimeType();
         }
 
-        if ($this->mimeTypeGuesser instanceof DeprecatedMimeTypeGuesserInterface && $mimeType = $this->mimeTypeGuesser->guess($object->getPathname())) {
-            return $mimeType;
-        } elseif ($this->mimeTypeGuesser && $mimeType = $this->mimeTypeGuesser->guessMimeType($object->getPathname())) {
+        if ($this->mimeTypeGuesser && $mimeType = $this->mimeTypeGuesser->guessMimeType($object->getPathname())) {
             return $mimeType;
         }
 

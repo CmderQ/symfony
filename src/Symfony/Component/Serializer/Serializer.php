@@ -56,12 +56,7 @@ class Serializer implements SerializerInterface, ContextAwareNormalizerInterface
      */
     protected $decoder;
 
-    /**
-     * @internal since Symfony 4.1
-     */
-    protected $normalizers = [];
-
-    private $cachedNormalizers;
+    private $normalizers = [];
     private $denormalizerCache = [];
     private $normalizerCache = [];
 
@@ -85,7 +80,7 @@ class Serializer implements SerializerInterface, ContextAwareNormalizerInterface
             }
 
             if (!($normalizer instanceof NormalizerInterface || $normalizer instanceof DenormalizerInterface)) {
-                throw new InvalidArgumentException(\sprintf('The class "%s" neither implements "%s" nor "%s".', \get_class($normalizer), NormalizerInterface::class, DenormalizerInterface::class));
+                throw new InvalidArgumentException(sprintf('The class "%s" neither implements "%s" nor "%s".', \get_class($normalizer), NormalizerInterface::class, DenormalizerInterface::class));
             }
         }
         $this->normalizers = $normalizers;
@@ -104,7 +99,7 @@ class Serializer implements SerializerInterface, ContextAwareNormalizerInterface
             }
 
             if (!($encoder instanceof EncoderInterface || $encoder instanceof DecoderInterface)) {
-                throw new InvalidArgumentException(\sprintf('The class "%s" neither implements "%s" nor "%s".', \get_class($encoder), EncoderInterface::class, DecoderInterface::class));
+                throw new InvalidArgumentException(sprintf('The class "%s" neither implements "%s" nor "%s".', \get_class($encoder), EncoderInterface::class, DecoderInterface::class));
             }
         }
         $this->encoder = new ChainEncoder($realEncoders);
@@ -220,10 +215,6 @@ class Serializer implements SerializerInterface, ContextAwareNormalizerInterface
      */
     private function getNormalizer($data, ?string $format, array $context)
     {
-        if ($this->cachedNormalizers !== $this->normalizers) {
-            $this->cachedNormalizers = $this->normalizers;
-            $this->denormalizerCache = $this->normalizerCache = [];
-        }
         $type = \is_object($data) ? \get_class($data) : 'native-'.\gettype($data);
 
         if (!isset($this->normalizerCache[$format][$type])) {
@@ -263,10 +254,6 @@ class Serializer implements SerializerInterface, ContextAwareNormalizerInterface
      */
     private function getDenormalizer($data, string $class, ?string $format, array $context)
     {
-        if ($this->cachedNormalizers !== $this->normalizers) {
-            $this->cachedNormalizers = $this->normalizers;
-            $this->denormalizerCache = $this->normalizerCache = [];
-        }
         if (!isset($this->denormalizerCache[$format][$class])) {
             $this->denormalizerCache[$format][$class] = [];
 

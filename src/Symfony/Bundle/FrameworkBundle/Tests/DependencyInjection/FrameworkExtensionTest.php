@@ -52,10 +52,8 @@ use Symfony\Component\Serializer\Normalizer\DateTimeNormalizer;
 use Symfony\Component\Serializer\Normalizer\JsonSerializableNormalizer;
 use Symfony\Component\Serializer\Serializer;
 use Symfony\Component\Translation\DependencyInjection\TranslatorPass;
-use Symfony\Component\Translation\TranslatorInterface;
 use Symfony\Component\Validator\DependencyInjection\AddConstraintValidatorsPass;
 use Symfony\Component\Validator\Mapping\Loader\PropertyInfoLoader;
-use Symfony\Component\Validator\Util\LegacyTranslatorProxy;
 use Symfony\Component\Workflow;
 
 abstract class FrameworkExtensionTest extends TestCase
@@ -158,15 +156,6 @@ abstract class FrameworkExtensionTest extends TestCase
 
         $this->assertFalse($container->hasDefinition('fragment.renderer.esi'), 'The ESI fragment renderer is not registered');
         $this->assertFalse($container->hasDefinition('esi'));
-    }
-
-    /**
-     * @group legacy
-     * @expectedException \LogicException
-     */
-    public function testAmbiguousWhenBothTemplatingAndFragments()
-    {
-        $this->createContainerFromFile('template_and_fragments');
     }
 
     public function testSsi()
@@ -288,46 +277,12 @@ abstract class FrameworkExtensionTest extends TestCase
     }
 
     /**
-     * @group legacy
-     */
-    public function testWorkflowLegacy()
-    {
-        $container = $this->createContainerFromFile('workflow-legacy');
-
-        $this->assertTrue($container->hasDefinition('state_machine.legacy'), 'Workflow is registered as a service');
-        $this->assertSame('state_machine.abstract', $container->getDefinition('state_machine.legacy')->getParent());
-        $this->assertTrue($container->hasDefinition('state_machine.legacy.definition'), 'Workflow definition is registered as a service');
-
-        $workflowDefinition = $container->getDefinition('state_machine.legacy.definition');
-
-        $this->assertSame(['draft'], $workflowDefinition->getArgument(2));
-
-        $this->assertSame(
-            [
-                'draft',
-                'published',
-            ],
-            $workflowDefinition->getArgument(0),
-            'Places are passed to the workflow definition'
-        );
-    }
-
-    /**
      * @expectedException \Symfony\Component\Workflow\Exception\InvalidDefinitionException
      * @expectedExceptionMessage A transition from a place/state must have an unique name. Multiple transitions named "go" from place/state "first" where found on StateMachine "my_workflow".
      */
     public function testWorkflowAreValidated()
     {
         $this->createContainerFromFile('workflow_not_valid');
-    }
-
-    /**
-     * @expectedException \Symfony\Component\Config\Definition\Exception\InvalidConfigurationException
-     * @expectedExceptionMessage "type" and "service" cannot be used together.
-     */
-    public function testWorkflowCannotHaveBothTypeAndService()
-    {
-        $this->createContainerFromFile('workflow_legacy_with_type_and_service');
     }
 
     /**
@@ -346,16 +301,6 @@ abstract class FrameworkExtensionTest extends TestCase
     public function testWorkflowShouldHaveOneOfSupportsAndSupportStrategy()
     {
         $this->createContainerFromFile('workflow_without_support_and_support_strategy');
-    }
-
-    /**
-     * @expectedException \Symfony\Component\Config\Definition\Exception\InvalidConfigurationException
-     * @expectedExceptionMessage "arguments" and "service" cannot be used together.
-     * @group legacy
-     */
-    public function testWorkflowCannotHaveBothArgumentsAndService()
-    {
-        $this->createContainerFromFile('workflow_legacy_with_arguments_and_service');
     }
 
     public function testWorkflowMultipleTransitionsWithSameName()
@@ -459,14 +404,14 @@ abstract class FrameworkExtensionTest extends TestCase
         $this->assertTrue($container->hasDefinition('console.command.workflow_dump'));
     }
 
-    public function testExplicitlyEnabledWorkflows()
+    public function testWorkflowsExplicitlyEnabled()
     {
         $container = $this->createContainerFromFile('workflows_explicitly_enabled');
 
         $this->assertTrue($container->hasDefinition('workflow.foo.definition'));
     }
 
-    public function testExplicitlyEnabledWorkflowNamedWorkflows()
+    public function testWorkflowsNamedExplicitlyEnabled()
     {
         $container = $this->createContainerFromFile('workflows_explicitly_enabled_named_workflows');
 
@@ -575,37 +520,6 @@ abstract class FrameworkExtensionTest extends TestCase
         $this->assertFalse($container->hasDefinition('request.add_request_formats_listener'), '->registerRequestConfiguration() does not load request.xml when no request formats are defined');
     }
 
-    /**
-     * @group legacy
-     */
-    public function testTemplating()
-    {
-        $container = $this->createContainerFromFile('templating');
-
-        $this->assertTrue($container->hasDefinition('templating.name_parser'), '->registerTemplatingConfiguration() loads templating.xml');
-
-        $this->assertEquals('templating.engine.delegating', (string) $container->getAlias('templating'), '->registerTemplatingConfiguration() configures delegating loader if multiple engines are provided');
-
-        $this->assertEquals($container->getDefinition('templating.loader.chain'), $container->getDefinition('templating.loader.wrapped'), '->registerTemplatingConfiguration() configures loader chain if multiple loaders are provided');
-
-        $this->assertEquals($container->getDefinition('templating.loader'), $container->getDefinition('templating.loader.cache'), '->registerTemplatingConfiguration() configures the loader to use cache');
-
-        $this->assertEquals('%templating.loader.cache.path%', $container->getDefinition('templating.loader.cache')->getArgument(1));
-        $this->assertEquals('/path/to/cache', $container->getParameter('templating.loader.cache.path'));
-
-        $this->assertEquals(['php', 'twig'], $container->getParameter('templating.engines'), '->registerTemplatingConfiguration() sets a templating.engines parameter');
-
-        $this->assertEquals(['FrameworkBundle:Form', 'theme1', 'theme2'], $container->getParameter('templating.helper.form.resources'), '->registerTemplatingConfiguration() registers the theme and adds the base theme');
-        $this->assertEquals('global_hinclude_template', $container->getParameter('fragment.renderer.hinclude.global_template'), '->registerTemplatingConfiguration() registers the global hinclude.js template');
-    }
-
-    public function testTemplatingCanBeDisabled()
-    {
-        $container = $this->createContainerFromFile('templating_disabled');
-
-        $this->assertFalse($container->hasParameter('templating.engines'), '"templating.engines" container parameter is not registered when templating is disabled.');
-    }
-
     public function testAssets()
     {
         $container = $this->createContainerFromFile('assets');
@@ -650,13 +564,6 @@ abstract class FrameworkExtensionTest extends TestCase
         $this->assertEquals('assets.custom_version_strategy', (string) $defaultPackage->getArgument(1));
     }
 
-    public function testAssetsCanBeDisabled()
-    {
-        $container = $this->createContainerFromFile('assets_disabled');
-
-        $this->assertFalse($container->has('templating.helper.assets'), 'The templating.helper.assets helper service is removed when assets are disabled.');
-    }
-
     public function testWebLink()
     {
         $container = $this->createContainerFromFile('web_link');
@@ -666,8 +573,6 @@ abstract class FrameworkExtensionTest extends TestCase
     public function testMessenger()
     {
         $container = $this->createContainerFromFile('messenger');
-        $this->assertTrue($container->hasAlias('message_bus'));
-        $this->assertTrue($container->getAlias('message_bus')->isPublic());
         $this->assertTrue($container->hasAlias('messenger.default_bus'));
         $this->assertTrue($container->getAlias('messenger.default_bus')->isPublic());
         $this->assertFalse($container->hasDefinition('messenger.transport.amqp.factory'));
@@ -765,8 +670,6 @@ abstract class FrameworkExtensionTest extends TestCase
             ['id' => 'handle_message', 'arguments' => []],
         ], $container->getParameter('messenger.bus.queries.middleware'));
 
-        $this->assertTrue($container->hasAlias('message_bus'));
-        $this->assertSame('messenger.bus.commands', (string) $container->getAlias('message_bus'));
         $this->assertTrue($container->hasAlias('messenger.default_bus'));
         $this->assertSame('messenger.bus.commands', (string) $container->getAlias('messenger.default_bus'));
     }
@@ -816,6 +719,11 @@ abstract class FrameworkExtensionTest extends TestCase
             $files,
             '->registerTranslatorConfiguration() finds translation resources in default path'
         );
+        $this->assertContains(
+            strtr(__DIR__.'/Fixtures/translations/domain.with.dots.en.yml', '/', \DIRECTORY_SEPARATOR),
+            $files,
+            '->registerTranslatorConfiguration() finds translation resources with dots in domain'
+        );
 
         $calls = $container->getDefinition('translator.default')->getMethodCalls();
         $this->assertEquals(['fr'], $calls[1][1][0]);
@@ -849,16 +757,6 @@ abstract class FrameworkExtensionTest extends TestCase
         $this->assertEquals(['en', 'fr'], $calls[1][1][0]);
     }
 
-    /**
-     * @expectedException \Symfony\Component\Config\Definition\Exception\InvalidConfigurationException
-     */
-    public function testTemplatingRequiresAtLeastOneEngine()
-    {
-        $container = $this->createContainer();
-        $loader = new FrameworkExtension();
-        $loader->load([['templating' => null]], $container);
-    }
-
     public function testValidation()
     {
         $container = $this->createContainerFromFile('full');
@@ -878,11 +776,7 @@ abstract class FrameworkExtensionTest extends TestCase
         $this->assertSame('setConstraintValidatorFactory', $calls[0][0]);
         $this->assertEquals([new Reference('validator.validator_factory')], $calls[0][1]);
         $this->assertSame('setTranslator', $calls[1][0]);
-        if (interface_exists(TranslatorInterface::class) && class_exists(LegacyTranslatorProxy::class)) {
-            $this->assertEquals([new Definition(LegacyTranslatorProxy::class, [new Reference('translator')])], $calls[1][1]);
-        } else {
-            $this->assertEquals([new Reference('translator')], $calls[1][1]);
-        }
+        $this->assertEquals([new Reference('translator')], $calls[1][1]);
         $this->assertSame('setTranslationDomain', $calls[2][0]);
         $this->assertSame(['%validator.translation_domain%'], $calls[2][1]);
         $this->assertSame('addXmlMappings', $calls[3][0]);
@@ -1023,39 +917,6 @@ abstract class FrameworkExtensionTest extends TestCase
         // no cache, no annotations, no static methods
     }
 
-    /**
-     * @group legacy
-     * @expectedDeprecation The "framework.validation.strict_email" configuration key has been deprecated in Symfony 4.1. Use the "framework.validation.email_validation_mode" configuration key instead.
-     * @expectedException \Symfony\Component\Config\Definition\Exception\InvalidConfigurationException
-     * @expectedExceptionMessage "strict_email" and "email_validation_mode" cannot be used together.
-     */
-    public function testCannotConfigureStrictEmailAndEmailValidationModeAtTheSameTime()
-    {
-        $this->createContainerFromFile('validation_strict_email_and_validation_mode');
-    }
-
-    /**
-     * @group legacy
-     * @expectedDeprecation The "framework.validation.strict_email" configuration key has been deprecated in Symfony 4.1. Use the "framework.validation.email_validation_mode" configuration key instead.
-     */
-    public function testEnabledStrictEmailOptionIsMappedToStrictEmailValidationMode()
-    {
-        $container = $this->createContainerFromFile('validation_strict_email_enabled');
-
-        $this->assertSame('strict', $container->getDefinition('validator.email')->getArgument(0));
-    }
-
-    /**
-     * @group legacy
-     * @expectedDeprecation The "framework.validation.strict_email" configuration key has been deprecated in Symfony 4.1. Use the "framework.validation.email_validation_mode" configuration key instead.
-     */
-    public function testDisabledStrictEmailOptionIsMappedToLooseEmailValidationMode()
-    {
-        $container = $this->createContainerFromFile('validation_strict_email_disabled');
-
-        $this->assertSame('loose', $container->getDefinition('validator.email')->getArgument(0));
-    }
-
     public function testEmailValidationModeIsPassedToEmailValidator()
     {
         $container = $this->createContainerFromFile('validation_email_validation_mode');
@@ -1177,10 +1038,6 @@ abstract class FrameworkExtensionTest extends TestCase
 
     public function testDateIntervalNormalizerRegistered()
     {
-        if (!class_exists(DateIntervalNormalizer::class)) {
-            $this->markTestSkipped('The DateIntervalNormalizer has been introduced in the Serializer Component version 3.4.');
-        }
-
         $container = $this->createContainerFromFile('full');
 
         $definition = $container->getDefinition('serializer.normalizer.dateinterval');
@@ -1281,45 +1138,6 @@ abstract class FrameworkExtensionTest extends TestCase
             }
         }
         $this->assertEquals($expectedLoaders, $loaders);
-    }
-
-    /**
-     * @group legacy
-     */
-    public function testAssetHelperWhenAssetsAreEnabled()
-    {
-        $container = $this->createContainerFromFile('templating');
-        $packages = $container->getDefinition('templating.helper.assets')->getArgument(0);
-
-        $this->assertSame('assets.packages', (string) $packages);
-    }
-
-    /**
-     * @group legacy
-     */
-    public function testAssetHelperWhenTemplatesAreEnabledAndNoAssetsConfiguration()
-    {
-        $container = $this->createContainerFromFile('templating_no_assets');
-        $packages = $container->getDefinition('templating.helper.assets')->getArgument(0);
-
-        $this->assertSame('assets.packages', (string) $packages);
-    }
-
-    /**
-     * @group legacy
-     */
-    public function testAssetsHelperIsRemovedWhenPhpTemplatingEngineIsEnabledAndAssetsAreDisabled()
-    {
-        $container = $this->createContainerFromFile('templating_php_assets_disabled');
-
-        $this->assertTrue(!$container->has('templating.helper.assets'), 'The templating.helper.assets helper service is removed when assets are disabled.');
-    }
-
-    public function testAssetHelperWhenAssetsAndTemplatesAreDisabled()
-    {
-        $container = $this->createContainerFromFile('default_config');
-
-        $this->assertFalse($container->hasDefinition('templating.helper.assets'));
     }
 
     public function testSerializerServiceIsRegisteredWhenEnabled()

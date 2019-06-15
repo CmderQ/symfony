@@ -84,6 +84,27 @@ DependencyInjection
      my_service:
        factory: ['@factory_service', method]
    ```
+ * Removed `tagged` in favor of `tagged_iterator`
+
+   Before:
+   ```yaml
+   services:
+       App\Handler:
+            tags: ['app.handler']
+
+        App\HandlerCollection:
+            arguments: [!tagged app.handler]
+   ```
+
+   After:
+   ```yaml
+   services:
+       App\Handler:
+           tags: ['app.handler']
+ 
+       App\HandlerCollection:
+           arguments: [!tagged_iterator app.handler]
+   ```
 
 DoctrineBridge
 --------------
@@ -91,7 +112,7 @@ DoctrineBridge
  * Deprecated injecting `ClassMetadataFactory` in `DoctrineExtractor`, an instance of `EntityManagerInterface` should be
    injected instead
  * Passing an `IdReader` to the `DoctrineChoiceLoader` when the query cannot be optimized with single id field will throw an exception, pass `null` instead
- * Not passing an `IdReader` to the `DoctrineChoiceLoader` when the query can be optimized with single id field will throw an exception
+ * Not passing an `IdReader` to the `DoctrineChoiceLoader` when the query can be optimized with single id field will not apply any optimization
 
 
 DomCrawler
@@ -219,6 +240,17 @@ FrameworkBundle
  * Removed support for legacy translations directories `src/Resources/translations/` and `src/Resources/<BundleName>/translations/`, use `translations/` instead.
  * Support for the legacy directory structure in `translation:update` and `debug:translation` commands has been removed.
  * Removed the "Psr\SimpleCache\CacheInterface" / "cache.app.simple" service, use "Symfony\Contracts\Cache\CacheInterface" / "cache.app" instead.
+ * Removed support for `templating` engine in `TemplateController`, use Twig instead
+ * Removed `ResolveControllerNameSubscriber`.
+
+HttpClient
+----------
+
+ * Added method `cancel()` to `ResponseInterface`
+ * The `$parser` argument of `ControllerResolver::__construct()` and `DelegatingLoader::__construct()`
+   has been removed.
+ * The `ControllerResolver` and `DelegatingLoader` classes have been made `final`.
+ * The `controller_name_converter` and `resolve_controller_name_subscriber` services have been removed.
 
 HttpFoundation
 --------------
@@ -255,6 +287,7 @@ HttpKernel
  * Removed `PostResponseEvent`, use `TerminateEvent` instead
  * Removed `TranslatorListener` in favor of `LocaleAwareListener`
  * The `DebugHandlersListener` class has been made `final`
+ * Removed `SaveSessionListener` in favor of `AbstractSessionListener` 
 
 Intl
 ----
@@ -269,6 +302,8 @@ Messenger
 ---------
 
  * The `LoggingMiddleware` class has been removed, pass a logger to `SendMessageMiddleware` instead.
+ * Passing a `ContainerInterface` instance as first argument of the `ConsumeMessagesCommand` constructor now
+   throws as `\TypeError`, pass a `RoutableMessageBus`  instance instead.
 
 Monolog
 -------
@@ -304,12 +339,14 @@ Routing
 
  * The `generator_base_class`, `generator_cache_class`, `matcher_base_class`, and `matcher_cache_class` router
    options have been removed.
- * `Route` and `CompiledRoute` don't implement `Serializable` anymore; if you serialize them, please
-   ensure your unserialization logic can recover from a failure related to an updated serialization format
+ * `Serializable` implementing methods for `Route` and `CompiledRoute` are final.
+   Instead of overwriting them, use `__serialize` and `__unserialize` as extension points which are forward compatible
+   with the new serialization methods in PHP 7.4.
 
 Security
 --------
 
+ * Implementations of `PasswordEncoderInterface` and `UserPasswordEncoderInterface` must have a new `needsRehash()` method
  * The `Role` and `SwitchUserRole` classes have been removed.
  * The `getReachableRoles()` method of the `RoleHierarchy` class has been removed. It has been replaced by the new
    `getReachableRoleNames()` method.
@@ -408,6 +445,7 @@ Serializer
 
    were removed, use the default context instead.
  * The `AbstractNormalizer::handleCircularReference()` method has two new `$format` and `$context` arguments.
+ * Removed support for instantiating a `DataUriNormalizer` with a default MIME type guesser when the `symfony/mime` component isn't installed.
 
 Translation
 -----------
@@ -442,7 +480,7 @@ Validator
  * Calling `EmailValidator::__construct()` method with a boolean parameter has been removed, use `EmailValidator("strict")` instead.
  * Removed the `checkDNS` and `dnsMessage` options from the `Url` constraint.
  * The component is now decoupled from `symfony/translation` and uses `Symfony\Contracts\Translation\TranslatorInterface` instead
- * The `ValidatorBuilderInterface` has been removed and `ValidatorBuilder` is now final
+ * The `ValidatorBuilderInterface` has been removed
  * Removed support for validating instances of `\DateTimeInterface` in `DateTimeValidator`, `DateValidator` and `TimeValidator`. Use `Type` instead or remove the constraint if the underlying model is type hinted to `\DateTimeInterface` already.
  * The `symfony/intl` component is now required for using the `Bic`, `Country`, `Currency`, `Language` and `Locale` constraints
  * The `egulias/email-validator` component is now required for using the `Email` constraint in strict mode

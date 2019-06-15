@@ -21,7 +21,7 @@ use Symfony\Component\HttpKernel\KernelInterface;
 use Symfony\Component\HttpKernel\Profiler\Profile as HttpProfile;
 
 /**
- * Client simulates a browser and makes requests to a Kernel object.
+ * Simulates a browser and makes requests to a Kernel object.
  *
  * @author Fabien Potencier <fabien@symfony.com>
  */

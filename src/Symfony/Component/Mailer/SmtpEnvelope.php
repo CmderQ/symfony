@@ -12,11 +12,7 @@
 namespace Symfony\Component\Mailer;
 
 use Symfony\Component\Mailer\Exception\InvalidArgumentException;
-use Symfony\Component\Mailer\Exception\LogicException;
 use Symfony\Component\Mime\Address;
-use Symfony\Component\Mime\Header\Headers;
-use Symfony\Component\Mime\Message;
-use Symfony\Component\Mime\NamedAddress;
 use Symfony\Component\Mime\RawMessage;
 
 /**
@@ -40,19 +36,12 @@ class SmtpEnvelope
 
     public static function create(RawMessage $message): self
     {
-        if ($message instanceof Message) {
-            $headers = $message->getHeaders();
-
-            return new self(self::getSenderFromHeaders($headers), self::getRecipientsFromHeaders($headers));
-        }
-
-        // FIXME: parse the raw message to create the envelope?
-        throw new InvalidArgumentException(sprintf('Unable to create an SmtpEnvelope from a "%s" message.', RawMessage::class));
+        return new DelayedSmtpEnvelope($message);
     }
 
     public function setSender(Address $sender): void
     {
-        $this->sender = $sender instanceof NamedAddress ? new Address($sender->getAddress()) : $sender;
+        $this->sender = new Address($sender->getAddress());
     }
 
     public function getSender(): Address
@@ -60,6 +49,9 @@ class SmtpEnvelope
         return $this->sender;
     }
 
+    /**
+     * @param Address[] $recipients
+     */
     public function setRecipients(array $recipients): void
     {
         if (!$recipients) {
@@ -68,12 +60,10 @@ class SmtpEnvelope
 
         $this->recipients = [];
         foreach ($recipients as $recipient) {
-            if ($recipient instanceof NamedAddress) {
-                $recipient = new Address($recipient->getAddress());
-            } elseif (!$recipient instanceof Address) {
+            if (!$recipient instanceof Address) {
                 throw new InvalidArgumentException(sprintf('A recipient must be an instance of "%s" (got "%s").', Address::class, \is_object($recipient) ? \get_class($recipient) : \gettype($recipient)));
             }
-            $this->recipients[] = $recipient;
+            $this->recipients[] = new Address($recipient->getAddress());
         }
     }
 
@@ -83,32 +73,5 @@ class SmtpEnvelope
     public function getRecipients(): array
     {
         return $this->recipients;
-    }
-
-    private static function getRecipientsFromHeaders(Headers $headers): array
-    {
-        $recipients = [];
-        foreach (['to', 'cc', 'bcc'] as $name) {
-            foreach ($headers->getAll($name) as $header) {
-                $recipients = array_merge($recipients, $header->getAddresses());
-            }
-        }
-
-        return $recipients;
-    }
-
-    private static function getSenderFromHeaders(Headers $headers): Address
-    {
-        if ($return = $headers->get('Return-Path')) {
-            return $return->getAddress();
-        }
-        if ($sender = $headers->get('Sender')) {
-            return $sender->getAddress();
-        }
-        if ($from = $headers->get('From')) {
-            return $from->getAddresses()[0];
-        }
-
-        throw new LogicException('Unable to determine the sender of the message.');
     }
 }

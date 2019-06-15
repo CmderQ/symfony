@@ -1,6 +1,20 @@
 CHANGELOG
 =========
 
+5.0.0
+-----
+
+ * made `Cookie` auto-secure and lax by default
+ * removed classes in the `MimeType` namespace, use the Symfony Mime component instead
+ * removed method `UploadedFile::getClientSize()` and the related constructor argument
+ * made `Request::getSession()` throw if the session has not been set before
+ * removed `Response::HTTP_RESERVED_FOR_WEBDAV_ADVANCED_COLLECTIONS_EXPIRED_PROPOSAL`
+
+4.4.0
+-----
+
+ * passing arguments to `Request::isMethodSafe()` is deprecated.
+
 4.3.0
 -----
 

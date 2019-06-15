@@ -5,6 +5,13 @@ CHANGELOG
 -----
 
  * The `LoggingMiddleware` class has been removed, pass a logger to `SendMessageMiddleware` instead.
+ * made `SendersLocator` require a `ContainerInterface` as 2nd argument
+
+4.4.0
+-----
+
+ * Deprecated passing a `ContainerInterface` instance as first argument of the `ConsumeMessagesCommand` constructor,
+   pass a `RoutableMessageBus`  instance instead.
 
 4.3.0
 -----

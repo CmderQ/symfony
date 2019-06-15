@@ -1603,15 +1603,6 @@ class RequestTest extends TestCase
         $this->assertObjectHasAttribute('attributeName', $session);
     }
 
-    /**
-     * @group legacy
-     * @expectedDeprecation Calling "Symfony\Component\HttpFoundation\Request::getSession()" when no session has been set is deprecated since Symfony 4.1 and will throw an exception in 5.0. Use "hasSession()" instead.
-     */
-    public function testGetSessionNullable()
-    {
-        (new Request())->getSession();
-    }
-
     public function testHasPreviousSession()
     {
         $request = new Request();
@@ -2115,7 +2106,7 @@ class RequestTest extends TestCase
     {
         $request = new Request();
         $request->setMethod($method);
-        $this->assertEquals($safe, $request->isMethodSafe(false));
+        $this->assertEquals($safe, $request->isMethodSafe());
     }
 
     public function methodSafeProvider()
@@ -2132,16 +2123,6 @@ class RequestTest extends TestCase
             ['TRACE', true],
             ['CONNECT', false],
         ];
-    }
-
-    /**
-     * @expectedException \BadMethodCallException
-     */
-    public function testMethodSafeChecksCacheable()
-    {
-        $request = new Request();
-        $request->setMethod('OPTIONS');
-        $request->isMethodSafe();
     }
 
     /**

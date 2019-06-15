@@ -110,7 +110,7 @@ final class CacheItem implements ItemInterface
         if (!$this->isTaggable) {
             throw new LogicException(sprintf('Cache item "%s" comes from a non tag-aware pool: you cannot tag it.', $this->key));
         }
-        if (!\is_iterable($tags)) {
+        if (!is_iterable($tags)) {
             $tags = [$tags];
         }
         foreach ($tags as $tag) {
@@ -138,20 +138,6 @@ final class CacheItem implements ItemInterface
     public function getMetadata(): array
     {
         return $this->metadata;
-    }
-
-    /**
-     * Returns the list of tags bound to the value coming from the pool storage if any.
-     *
-     * @return array
-     *
-     * @deprecated since Symfony 4.2, use the "getMetadata()" method instead.
-     */
-    public function getPreviousTags()
-    {
-        @trigger_error(sprintf('The "%s()" method is deprecated since Symfony 4.2, use the "getMetadata()" method instead.', __METHOD__), E_USER_DEPRECATED);
-
-        return $this->metadata[self::METADATA_TAGS] ?? [];
     }
 
     /**

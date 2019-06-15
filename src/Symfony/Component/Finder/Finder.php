@@ -174,7 +174,7 @@ class Finder implements \IteratorAggregate, \Countable
      */
     public function name($patterns)
     {
-        $this->names = \array_merge($this->names, (array) $patterns);
+        $this->names = array_merge($this->names, (array) $patterns);
 
         return $this;
     }
@@ -190,7 +190,7 @@ class Finder implements \IteratorAggregate, \Countable
      */
     public function notName($patterns)
     {
-        $this->notNames = \array_merge($this->notNames, (array) $patterns);
+        $this->notNames = array_merge($this->notNames, (array) $patterns);
 
         return $this;
     }
@@ -212,7 +212,7 @@ class Finder implements \IteratorAggregate, \Countable
      */
     public function contains($patterns)
     {
-        $this->contains = \array_merge($this->contains, (array) $patterns);
+        $this->contains = array_merge($this->contains, (array) $patterns);
 
         return $this;
     }
@@ -234,7 +234,7 @@ class Finder implements \IteratorAggregate, \Countable
      */
     public function notContains($patterns)
     {
-        $this->notContains = \array_merge($this->notContains, (array) $patterns);
+        $this->notContains = array_merge($this->notContains, (array) $patterns);
 
         return $this;
     }
@@ -258,7 +258,7 @@ class Finder implements \IteratorAggregate, \Countable
      */
     public function path($patterns)
     {
-        $this->paths = \array_merge($this->paths, (array) $patterns);
+        $this->paths = array_merge($this->paths, (array) $patterns);
 
         return $this;
     }
@@ -282,7 +282,7 @@ class Finder implements \IteratorAggregate, \Countable
      */
     public function notPath($patterns)
     {
-        $this->notPaths = \array_merge($this->notPaths, (array) $patterns);
+        $this->notPaths = array_merge($this->notPaths, (array) $patterns);
 
         return $this;
     }
@@ -438,13 +438,8 @@ class Finder implements \IteratorAggregate, \Countable
      *
      * @see SortableIterator
      */
-    public function sortByName(/* bool $useNaturalSort = false */)
+    public function sortByName(bool $useNaturalSort = false)
     {
-        if (\func_num_args() < 1 && __CLASS__ !== \get_class($this) && __CLASS__ !== (new \ReflectionMethod($this, __FUNCTION__))->getDeclaringClass()->getName() && !$this instanceof \PHPUnit\Framework\MockObject\MockObject && !$this instanceof \Prophecy\Prophecy\ProphecySubjectInterface) {
-            @trigger_error(sprintf('The "%s()" method will have a new "bool $useNaturalSort = false" argument in version 5.0, not defining it is deprecated since Symfony 4.2.', __METHOD__), E_USER_DEPRECATED);
-        }
-        $useNaturalSort = 0 < \func_num_args() && func_get_arg(0);
-
         $this->sort = $useNaturalSort ? Iterator\SortableIterator::SORT_BY_NAME_NATURAL : Iterator\SortableIterator::SORT_BY_NAME;
 
         return $this;

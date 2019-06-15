@@ -11,7 +11,6 @@
 
 namespace Symfony\Component\Form;
 
-use Symfony\Component\EventDispatcher\LegacyEventDispatcherProxy;
 use Symfony\Component\Form\Event\PostSetDataEvent;
 use Symfony\Component\Form\Event\PostSubmitEvent;
 use Symfony\Component\Form\Event\PreSetDataEvent;
@@ -95,7 +94,7 @@ class Form implements \IteratorAggregate, FormInterface, ClearableErrorsInterfac
     private $submitted = false;
 
     /**
-     * @var ClickableInterface|null The button that was used to submit the form
+     * @var FormInterface|ClickableInterface|null The button that was used to submit the form
      */
     private $clickedButton;
 
@@ -334,7 +333,7 @@ class Form implements \IteratorAggregate, FormInterface, ClearableErrorsInterfac
         }
 
         $this->lockSetData = true;
-        $dispatcher = LegacyEventDispatcherProxy::decorate($this->config->getEventDispatcher());
+        $dispatcher = $this->config->getEventDispatcher();
 
         // Hook to change content of the model data before transformation and mapping children
         if ($dispatcher->hasListeners(FormEvents::PRE_SET_DATA)) {
@@ -541,7 +540,7 @@ class Form implements \IteratorAggregate, FormInterface, ClearableErrorsInterfac
             $this->transformationFailure = new TransformationFailedException('Submitted data was expected to be text or number, array given.');
         }
 
-        $dispatcher = LegacyEventDispatcherProxy::decorate($this->config->getEventDispatcher());
+        $dispatcher = $this->config->getEventDispatcher();
 
         $modelData = null;
         $normData = null;
@@ -753,7 +752,7 @@ class Form implements \IteratorAggregate, FormInterface, ClearableErrorsInterfac
     /**
      * Returns the button that was used to submit the form.
      *
-     * @return ClickableInterface|null
+     * @return FormInterface|ClickableInterface|null
      */
     public function getClickedButton()
     {

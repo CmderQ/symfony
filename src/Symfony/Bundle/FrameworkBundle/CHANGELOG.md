@@ -5,6 +5,26 @@ CHANGELOG
 -----
 
  * Removed support to load translation resources from the legacy directories `src/Resources/translations/` and `src/Resources/<BundleName>/translations/`
+ * Removed `ControllerNameParser`.
+ * Removed `ResolveControllerNameSubscriber`
+ * Removed support for `bundle:controller:action` to reference controllers. Use `serviceOrFqcn::method` instead
+ * Removed support for PHP templating, use Twig instead
+ * Removed `Controller`, use `AbstractController` instead
+ * Removed `Client`, use `KernelBrowser` instead
+ * Removed `ContainerAwareCommand`, use dependency injection instead
+ * Removed the `validation.strict_email` option, use `validation.email_validation_mode` instead
+ * Removed the `cache.app.simple` service and its corresponding PSR-16 autowiring alias
+ * Removed cache-related compiler passes and `RequestDataCollector`
+ * Removed the `translator.selector` and `session.save_listener` services
+ * Removed `SecurityUserValueResolver`, use `UserValueResolver` instead
+
+4.4.0
+-----
+
+ * Deprecated support for `templating` engine in `TemplateController`, use Twig instead
+ * Deprecated the `$parser` argument of `ControllerResolver::__construct()` and `DelegatingLoader::__construct()`
+ * Deprecated the `controller_name_converter` and `resolve_controller_name_subscriber` services
+ * The `ControllerResolver` and `DelegatingLoader` classes have been marked as `final`
 
 4.3.0
 -----

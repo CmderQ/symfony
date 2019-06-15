@@ -349,12 +349,12 @@ class Definition
      *
      * @throws InvalidArgumentException on empty $method param
      */
-    public function addMethodCall($method, array $arguments = []/*, bool $returnsClone = false*/)
+    public function addMethodCall($method, array $arguments = [], bool $returnsClone = false)
     {
         if (empty($method)) {
             throw new InvalidArgumentException('Method name cannot be empty.');
         }
-        $this->calls[] = 2 < \func_num_args() && \func_get_arg(2) ? [$method, $arguments, true] : [$method, $arguments];
+        $this->calls[] = 2 < \func_num_args() && func_get_arg(2) ? [$method, $arguments, true] : [$method, $arguments];
 
         return $this;
     }

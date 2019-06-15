@@ -5,10 +5,20 @@ CHANGELOG
 -----
 
  * removed the `checkDNS` and `dnsMessage` options of the `Url` constraint
+ * removed the `checkMX`, `checkHost` and `strict` options of the `Email` constraint
  * removed support for validating instances of `\DateTimeInterface` in `DateTimeValidator`, `DateValidator` and `TimeValidator`
  * removed support for using the `Bic`, `Country`, `Currency`, `Language` and `Locale` constraints without `symfony/intl`
  * removed support for using the `Email` constraint without `egulias/email-validator`
  * removed support for using the `Expression` constraint without `symfony/expression-language`
+ * changed default value of `canonicalize` option of `Locale` constraint to `true`
+ * removed `ValidatorBuilderInterface`
+
+4.4.0
+-----
+
+ * added the `compared_value_path` parameter in violations when using any 
+   comparison constraint with the `propertyPath` option.
+ * added support for checking an array of types in `TypeValidator`
 
 4.3.0
 -----
@@ -34,7 +44,7 @@ CHANGELOG
  * added `DivisibleBy` constraint
  * decoupled from `symfony/translation` by using `Symfony\Contracts\Translation\TranslatorInterface`
  * deprecated `ValidatorBuilderInterface`
- * made `ValidatorBuilder` final
+ * made `ValidatorBuilder::setTranslator()` final
  * marked `format` the default option in `DateTime` constraint
  * deprecated validating instances of `\DateTimeInterface` in `DateTimeValidator`, `DateValidator` and `TimeValidator`.
  * deprecated using the `Bic`, `Country`, `Currency`, `Language` and `Locale` constraints without `symfony/intl`

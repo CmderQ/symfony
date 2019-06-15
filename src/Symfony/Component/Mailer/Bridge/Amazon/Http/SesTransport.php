@@ -12,10 +12,10 @@
 namespace Symfony\Component\Mailer\Bridge\Amazon\Http;
 
 use Psr\Log\LoggerInterface;
-use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\Mailer\Exception\TransportException;
 use Symfony\Component\Mailer\SentMessage;
 use Symfony\Component\Mailer\Transport\Http\AbstractHttpTransport;
+use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 /**
@@ -56,7 +56,7 @@ class SesTransport extends AbstractHttpTransport
             ],
             'body' => [
                 'Action' => 'SendRawEmail',
-                'RawMessage.Data' => \base64_encode($message->toString()),
+                'RawMessage.Data' => base64_encode($message->toString()),
             ],
         ]);
 

@@ -293,7 +293,7 @@ abstract class AbstractObjectNormalizer extends AbstractNormalizer
      */
     public function supportsDenormalization($data, $type, $format = null)
     {
-        return \class_exists($type) || (\interface_exists($type, false) && $this->classDiscriminatorResolver && null !== $this->classDiscriminatorResolver->getMappingForClass($type));
+        return class_exists($type) || (interface_exists($type, false) && $this->classDiscriminatorResolver && null !== $this->classDiscriminatorResolver->getMappingForClass($type));
     }
 
     /**
@@ -541,17 +541,10 @@ abstract class AbstractObjectNormalizer extends AbstractNormalizer
      *
      * {@inheritdoc}
      *
-     * @param string|null $format
+     * @internal
      */
-    protected function createChildContext(array $parentContext, $attribute/*, ?string $format */)
+    protected function createChildContext(array $parentContext, string $attribute, ?string $format): array
     {
-        if (\func_num_args() >= 3) {
-            $format = \func_get_arg(2);
-        } else {
-            @trigger_error(sprintf('Method "%s::%s()" will have a third "?string $format" argument in version 5.0; not defining it is deprecated since Symfony 4.3.', \get_class($this), __FUNCTION__), E_USER_DEPRECATED);
-            $format = null;
-        }
-
         $context = parent::createChildContext($parentContext, $attribute, $format);
         $context['cache_key'] = $this->getCacheKey($format, $context);
 

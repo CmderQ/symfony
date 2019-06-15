@@ -167,8 +167,9 @@ final class CurlResponse implements ResponseInterface
             if (!\in_array(curl_getinfo($this->handle, CURLINFO_PRIVATE), ['headers', 'content'], true)) {
                 rewind($this->debugBuffer);
                 $info['debug'] = stream_get_contents($this->debugBuffer);
-                fclose($this->debugBuffer);
-                $this->debugBuffer = null;
+                curl_setopt($this->handle, CURLOPT_VERBOSE, false);
+                rewind($this->debugBuffer);
+                ftruncate($this->debugBuffer, 0);
                 $this->finalInfo = $info;
             }
         }
@@ -309,14 +310,19 @@ final class CurlResponse implements ResponseInterface
         $info['redirect_url'] = null;
 
         if (300 <= $statusCode && $statusCode < 400 && null !== $location) {
-            $info['redirect_url'] = $resolveRedirect($ch, $location);
-            $url = parse_url($location ?? ':');
+            if (null === $info['redirect_url'] = $resolveRedirect($ch, $location)) {
+                $options['max_redirects'] = curl_getinfo($ch, CURLINFO_REDIRECT_COUNT);
+                curl_setopt($ch, CURLOPT_FOLLOWLOCATION, false);
+                curl_setopt($ch, CURLOPT_MAXREDIRS, $options['max_redirects']);
+            } else {
+                $url = parse_url($location ?? ':');
 
-            if (isset($url['host']) && null !== $ip = $multi->dnsCache->hostnames[$url['host'] = strtolower($url['host'])] ?? null) {
-                // Populate DNS cache for redirects if needed
-                $port = $url['port'] ?? ('http' === ($url['scheme'] ?? parse_url(curl_getinfo($ch, CURLINFO_EFFECTIVE_URL), PHP_URL_SCHEME)) ? 80 : 443);
-                curl_setopt($ch, CURLOPT_RESOLVE, ["{$url['host']}:$port:$ip"]);
-                $multi->dnsCache->removals["-{$url['host']}:$port"] = "-{$url['host']}:$port";
+                if (isset($url['host']) && null !== $ip = $multi->dnsCache->hostnames[$url['host'] = strtolower($url['host'])] ?? null) {
+                    // Populate DNS cache for redirects if needed
+                    $port = $url['port'] ?? ('http' === ($url['scheme'] ?? parse_url(curl_getinfo($ch, CURLINFO_EFFECTIVE_URL), PHP_URL_SCHEME)) ? 80 : 443);
+                    curl_setopt($ch, CURLOPT_RESOLVE, ["{$url['host']}:$port:$ip"]);
+                    $multi->dnsCache->removals["-{$url['host']}:$port"] = "-{$url['host']}:$port";
+                }
             }
         }
 

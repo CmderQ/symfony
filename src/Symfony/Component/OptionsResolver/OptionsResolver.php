@@ -828,7 +828,7 @@ class OptionsResolver implements Options
      * Returns the resolved value of an option.
      *
      * @param string $option             The option name
-     * @param bool   $triggerDeprecation Whether to trigger the deprecation or not (true by default)
+     * @param bool   $triggerDeprecation Whether to trigger the deprecation or not
      *
      * @return mixed The option value
      *
@@ -840,13 +840,13 @@ class OptionsResolver implements Options
      * @throws OptionDefinitionException If there is a cyclic dependency between
      *                                   lazy options and/or normalizers
      */
-    public function offsetGet($option/*, bool $triggerDeprecation = true*/)
+    public function offsetGet($option, bool $triggerDeprecation = true)
     {
         if (!$this->locked) {
             throw new AccessException('Array access is only supported within closures of lazy options and normalizers.');
         }
 
-        $triggerDeprecation = 1 === \func_num_args() || \func_get_arg(1);
+        $triggerDeprecation = 1 === \func_num_args() || func_get_arg(1);
 
         // Shortcut for resolved options
         if (isset($this->resolved[$option]) || \array_key_exists($option, $this->resolved)) {

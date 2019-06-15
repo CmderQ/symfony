@@ -11,7 +11,6 @@
 
 namespace Symfony\Bundle\TwigBundle\DependencyInjection;
 
-use Symfony\Bundle\TwigBundle\Loader\NativeFilesystemLoader;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\Config\Resource\FileExistenceResource;
 use Symfony\Component\Console\Application;
@@ -40,10 +39,6 @@ class TwigExtension extends Extension
 
         if (class_exists('Symfony\Component\Form\Form')) {
             $loader->load('form.xml');
-        }
-
-        if (interface_exists('Symfony\Component\Templating\EngineInterface')) {
-            $loader->load('templating.xml');
         }
 
         if (class_exists(Application::class)) {
@@ -91,10 +86,6 @@ class TwigExtension extends Extension
 
         $twigFilesystemLoaderDefinition = $container->getDefinition('twig.loader.native_filesystem');
 
-        if ($container->getParameter('kernel.debug')) {
-            $twigFilesystemLoaderDefinition->setClass(NativeFilesystemLoader::class);
-        }
-
         // register user-configured paths
         foreach ($config['paths'] as $path => $namespace) {
             if (!$namespace) {
@@ -105,8 +96,7 @@ class TwigExtension extends Extension
         }
 
         // paths are modified in ExtensionPass if forms are enabled
-        $container->getDefinition('twig.cache_warmer')->replaceArgument(2, $config['paths']);
-        $container->getDefinition('twig.template_iterator')->replaceArgument(2, $config['paths']);
+        $container->getDefinition('twig.template_iterator')->replaceArgument(1, $config['paths']);
 
         foreach ($this->getBundleTemplatePaths($container, $config) as $name => $paths) {
             $namespace = $this->normalizeBundleName($name);
@@ -156,7 +146,6 @@ class TwigExtension extends Extension
         $container->registerForAutoconfiguration(RuntimeExtensionInterface::class)->addTag('twig.runtime');
 
         if (false === $config['cache']) {
-            $container->removeDefinition('twig.cache_warmer');
             $container->removeDefinition('twig.template_cache_warmer');
         }
     }
