@@ -33,8 +33,8 @@ final class NativePasswordEncoder implements PasswordEncoderInterface, SelfSalti
         $opsLimit = $opsLimit ?? max(6, \defined('SODIUM_CRYPTO_PWHASH_OPSLIMIT_MODERATE') ? \SODIUM_CRYPTO_PWHASH_OPSLIMIT_MODERATE : 6);
         $memLimit = $memLimit ?? max(64 * 1024 * 1024, \defined('SODIUM_CRYPTO_PWHASH_MEMLIMIT_INTERACTIVE') ? \SODIUM_CRYPTO_PWHASH_MEMLIMIT_INTERACTIVE : 64 * 1024 * 1024);
 
-        if (2 > $opsLimit) {
-            throw new \InvalidArgumentException('$opsLimit must be 2 or greater.');
+        if (3 > $opsLimit) {
+            throw new \InvalidArgumentException('$opsLimit must be 3 or greater.');
         }
 
         if (10 * 1024 > $memLimit) {
@@ -78,7 +78,7 @@ final class NativePasswordEncoder implements PasswordEncoderInterface, SelfSalti
     /**
      * {@inheritdoc}
      */
-    public function isPasswordValid($encoded, $raw, $salt)
+    public function isPasswordValid($encoded, $raw, $salt): bool
     {
         if (72 < \strlen($raw) && 0 === strpos($encoded, '$2')) {
             // BCrypt encodes only the first 72 chars

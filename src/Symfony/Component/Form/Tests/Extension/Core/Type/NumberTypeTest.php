@@ -77,6 +77,30 @@ class NumberTypeTest extends BaseTypeTest
         $this->assertSame('12345,68', $form->createView()->vars['value']);
     }
 
+    /**
+     * @expectedException \Symfony\Component\Form\Exception\TransformationFailedException
+     * @expectedExceptionMessage Expected a numeric string.
+     */
+    public function testStringInputWithFloatData(): void
+    {
+        $this->factory->create(static::TESTED_TYPE, 12345.6789, [
+            'input' => 'string',
+            'scale' => 2,
+        ]);
+    }
+
+    /**
+     * @expectedException \Symfony\Component\Form\Exception\TransformationFailedException
+     * @expectedExceptionMessage Expected a numeric string.
+     */
+    public function testStringInputWithIntData(): void
+    {
+        $this->factory->create(static::TESTED_TYPE, 12345, [
+            'input' => 'string',
+            'scale' => 2,
+        ]);
+    }
+
     public function testDefaultFormattingWithRounding(): void
     {
         $form = $this->factory->create(static::TESTED_TYPE, null, ['scale' => 0, 'rounding_mode' => \NumberFormatter::ROUND_UP]);

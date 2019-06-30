@@ -146,6 +146,7 @@ Finder
 Form
 ----
 
+ * Removed support for using `int` or `float` as data for the `NumberType` when the `input` option is set to `string`.
  * Removed support for using the `format` option of `DateType` and `DateTimeType` when the `html5` option is enabled.
  * Using names for buttons that do not start with a letter, a digit, or an underscore leads to an exception.
  * Using names for buttons that do not contain only letters, digits, underscores, hyphens, and colons leads to an
@@ -463,12 +464,12 @@ TwigBundle
  * The default value (`false`) of the `twig.strict_variables` configuration option has been changed to `%kernel.debug%`.
  * The `transchoice` tag and filter have been removed, use the `trans` ones instead with a `%count%` parameter.
  * Removed support for legacy templates directories `src/Resources/views/` and `src/Resources/<BundleName>/views/`, use `templates/` and `templates/bundles/<BundleName>/` instead.
- 
+
 TwigBridge
 ----------
 
  * Removed argument `$rootDir` from the `DebugCommand::__construct()` method and the 5th argument must be an instance of `FileLinkFormatter`
- * removed the `$requestStack` and `$requestContext` arguments of the 
+ * removed the `$requestStack` and `$requestContext` arguments of the
    `HttpFoundationExtension`, pass a `Symfony\Component\HttpFoundation\UrlHelper`
    instance as the only argument instead
 
@@ -497,6 +498,7 @@ Workflow
  * `MarkingStoreInterface::setMarking()` has a third argument: `array $context = []`.
  * Removed support of `initial_place`. Use `initial_places` instead.
  * `MultipleStateMarkingStore` has been removed. Use `MethodMarkingStore` instead.
+ * `DefinitionBuilder::setInitialPlace()` has been removed, use `DefinitionBuilder::setInitialPlaces()` instead.
 
    Before:
    ```yaml

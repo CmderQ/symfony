@@ -13,6 +13,7 @@ namespace Symfony\Bundle\FrameworkBundle\DependencyInjection;
 
 use Doctrine\Common\Annotations\AnnotationRegistry;
 use Doctrine\Common\Annotations\Reader;
+use Http\Client\HttpClient;
 use Psr\Cache\CacheItemPoolInterface;
 use Psr\Container\ContainerInterface as PsrContainerInterface;
 use Psr\Http\Client\ClientInterface;
@@ -59,7 +60,6 @@ use Symfony\Component\Form\ChoiceList\Factory\CachingFactoryDecorator;
 use Symfony\Component\Form\FormTypeExtensionInterface;
 use Symfony\Component\Form\FormTypeGuesserInterface;
 use Symfony\Component\Form\FormTypeInterface;
-use Symfony\Component\HttpClient\Psr18Client;
 use Symfony\Component\HttpClient\ScopingHttpClient;
 use Symfony\Component\HttpKernel\CacheClearer\CacheClearerInterface;
 use Symfony\Component\HttpKernel\CacheWarmer\CacheWarmerInterface;
@@ -142,6 +142,7 @@ class FrameworkExtension extends Extension
         $loader->load('web.xml');
         $loader->load('services.xml');
         $loader->load('fragment_renderer.xml');
+        $loader->load('error_catcher.xml');
 
         $container->registerAliasForArgument('parameter_bag', PsrContainerInterface::class);
 
@@ -212,6 +213,10 @@ class FrameworkExtension extends Extension
         }
 
         if ($this->isConfigEnabled($container, $config['session'])) {
+            if (!\extension_loaded('session')) {
+                throw new \LogicException('PHP extension "session" is required.');
+            }
+
             $this->sessionConfigEnabled = true;
             $this->registerSessionConfiguration($config['session'], $container, $loader);
             if (!empty($config['test'])) {
@@ -626,6 +631,10 @@ class FrameworkExtension extends Extension
             $definitionDefinition->addArgument($transitions);
             $definitionDefinition->addArgument($initialMarking);
             $definitionDefinition->addArgument($metadataStoreDefinition);
+            $definitionDefinition->addTag('workflow.definition', [
+                'name' => $name,
+                'type' => $type,
+            ]);
 
             // Create MarkingStore
             if (isset($workflow['marking_store']['type'])) {
@@ -652,18 +661,16 @@ class FrameworkExtension extends Extension
             $container->registerAliasForArgument($workflowId, WorkflowInterface::class, $name.'.'.$type);
 
             // Validate Workflow
-            $realDefinition = (new Workflow\DefinitionBuilder($places))
-                ->addTransitions(array_map(function (Reference $ref) use ($container): Workflow\Transition {
-                    return $container->get((string) $ref);
-                }, $transitions))
-                ->setInitialPlace($initialMarking)
-                ->build()
-            ;
             if ('state_machine' === $workflow['type']) {
                 $validator = new Workflow\Validator\StateMachineValidator();
             } else {
                 $validator = new Workflow\Validator\WorkflowValidator();
             }
+
+            $trs = array_map(function (Reference $ref) use ($container): Workflow\Transition {
+                return $container->get((string) $ref);
+            }, $transitions);
+            $realDefinition = new Workflow\Definition($places, $trs, $initialMarking);
             $validator->validate($realDefinition, $name);
 
             // Add workflow to Registry
@@ -1695,7 +1702,7 @@ class FrameworkExtension extends Extension
 
             if (!$container->getParameter('kernel.debug')) {
                 $propertyAccessDefinition->setFactory([PropertyAccessor::class, 'createCache']);
-                $propertyAccessDefinition->setArguments([null, null, $version, new Reference('logger', ContainerInterface::IGNORE_ON_INVALID_REFERENCE)]);
+                $propertyAccessDefinition->setArguments([null, 0, $version, new Reference('logger', ContainerInterface::IGNORE_ON_INVALID_REFERENCE)]);
                 $propertyAccessDefinition->addTag('cache.pool', ['clearer' => 'cache.system_clearer']);
                 $propertyAccessDefinition->addTag('monolog.logger', ['channel' => 'cache']);
             } else {
@@ -1714,6 +1721,10 @@ class FrameworkExtension extends Extension
         if (!$hasPsr18 = interface_exists(ClientInterface::class)) {
             $container->removeDefinition('psr18.http_client');
             $container->removeAlias(ClientInterface::class);
+        }
+
+        if (!interface_exists(HttpClient::class)) {
+            $container->removeDefinition(HttpClient::class);
         }
 
         foreach ($config['scoped_clients'] as $name => $scopeConfig) {
@@ -1736,9 +1747,8 @@ class FrameworkExtension extends Extension
             $container->registerAliasForArgument($name, HttpClientInterface::class);
 
             if ($hasPsr18) {
-                $container->register('psr18.'.$name, Psr18Client::class)
-                    ->setAutowired(true)
-                    ->setArguments([new Reference($name)]);
+                $container->setDefinition('psr18.'.$name, new ChildDefinition('psr18.http_client'))
+                    ->replaceArgument(0, new Reference($name));
 
                 $container->registerAliasForArgument('psr18.'.$name, ClientInterface::class, $name);
             }

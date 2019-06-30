@@ -11,7 +11,7 @@
 
 namespace Symfony\Component\Messenger\Stamp;
 
-use Symfony\Component\Debug\Exception\FlattenException;
+use Symfony\Component\ErrorCatcher\Exception\FlattenException;
 use Symfony\Component\Messenger\Envelope;
 
 /**
@@ -19,7 +19,7 @@ use Symfony\Component\Messenger\Envelope;
  *
  * @experimental in 4.3
  */
-class RedeliveryStamp implements StampInterface
+final class RedeliveryStamp implements StampInterface
 {
     private $retryCount;
     private $senderClassOrAlias;

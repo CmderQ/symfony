@@ -65,7 +65,7 @@ class Connection
         return $this->configuration;
     }
 
-    public static function buildConfiguration($dsn, array $options = [])
+    public static function buildConfiguration($dsn, array $options = []): array
     {
         if (false === $components = parse_url($dsn)) {
             throw new InvalidArgumentException(sprintf('The given Doctrine Messenger DSN "%s" is invalid.', $dsn));
@@ -155,7 +155,7 @@ class Connection
                 return null;
             }
 
-            $doctrineEnvelope['headers'] = json_decode($doctrineEnvelope['headers'], true);
+            $doctrineEnvelope = $this->decodeEnvelopeHeaders($doctrineEnvelope);
 
             $queryBuilder = $this->driverConnection->createQueryBuilder()
                 ->update($this->configuration['table_name'])
@@ -238,7 +238,11 @@ class Connection
             $queryBuilder->setMaxResults($limit);
         }
 
-        return $this->executeQuery($queryBuilder->getSQL(), $queryBuilder->getParameters())->fetchAll();
+        $data = $this->executeQuery($queryBuilder->getSQL(), $queryBuilder->getParameters())->fetchAll();
+
+        return array_map(function ($doctrineEnvelope) {
+            return $this->decodeEnvelopeHeaders($doctrineEnvelope);
+        }, $data);
     }
 
     public function find($id): ?array
@@ -254,7 +258,7 @@ class Connection
             'id' => $id,
         ])->fetch();
 
-        return false === $data ? null : $data;
+        return false === $data ? null : $this->decodeEnvelopeHeaders($data);
     }
 
     private function createAvailableMessagesQueryBuilder(): QueryBuilder
@@ -328,8 +332,15 @@ class Connection
         return $schema;
     }
 
-    public static function formatDateTime(\DateTimeInterface $dateTime)
+    public static function formatDateTime(\DateTimeInterface $dateTime): string
     {
         return $dateTime->format('Y-m-d\TH:i:s');
+    }
+
+    private function decodeEnvelopeHeaders(array $doctrineEnvelope): array
+    {
+        $doctrineEnvelope['headers'] = json_decode($doctrineEnvelope['headers'], true);
+
+        return $doctrineEnvelope;
     }
 }

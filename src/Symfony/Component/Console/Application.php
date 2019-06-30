@@ -41,9 +41,9 @@ use Symfony\Component\Console\Output\ConsoleOutput;
 use Symfony\Component\Console\Output\ConsoleOutputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
-use Symfony\Component\Debug\ErrorHandler;
-use Symfony\Component\Debug\Exception\FatalThrowableError;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
+use Symfony\Component\ErrorCatcher\ErrorHandler;
+use Symfony\Component\ErrorCatcher\Exception\FatalThrowableError;
 
 /**
  * An Application is the container for a collection of commands.
