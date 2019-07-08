@@ -25,6 +25,7 @@ use Symfony\Component\Cache\Adapter\DoctrineAdapter;
 use Symfony\Component\Cache\Adapter\FilesystemAdapter;
 use Symfony\Component\Cache\Adapter\ProxyAdapter;
 use Symfony\Component\Cache\Adapter\RedisAdapter;
+use Symfony\Component\Cache\DependencyInjection\CachePoolPass;
 use Symfony\Component\Config\Resource\DirectoryResource;
 use Symfony\Component\Config\Resource\FileExistenceResource;
 use Symfony\Component\DependencyInjection\ChildDefinition;
@@ -1220,13 +1221,36 @@ abstract class FrameworkExtensionTest extends TestCase
 
     public function testCachePoolServices()
     {
-        $container = $this->createContainerFromFile('cache');
+        $container = $this->createContainerFromFile('cache', [], true, false);
+        $container->setParameter('cache.prefix.seed', 'test');
+        $container->addCompilerPass(new CachePoolPass());
+        $container->compile();
 
         $this->assertCachePoolServiceDefinitionIsCreated($container, 'cache.foo', 'cache.adapter.apcu', 30);
         $this->assertCachePoolServiceDefinitionIsCreated($container, 'cache.bar', 'cache.adapter.doctrine', 5);
         $this->assertCachePoolServiceDefinitionIsCreated($container, 'cache.baz', 'cache.adapter.filesystem', 7);
         $this->assertCachePoolServiceDefinitionIsCreated($container, 'cache.foobar', 'cache.adapter.psr6', 10);
         $this->assertCachePoolServiceDefinitionIsCreated($container, 'cache.def', 'cache.app', 11);
+
+        $chain = $container->getDefinition('cache.chain');
+
+        $this->assertSame(ChainAdapter::class, $chain->getClass());
+
+        $expected = [
+            [
+                (new ChildDefinition('cache.adapter.array'))
+                    ->replaceArgument(0, 12),
+                (new ChildDefinition('cache.adapter.filesystem'))
+                    ->replaceArgument(0, 'x5nX4TVTWn')
+                    ->replaceArgument(1, 12),
+                (new ChildDefinition('cache.adapter.redis'))
+                    ->replaceArgument(0, new Reference('.cache_connection.kYdiLgf'))
+                    ->replaceArgument(1, 'x5nX4TVTWn')
+                    ->replaceArgument(2, 12),
+            ],
+            12,
+        ];
+        $this->assertEquals($expected, $chain->getArguments());
     }
 
     public function testRemovesResourceCheckerConfigCacheFactoryArgumentOnlyIfNoDebug()
@@ -1459,10 +1483,6 @@ abstract class FrameworkExtensionTest extends TestCase
                 $this->assertSame(DoctrineAdapter::class, $parentDefinition->getClass());
                 break;
             case 'cache.app':
-                if (ChainAdapter::class === $parentDefinition->getClass()) {
-                    break;
-                }
-                // no break
             case 'cache.adapter.filesystem':
                 $this->assertSame(FilesystemAdapter::class, $parentDefinition->getClass());
                 break;

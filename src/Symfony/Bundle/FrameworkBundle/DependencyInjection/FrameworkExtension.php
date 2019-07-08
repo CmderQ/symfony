@@ -16,6 +16,7 @@ use Doctrine\Common\Annotations\Reader;
 use Http\Client\HttpClient;
 use Psr\Cache\CacheItemPoolInterface;
 use Psr\Container\ContainerInterface as PsrContainerInterface;
+use Psr\EventDispatcher\EventDispatcherInterface as PsrEventDispatcherInterface;
 use Psr\Http\Client\ClientInterface;
 use Psr\Log\LoggerAwareInterface;
 use Symfony\Bridge\Monolog\Processor\DebugProcessor;
@@ -28,6 +29,7 @@ use Symfony\Component\BrowserKit\AbstractBrowser;
 use Symfony\Component\Cache\Adapter\AbstractAdapter;
 use Symfony\Component\Cache\Adapter\AdapterInterface;
 use Symfony\Component\Cache\Adapter\ArrayAdapter;
+use Symfony\Component\Cache\Adapter\ChainAdapter;
 use Symfony\Component\Cache\Adapter\TagAwareAdapter;
 use Symfony\Component\Cache\DependencyInjection\CachePoolPass;
 use Symfony\Component\Cache\Marshaller\DefaultMarshaller;
@@ -144,6 +146,10 @@ class FrameworkExtension extends Extension
         $loader->load('fragment_renderer.xml');
         $loader->load('error_catcher.xml');
 
+        if (interface_exists(PsrEventDispatcherInterface::class)) {
+            $container->setAlias(PsrEventDispatcherInterface::class, 'event_dispatcher');
+        }
+
         $container->registerAliasForArgument('parameter_bag', PsrContainerInterface::class);
 
         if (class_exists(Application::class)) {
@@ -214,7 +220,7 @@ class FrameworkExtension extends Extension
 
         if ($this->isConfigEnabled($container, $config['session'])) {
             if (!\extension_loaded('session')) {
-                throw new \LogicException('PHP extension "session" is required.');
+                throw new LogicException('Session support cannot be enabled as the session extension is not installed. See https://www.php.net/session.installation for instructions.');
             }
 
             $this->sessionConfigEnabled = true;
@@ -278,7 +284,7 @@ class FrameworkExtension extends Extension
         $this->registerEsiConfiguration($config['esi'], $container, $loader);
         $this->registerSsiConfiguration($config['ssi'], $container, $loader);
         $this->registerFragmentsConfiguration($config['fragments'], $container, $loader);
-        $this->registerTranslatorConfiguration($config['translator'], $container, $loader);
+        $this->registerTranslatorConfiguration($config['translator'], $container, $loader, $config['default_locale']);
         $this->registerProfilerConfiguration($config['profiler'], $container, $loader);
         $this->registerCacheConfiguration($config['cache'], $container);
         $this->registerWorkflowConfiguration($config['workflows'], $container, $loader);
@@ -952,7 +958,7 @@ class FrameworkExtension extends Extension
         return new Reference('assets.empty_version_strategy');
     }
 
-    private function registerTranslatorConfiguration(array $config, ContainerBuilder $container, LoaderInterface $loader)
+    private function registerTranslatorConfiguration(array $config, ContainerBuilder $container, LoaderInterface $loader, string $defaultLocale)
     {
         if (!$this->isConfigEnabled($container, $config)) {
             $container->removeDefinition('console.command.translation_debug');
@@ -967,7 +973,7 @@ class FrameworkExtension extends Extension
         $container->setAlias('translator', 'translator.default')->setPublic(true);
         $container->setAlias('translator.formatter', new Alias($config['formatter'], false));
         $translator = $container->findDefinition('translator.default');
-        $translator->addMethodCall('setFallbackLocales', [$config['fallbacks']]);
+        $translator->addMethodCall('setFallbackLocales', [$config['fallbacks'] ?: [$defaultLocale]]);
 
         $container->setParameter('translator.logging', $config['logging']);
         $container->setParameter('translator.default_path', $config['default_path']);
@@ -1650,16 +1656,29 @@ class FrameworkExtension extends Extension
         }
         foreach (['app', 'system'] as $name) {
             $config['pools']['cache.'.$name] = [
-                'adapter' => $config[$name],
+                'adapters' => [$config[$name]],
                 'public' => true,
                 'tags' => false,
             ];
         }
         foreach ($config['pools'] as $name => $pool) {
-            if ($config['pools'][$pool['adapter']]['tags'] ?? false) {
-                $pool['adapter'] = '.'.$pool['adapter'].'.inner';
+            $pool['adapters'] = $pool['adapters'] ?: ['cache.app'];
+
+            foreach ($pool['adapters'] as $provider => $adapter) {
+                if ($config['pools'][$adapter]['tags'] ?? false) {
+                    $pool['adapters'][$provider] = $adapter = '.'.$adapter.'.inner';
+                }
             }
-            $definition = new ChildDefinition($pool['adapter']);
+
+            if (1 === \count($pool['adapters'])) {
+                if (!isset($pool['provider']) && !\is_int($provider)) {
+                    $pool['provider'] = $provider;
+                }
+                $definition = new ChildDefinition($adapter);
+            } else {
+                $definition = new Definition(ChainAdapter::class, [$pool['adapters'], 0]);
+                $pool['reset'] = 'reset';
+            }
 
             if ($pool['tags']) {
                 if (true !== $pool['tags'] && ($config['pools'][$pool['tags']]['tags'] ?? false)) {
@@ -1690,7 +1709,7 @@ class FrameworkExtension extends Extension
             }
 
             $definition->setPublic($pool['public']);
-            unset($pool['adapter'], $pool['public'], $pool['tags']);
+            unset($pool['adapters'], $pool['public'], $pool['tags']);
 
             $definition->addTag('cache.pool', $pool);
             $container->setDefinition($name, $definition);
@@ -1763,6 +1782,13 @@ class FrameworkExtension extends Extension
 
         $loader->load('mailer.xml');
         $container->getDefinition('mailer.default_transport')->setArgument(0, $config['dsn']);
+
+        $recipients = $config['envelope']['recipients'] ?? null;
+        $sender = $config['envelope']['sender'] ?? null;
+
+        $envelopeListener = $container->getDefinition('mailer.envelope_listener');
+        $envelopeListener->setArgument(0, $sender);
+        $envelopeListener->setArgument(1, $recipients);
     }
 
     /**

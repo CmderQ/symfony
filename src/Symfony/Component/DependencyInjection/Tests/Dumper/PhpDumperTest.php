@@ -1082,7 +1082,7 @@ class PhpDumperTest extends TestCase
             'class' => 'stdClass',
         ]));
 
-        $container->setDefinition('foo', new Definition(new Parameter('class')));
+        $container->setDefinition('foo', new Definition('%class%'));
         $container->setDefinition('bar', new Definition('stdClass', [
             new Reference('foo'),
         ]))->setPublic(true);
@@ -1251,7 +1251,7 @@ class PhpDumperTest extends TestCase
 
 class Rot13EnvVarProcessor implements EnvVarProcessorInterface
 {
-    public function getEnv($prefix, $name, \Closure $getEnv)
+    public function getEnv(string $prefix, string $name, \Closure $getEnv)
     {
         return str_rot13($getEnv($name));
     }

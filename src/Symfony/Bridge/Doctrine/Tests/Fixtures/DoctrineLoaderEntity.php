@@ -36,13 +36,13 @@ class DoctrineLoaderEntity extends DoctrineLoaderParentEntity
 
     /**
      * @ORM\Column(length=20)
-     * @Assert\Length(min=5)
+     * @Assert\Length(min=5, allowEmptyString=true)
      */
     public $mergedMaxLength;
 
     /**
      * @ORM\Column(length=20)
-     * @Assert\Length(min=1, max=10)
+     * @Assert\Length(min=1, max=10, allowEmptyString=true)
      */
     public $alreadyMappedMaxLength;
 

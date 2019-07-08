@@ -23,8 +23,6 @@ use Symfony\Component\Filesystem\Filesystem;
  *
  * @author Nicolas Grekas <p@tchwork.com>
  * @author André Rømcke <andre.romcke+symfony@gmail.com>
- *
- * @experimental in 4.3
  */
 class FilesystemTagAwareAdapter extends AbstractTagAwareAdapter implements PruneableInterface
 {
@@ -53,7 +51,7 @@ class FilesystemTagAwareAdapter extends AbstractTagAwareAdapter implements Prune
     /**
      * {@inheritdoc}
      */
-    protected function doSave(array $values, ?int $lifetime, array $addTagData = [], array $removeTagData = []): array
+    protected function doSave(array $values, int $lifetime, array $addTagData = [], array $removeTagData = []): array
     {
         $failed = $this->doSaveCache($values, $lifetime);
 

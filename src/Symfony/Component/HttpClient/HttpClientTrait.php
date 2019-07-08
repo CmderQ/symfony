@@ -19,8 +19,6 @@ use Symfony\Component\HttpClient\Exception\InvalidArgumentException;
  * All methods are static to prevent implementers from creating memory leaks via circular references.
  *
  * @author Nicolas Grekas <p@tchwork.com>
- *
- * @experimental in 4.3
  */
 trait HttpClientTrait
 {
@@ -179,6 +177,10 @@ trait HttpClientTrait
                 if (levenshtein($name, $key) <= \strlen($name) / 3 || false !== strpos($key, $name)) {
                     $alternatives[] = $key;
                 }
+            }
+
+            if ('auth_ntlm' === $name) {
+                throw new InvalidArgumentException(sprintf('Option "%s" is not supported by %s, try using CurlHttpClient instead.', __CLASS__));
             }
 
             throw new InvalidArgumentException(sprintf('Unsupported option "%s" passed to %s, did you mean "%s"?', $name, __CLASS__, implode('", "', $alternatives ?: array_keys($defaultOptions))));

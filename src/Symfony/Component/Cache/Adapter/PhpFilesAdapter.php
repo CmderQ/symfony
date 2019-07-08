@@ -116,9 +116,6 @@ class PhpFilesAdapter extends AbstractAdapter implements PruneableInterface
                 $values[$id] = null;
             } elseif (!\is_object($value)) {
                 $values[$id] = $value;
-            } elseif (!$value instanceof LazyValue) {
-                // calling a Closure is for @deprecated BC and should be removed in Symfony 5.0
-                $values[$id] = $value();
             } elseif (false === $values[$id] = include $value->file) {
                 unset($values[$id], $this->values[$id]);
                 $missingIds[] = $id;
@@ -165,7 +162,7 @@ class PhpFilesAdapter extends AbstractAdapter implements PruneableInterface
     /**
      * {@inheritdoc}
      */
-    protected function doHave($id)
+    protected function doHave(string $id)
     {
         if ($this->appendOnly && isset($this->values[$id])) {
             return true;
@@ -199,7 +196,7 @@ class PhpFilesAdapter extends AbstractAdapter implements PruneableInterface
     /**
      * {@inheritdoc}
      */
-    protected function doSave(array $values, $lifetime)
+    protected function doSave(array $values, int $lifetime)
     {
         $ok = true;
         $expiry = $lifetime ? time() + $lifetime : 'PHP_INT_MAX';
@@ -256,7 +253,7 @@ class PhpFilesAdapter extends AbstractAdapter implements PruneableInterface
     /**
      * {@inheritdoc}
      */
-    protected function doClear($namespace)
+    protected function doClear(string $namespace)
     {
         $this->values = [];
 

@@ -41,8 +41,6 @@ use Symfony\Component\Cache\Traits\RedisTrait;
  *
  * @author Nicolas Grekas <p@tchwork.com>
  * @author André Rømcke <andre.romcke+symfony@gmail.com>
- *
- * @experimental in 4.3
  */
 class RedisTagAwareAdapter extends AbstractTagAwareAdapter
 {
@@ -90,7 +88,7 @@ class RedisTagAwareAdapter extends AbstractTagAwareAdapter
     /**
      * {@inheritdoc}
      */
-    protected function doSave(array $values, ?int $lifetime, array $addTagData = [], array $delTagData = []): array
+    protected function doSave(array $values, int $lifetime, array $addTagData = [], array $delTagData = []): array
     {
         // serialize values
         if (!$serialized = $this->marshaller->marshall($values, $failed)) {

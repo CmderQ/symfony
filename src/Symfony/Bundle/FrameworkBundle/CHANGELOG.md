@@ -25,10 +25,12 @@ CHANGELOG
  * Deprecated the `$parser` argument of `ControllerResolver::__construct()` and `DelegatingLoader::__construct()`
  * Deprecated the `controller_name_converter` and `resolve_controller_name_subscriber` services
  * The `ControllerResolver` and `DelegatingLoader` classes have been marked as `final`
+ * Added support for configuring chained cache pools
 
 4.3.0
 -----
 
+ * Deprecated the `framework.templating` option, use Twig instead.
  * Added `WebTestAssertionsTrait` (included by default in `WebTestCase`)
  * Renamed `Client` to `KernelBrowser`
  * Not passing the project directory to the constructor of the `AssetsInstallCommand` is deprecated. This argument will

@@ -297,10 +297,7 @@ class Configuration implements ConfigurationInterface
                                         ->cannotBeEmpty()
                                     ->end()
                                     ->arrayNode('initial_marking')
-                                        ->beforeNormalization()
-                                            ->ifTrue(function ($v) { return !\is_array($v); })
-                                            ->then(function ($v) { return [$v]; })
-                                        ->end()
+                                        ->beforeNormalization()->castToArray()->end()
                                         ->defaultValue([])
                                         ->prototype('scalar')->end()
                                     ->end()
@@ -533,10 +530,7 @@ class Configuration implements ConfigurationInterface
                                     ->ifTrue(function ($v) { return \is_array($v) && isset($v['mime_type']); })
                                     ->then(function ($v) { return $v['mime_type']; })
                                 ->end()
-                                ->beforeNormalization()
-                                    ->ifTrue(function ($v) { return !\is_array($v); })
-                                    ->then(function ($v) { return [$v]; })
-                                ->end()
+                                ->beforeNormalization()->castToArray()->end()
                                 ->prototype('scalar')->end()
                             ->end()
                         ->end()
@@ -562,10 +556,7 @@ class Configuration implements ConfigurationInterface
                         ->scalarNode('base_path')->defaultValue('')->end()
                         ->arrayNode('base_urls')
                             ->requiresAtLeastOneElement()
-                            ->beforeNormalization()
-                                ->ifTrue(function ($v) { return !\is_array($v); })
-                                ->then(function ($v) { return [$v]; })
-                            ->end()
+                            ->beforeNormalization()->castToArray()->end()
                             ->prototype('scalar')->end()
                         ->end()
                     ->end()
@@ -607,10 +598,7 @@ class Configuration implements ConfigurationInterface
                                     ->scalarNode('base_path')->defaultValue('')->end()
                                     ->arrayNode('base_urls')
                                         ->requiresAtLeastOneElement()
-                                        ->beforeNormalization()
-                                            ->ifTrue(function ($v) { return !\is_array($v); })
-                                            ->then(function ($v) { return [$v]; })
-                                        ->end()
+                                        ->beforeNormalization()->castToArray()->end()
                                         ->prototype('scalar')->end()
                                     ->end()
                                 ->end()
@@ -651,9 +639,10 @@ class Configuration implements ConfigurationInterface
                     ->fixXmlConfig('path')
                     ->children()
                         ->arrayNode('fallbacks')
+                            ->info('Defaults to the value of "default_locale".')
                             ->beforeNormalization()->ifString()->then(function ($v) { return [$v]; })->end()
                             ->prototype('scalar')->end()
-                            ->defaultValue(['en'])
+                            ->defaultValue([])
                         ->end()
                         ->booleanNode('logging')->defaultValue(false)->end()
                         ->scalarNode('formatter')->defaultValue('translator.formatter.default')->end()
@@ -684,10 +673,7 @@ class Configuration implements ConfigurationInterface
                             ->defaultValue(['loadValidatorMetadata'])
                             ->prototype('scalar')->end()
                             ->treatFalseLike([])
-                            ->validate()
-                                ->ifTrue(function ($v) { return !\is_array($v); })
-                                ->then(function ($v) { return (array) $v; })
-                            ->end()
+                            ->validate()->castToArray()->end()
                         ->end()
                         ->scalarNode('translation_domain')->defaultValue('validators')->end()
                         ->enumNode('email_validation_mode')->values(['html5', 'loose', 'strict'])->end()
@@ -861,8 +847,38 @@ class Configuration implements ConfigurationInterface
                         ->arrayNode('pools')
                             ->useAttributeAsKey('name')
                             ->prototype('array')
+                                ->fixXmlConfig('adapter')
+                                ->beforeNormalization()
+                                    ->ifTrue(function ($v) { return (isset($v['adapters']) || \is_array($v['adapter'] ?? null)) && isset($v['provider']); })
+                                    ->thenInvalid('Pool cannot have a "provider" while "adapter" is set to a map')
+                                ->end()
                                 ->children()
-                                    ->scalarNode('adapter')->defaultValue('cache.app')->end()
+                                    ->arrayNode('adapters')
+                                        ->info('One or more adapters to chain for creating the pool, defaults to "cache.app".')
+                                        ->beforeNormalization()
+                                            ->always()->then(function ($values) {
+                                                if ([0] === array_keys($values) && \is_array($values[0])) {
+                                                    return $values[0];
+                                                }
+                                                $adapters = [];
+
+                                                foreach ($values as $k => $v) {
+                                                    if (\is_int($k) && \is_string($v)) {
+                                                        $adapters[] = $v;
+                                                    } elseif (!\is_array($v)) {
+                                                        $adapters[$k] = $v;
+                                                    } elseif (isset($v['provider'])) {
+                                                        $adapters[$v['provider']] = $v['name'] ?? $v;
+                                                    } else {
+                                                        $adapters[] = $v['name'] ?? $v;
+                                                    }
+                                                }
+
+                                                return $adapters;
+                                            })
+                                        ->end()
+                                        ->prototype('scalar')->end()
+                                    ->end()
                                     ->scalarNode('tags')->defaultNull()->end()
                                     ->booleanNode('public')->defaultFalse()->end()
                                     ->integerNode('default_lifetime')->end()
@@ -982,6 +998,7 @@ class Configuration implements ConfigurationInterface
                     ->end()
                     ->children()
                         ->arrayNode('routing')
+                            ->normalizeKeys(false)
                             ->useAttributeAsKey('message_class')
                             ->beforeNormalization()
                                 ->always()
@@ -1041,6 +1058,7 @@ class Configuration implements ConfigurationInterface
                             ->end()
                         ->end()
                         ->arrayNode('transports')
+                            ->normalizeKeys(false)
                             ->useAttributeAsKey('name')
                             ->arrayPrototype()
                                 ->beforeNormalization()
@@ -1061,9 +1079,14 @@ class Configuration implements ConfigurationInterface
                                     ->end()
                                     ->arrayNode('retry_strategy')
                                         ->addDefaultsIfNotSet()
-                                        ->validate()
-                                            ->ifTrue(function ($v) { return null !== $v['service'] && (isset($v['max_retries']) || isset($v['delay']) || isset($v['multiplier']) || isset($v['max_delay'])); })
-                                            ->thenInvalid('"service" cannot be used along with the other retry_strategy options.')
+                                        ->beforeNormalization()
+                                            ->always(function ($v) {
+                                                if (isset($v['service']) && (isset($v['max_retries']) || isset($v['delay']) || isset($v['multiplier']) || isset($v['max_delay']))) {
+                                                    throw new \InvalidArgumentException('The "service" cannot be used along with the other "retry_strategy" options.');
+                                                }
+
+                                                return $v;
+                                            })
                                         ->end()
                                         ->children()
                                             ->scalarNode('service')->defaultNull()->info('Service id to override the retry strategy entirely')->end()
@@ -1083,6 +1106,7 @@ class Configuration implements ConfigurationInterface
                         ->scalarNode('default_bus')->defaultNull()->end()
                         ->arrayNode('buses')
                             ->defaultValue(['messenger.bus.default' => ['default_middleware' => true, 'middleware' => []]])
+                            ->normalizeKeys(false)
                             ->useAttributeAsKey('name')
                             ->arrayPrototype()
                                 ->addDefaultsIfNotSet()
@@ -1280,6 +1304,9 @@ class Configuration implements ConfigurationInterface
                                     ->scalarNode('auth_bearer')
                                         ->info('A token enabling HTTP Bearer authorization.')
                                     ->end()
+                                    ->scalarNode('auth_ntlm')
+                                        ->info('A "username:password" pair to use Microsoft NTLM authentication (requires the cURL extension).')
+                                    ->end()
                                     ->arrayNode('query')
                                         ->info('Associative array of query string values merged with the base URI.')
                                         ->useAttributeAsKey('key')
@@ -1391,6 +1418,22 @@ class Configuration implements ConfigurationInterface
                     ->{!class_exists(FullStack::class) && class_exists(Mailer::class) ? 'canBeDisabled' : 'canBeEnabled'}()
                     ->children()
                         ->scalarNode('dsn')->defaultValue('smtp://null')->end()
+                        ->arrayNode('envelope')
+                            ->info('Mailer Envelope configuration')
+                            ->children()
+                                ->scalarNode('sender')->end()
+                                ->arrayNode('recipients')
+                                    ->performNoDeepMerging()
+                                    ->beforeNormalization()
+                                    ->ifArray()
+                                        ->then(function ($v) {
+                                            return array_filter(array_values($v));
+                                        })
+                                    ->end()
+                                    ->prototype('scalar')->end()
+                                ->end()
+                            ->end()
+                        ->end()
                     ->end()
                 ->end()
             ->end()
