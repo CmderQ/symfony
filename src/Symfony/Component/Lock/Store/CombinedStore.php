@@ -18,6 +18,7 @@ use Symfony\Component\Lock\Exception\InvalidArgumentException;
 use Symfony\Component\Lock\Exception\LockConflictedException;
 use Symfony\Component\Lock\Exception\NotSupportedException;
 use Symfony\Component\Lock\Key;
+use Symfony\Component\Lock\PersistingStoreInterface;
 use Symfony\Component\Lock\StoreInterface;
 use Symfony\Component\Lock\Strategy\StrategyInterface;
 
@@ -31,22 +32,22 @@ class CombinedStore implements StoreInterface, LoggerAwareInterface
     use LoggerAwareTrait;
     use ExpiringStoreTrait;
 
-    /** @var StoreInterface[] */
+    /** @var PersistingStoreInterface[] */
     private $stores;
     /** @var StrategyInterface */
     private $strategy;
 
     /**
-     * @param StoreInterface[]  $stores   The list of synchronized stores
-     * @param StrategyInterface $strategy
+     * @param PersistingStoreInterface[] $stores   The list of synchronized stores
+     * @param StrategyInterface          $strategy
      *
      * @throws InvalidArgumentException
      */
     public function __construct(array $stores, StrategyInterface $strategy)
     {
         foreach ($stores as $store) {
-            if (!$store instanceof StoreInterface) {
-                throw new InvalidArgumentException(sprintf('The store must implement "%s". Got "%s".', StoreInterface::class, \get_class($store)));
+            if (!$store instanceof PersistingStoreInterface) {
+                throw new InvalidArgumentException(sprintf('The store must implement "%s". Got "%s".', PersistingStoreInterface::class, \get_class($store)));
             }
         }
 
@@ -92,8 +93,14 @@ class CombinedStore implements StoreInterface, LoggerAwareInterface
         throw new LockConflictedException();
     }
 
+    /**
+     * {@inheritdoc}
+     *
+     * @deprecated since Symfony 4.4.
+     */
     public function waitAndSave(Key $key)
     {
+        @trigger_error(sprintf('%s() is deprecated since Symfony 4.4 and will be removed in Symfony 5.0.', __METHOD__), E_USER_DEPRECATED);
         throw new NotSupportedException(sprintf('The store "%s" does not supports blocking locks.', \get_class($this)));
     }
 

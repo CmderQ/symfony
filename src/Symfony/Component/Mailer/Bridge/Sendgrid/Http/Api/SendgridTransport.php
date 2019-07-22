@@ -12,13 +12,14 @@
 namespace Symfony\Component\Mailer\Bridge\Sendgrid\Http\Api;
 
 use Psr\Log\LoggerInterface;
-use Symfony\Component\Mailer\Exception\TransportException;
+use Symfony\Component\Mailer\Exception\HttpTransportException;
 use Symfony\Component\Mailer\SmtpEnvelope;
 use Symfony\Component\Mailer\Transport\Http\Api\AbstractApiTransport;
 use Symfony\Component\Mime\Address;
 use Symfony\Component\Mime\Email;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
+use Symfony\Contracts\HttpClient\ResponseInterface;
 
 /**
  * @author Kevin Verschaeve
@@ -36,7 +37,7 @@ class SendgridTransport extends AbstractApiTransport
         parent::__construct($client, $dispatcher, $logger);
     }
 
-    protected function doSendEmail(Email $email, SmtpEnvelope $envelope): void
+    protected function doSendApi(Email $email, SmtpEnvelope $envelope): ResponseInterface
     {
         $response = $this->client->request('POST', self::ENDPOINT, [
             'json' => $this->getPayload($email, $envelope),
@@ -46,8 +47,10 @@ class SendgridTransport extends AbstractApiTransport
         if (202 !== $response->getStatusCode()) {
             $errors = $response->toArray(false);
 
-            throw new TransportException(sprintf('Unable to send an email: %s (code %s).', implode('; ', array_column($errors['errors'], 'message')), $response->getStatusCode()));
+            throw new HttpTransportException(sprintf('Unable to send an email: %s (code %s).', implode('; ', array_column($errors['errors'], 'message')), $response->getStatusCode()), $response);
         }
+
+        return $response;
     }
 
     private function getPayload(Email $email, SmtpEnvelope $envelope): array
@@ -80,7 +83,7 @@ class SendgridTransport extends AbstractApiTransport
         // these headers can't be overwritten according to Sendgrid docs
         // see https://developers.pepipost.com/migration-api/new-subpage/email-send
         $headersToBypass = ['x-sg-id', 'x-sg-eid', 'received', 'dkim-signature', 'content-transfer-encoding', 'from', 'to', 'cc', 'bcc', 'subject', 'content-type', 'reply-to'];
-        foreach ($email->getHeaders()->getAll() as $name => $header) {
+        foreach ($email->getHeaders()->all() as $name => $header) {
             if (\in_array($name, $headersToBypass, true)) {
                 continue;
             }

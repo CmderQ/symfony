@@ -12,12 +12,13 @@
 namespace Symfony\Component\Mailer\Bridge\Postmark\Http\Api;
 
 use Psr\Log\LoggerInterface;
-use Symfony\Component\Mailer\Exception\TransportException;
+use Symfony\Component\Mailer\Exception\HttpTransportException;
 use Symfony\Component\Mailer\SmtpEnvelope;
 use Symfony\Component\Mailer\Transport\Http\Api\AbstractApiTransport;
 use Symfony\Component\Mime\Email;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
+use Symfony\Contracts\HttpClient\ResponseInterface;
 
 /**
  * @author Kevin Verschaeve
@@ -35,7 +36,7 @@ class PostmarkTransport extends AbstractApiTransport
         parent::__construct($client, $dispatcher, $logger);
     }
 
-    protected function doSendEmail(Email $email, SmtpEnvelope $envelope): void
+    protected function doSendApi(Email $email, SmtpEnvelope $envelope): ResponseInterface
     {
         $response = $this->client->request('POST', self::ENDPOINT, [
             'headers' => [
@@ -48,8 +49,10 @@ class PostmarkTransport extends AbstractApiTransport
         if (200 !== $response->getStatusCode()) {
             $error = $response->toArray(false);
 
-            throw new TransportException(sprintf('Unable to send an email: %s (code %s).', $error['Message'], $error['ErrorCode']));
+            throw new HttpTransportException(sprintf('Unable to send an email: %s (code %s).', $error['Message'], $error['ErrorCode']), $response);
         }
+
+        return $response;
     }
 
     private function getPayload(Email $email, SmtpEnvelope $envelope): array
@@ -66,7 +69,7 @@ class PostmarkTransport extends AbstractApiTransport
         ];
 
         $headersToBypass = ['from', 'to', 'cc', 'bcc', 'subject', 'content-type', 'sender'];
-        foreach ($email->getHeaders()->getAll() as $name => $header) {
+        foreach ($email->getHeaders()->all() as $name => $header) {
             if (\in_array($name, $headersToBypass, true)) {
                 continue;
             }

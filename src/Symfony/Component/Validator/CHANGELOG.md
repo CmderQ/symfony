@@ -27,6 +27,14 @@ CHANGELOG
    comparison constraint with the `propertyPath` option.
  * added support for checking an array of types in `TypeValidator`
  * added a new `allowEmptyString` option to the `Length` constraint to allow rejecting empty strings when `min` is set, by setting it to `false`.
+ * Added new `minPropertyPath` and `maxPropertyPath` options
+   to `Range` constraint in order to get the value to compare
+   from an array or object
+ * added the `min_limit_path` and `max_limit_path` parameters in violations when using 
+   `Range` constraint with respectively the `minPropertyPath` and
+   `maxPropertyPath` options
+ * added a new `notInRangeMessage` option to the `Range` constraint that will
+   be used in the violation builder when both `min` and `max` are not null
 
 4.3.0
 -----

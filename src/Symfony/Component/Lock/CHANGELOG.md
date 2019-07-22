@@ -4,8 +4,9 @@ CHANGELOG
 4.4.0
 -----
 
- * added InvalidTtlException
- 
+ * added InvalidTtlException  
+ * deprecated `StoreInterface` in favor of `BlockingStoreInterface` and `PersistingStoreInterface`
+   
 4.2.0
 -----
 

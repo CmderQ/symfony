@@ -1,6 +1,19 @@
 CHANGELOG
 =========
 
+5.0.0
+-----
+
+ * removed the `ExceptionController::templateExists()` method
+ * removed the `TemplateManager::templateExists()` method
+
+4.4.0
+-----
+
+ * Added button to clear the ajax request tab
+ * Deprecated the `ExceptionController::templateExists()` method
+ * Deprecated the `TemplateManager::templateExists()` method
+
 4.3.0
 -----
 

@@ -18,12 +18,12 @@
     "require": {
         "php": "^7.2.9",
         "symfony/config": "^4.4|^5.0",
-        "symfony/error-catcher": "^4.4|^5.0",
+        "symfony/error-renderer": "^4.4|^5.0",
         "symfony/twig-bridge": "^4.4|^5.0",
         "symfony/http-foundation": "^4.4|^5.0",
         "symfony/http-kernel": "^4.4|^5.0",
         "symfony/polyfill-ctype": "~1.8",
-        "twig/twig": "~1.41|~2.10"
+        "twig/twig": "^2.10"
     },
     "require-dev": {
         "symfony/asset": "^4.4|^5.0",

@@ -1177,20 +1177,6 @@ class Process implements \IteratorAggregate
     }
 
     /**
-     * Sets whether environment variables will be inherited or not.
-     *
-     * @return self The current Process instance
-     */
-    public function inheritEnvironmentVariables(bool $inheritEnv = true)
-    {
-        if (!$inheritEnv) {
-            throw new InvalidArgumentException('Not inheriting environment variables is not supported.');
-        }
-
-        return $this;
-    }
-
-    /**
      * Performs a check between the timeout definition and the time the process started.
      *
      * In case you run a background process (with the start method), you should

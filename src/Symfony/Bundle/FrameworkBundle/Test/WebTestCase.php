@@ -39,6 +39,10 @@ abstract class WebTestCase extends KernelTestCase
      */
     protected static function createClient(array $options = [], array $server = [])
     {
+        if (true === static::$booted) {
+            throw new \LogicException(sprintf('Booting the kernel before calling %s() is not supported, the kernel should only be booted once.', __METHOD__));
+        }
+
         $kernel = static::bootKernel($options);
 
         try {

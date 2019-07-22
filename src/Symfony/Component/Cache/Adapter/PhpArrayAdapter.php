@@ -262,11 +262,15 @@ class PhpArrayAdapter implements AdapterInterface, CacheInterface, PruneableInte
     /**
      * {@inheritdoc}
      */
-    public function clear()
+    public function clear(string $prefix = '')
     {
         $this->keys = $this->values = [];
 
         $cleared = @unlink($this->file) || !file_exists($this->file);
+
+        if ($this->pool instanceof AdapterInterface) {
+            return $this->pool->clear($prefix) && $cleared;
+        }
 
         return $this->pool->clear() && $cleared;
     }
