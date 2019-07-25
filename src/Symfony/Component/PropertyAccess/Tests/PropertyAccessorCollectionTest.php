@@ -165,35 +165,35 @@ abstract class PropertyAccessorCollectionTest extends PropertyAccessorArrayAcces
 
     public function testIsWritableReturnsTrueIfAdderAndRemoverExists()
     {
-        $car = $this->getMockBuilder(__CLASS__.'_Car')->getMock();
+        $car = new PropertyAccessorCollectionTest_Car();
         $this->assertTrue($this->propertyAccessor->isWritable($car, 'axes'));
     }
 
     public function testIsWritableReturnsFalseIfOnlyAdderExists()
     {
-        $car = $this->getMockBuilder(__CLASS__.'_CarOnlyAdder')->getMock();
+        $car = new PropertyAccessorCollectionTest_CarOnlyAdder();
         $this->assertFalse($this->propertyAccessor->isWritable($car, 'axes'));
     }
 
     public function testIsWritableReturnsFalseIfOnlyRemoverExists()
     {
-        $car = $this->getMockBuilder(__CLASS__.'_CarOnlyRemover')->getMock();
+        $car = new PropertyAccessorCollectionTest_CarOnlyRemover();
         $this->assertFalse($this->propertyAccessor->isWritable($car, 'axes'));
     }
 
     public function testIsWritableReturnsFalseIfNoAdderNorRemoverExists()
     {
-        $car = $this->getMockBuilder(__CLASS__.'_CarNoAdderAndRemover')->getMock();
+        $car = new PropertyAccessorCollectionTest_CarNoAdderAndRemover();
         $this->assertFalse($this->propertyAccessor->isWritable($car, 'axes'));
     }
 
     /**
      * @expectedException \Symfony\Component\PropertyAccess\Exception\NoSuchPropertyException
-     * @expectedExceptionMessageRegExp /Could not determine access type for property "axes" in class "Mock_PropertyAccessorCollectionTest_Car[^"]*": The property "axes" in class "Mock_PropertyAccessorCollectionTest_Car[^"]*" can be defined with the methods "addAxis\(\)", "removeAxis\(\)" but the new value must be an array or an instance of \\Traversable, "string" given./
+     * @expectedExceptionMessageRegExp /Could not determine access type for property "axes" in class "Symfony\\Component\\PropertyAccess\\Tests\\PropertyAccessorCollectionTest_Car[^"]*": The property "axes" in class "Symfony\\Component\\PropertyAccess\\Tests\\PropertyAccessorCollectionTest_Car[^"]*" can be defined with the methods "addAxis\(\)", "removeAxis\(\)" but the new value must be an array or an instance of \\Traversable, "string" given./
      */
     public function testSetValueFailsIfAdderAndRemoverExistButValueIsNotTraversable()
     {
-        $car = $this->getMockBuilder(__CLASS__.'_Car')->getMock();
+        $car = new PropertyAccessorCollectionTest_Car();
 
         $this->propertyAccessor->setValue($car, 'axes', 'Not an array or Traversable');
     }

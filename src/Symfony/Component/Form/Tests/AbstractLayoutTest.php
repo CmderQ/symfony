@@ -726,6 +726,8 @@ abstract class AbstractLayoutTest extends FormIntegrationTestCase
 
     public function testSingleChoiceWithPreferred()
     {
+        $this->requiresFeatureSet(404);
+
         $form = $this->factory->createNamed('name', 'Symfony\Component\Form\Extension\Core\Type\ChoiceType', '&a', [
             'choices' => ['Choice&A' => '&a', 'Choice&B' => '&b'],
             'preferred_choices' => ['&b'],
@@ -741,14 +743,17 @@ abstract class AbstractLayoutTest extends FormIntegrationTestCase
         ./option[@value="&b"][not(@selected)][.="[trans]Choice&B[/trans]"]
         /following-sibling::option[@disabled="disabled"][not(@selected)][.="-- sep --"]
         /following-sibling::option[@value="&a"][@selected="selected"][.="[trans]Choice&A[/trans]"]
+        /following-sibling::option[@value="&b"][.="[trans]Choice&B[/trans]"]
     ]
-    [count(./option)=3]
+    [count(./option)=4]
 '
         );
     }
 
     public function testSingleChoiceWithPreferredAndNoSeparator()
     {
+        $this->requiresFeatureSet(404);
+
         $form = $this->factory->createNamed('name', 'Symfony\Component\Form\Extension\Core\Type\ChoiceType', '&a', [
             'choices' => ['Choice&A' => '&a', 'Choice&B' => '&b'],
             'preferred_choices' => ['&b'],
@@ -763,14 +768,17 @@ abstract class AbstractLayoutTest extends FormIntegrationTestCase
     [
         ./option[@value="&b"][not(@selected)][.="[trans]Choice&B[/trans]"]
         /following-sibling::option[@value="&a"][@selected="selected"][.="[trans]Choice&A[/trans]"]
+        /following-sibling::option[@value="&b"][.="[trans]Choice&B[/trans]"]
     ]
-    [count(./option)=2]
+    [count(./option)=3]
 '
         );
     }
 
     public function testSingleChoiceWithPreferredAndBlankSeparator()
     {
+        $this->requiresFeatureSet(404);
+
         $form = $this->factory->createNamed('name', 'Symfony\Component\Form\Extension\Core\Type\ChoiceType', '&a', [
             'choices' => ['Choice&A' => '&a', 'Choice&B' => '&b'],
             'preferred_choices' => ['&b'],
@@ -786,14 +794,17 @@ abstract class AbstractLayoutTest extends FormIntegrationTestCase
         ./option[@value="&b"][not(@selected)][.="[trans]Choice&B[/trans]"]
         /following-sibling::option[@disabled="disabled"][not(@selected)][.=""]
         /following-sibling::option[@value="&a"][@selected="selected"][.="[trans]Choice&A[/trans]"]
+        /following-sibling::option[@value="&b"][.="[trans]Choice&B[/trans]"]
     ]
-    [count(./option)=3]
+    [count(./option)=4]
 '
         );
     }
 
     public function testChoiceWithOnlyPreferred()
     {
+        $this->requiresFeatureSet(404);
+
         $form = $this->factory->createNamed('name', 'Symfony\Component\Form\Extension\Core\Type\ChoiceType', '&a', [
             'choices' => ['Choice&A' => '&a', 'Choice&B' => '&b'],
             'preferred_choices' => ['&a', '&b'],
@@ -803,7 +814,7 @@ abstract class AbstractLayoutTest extends FormIntegrationTestCase
 
         $this->assertWidgetMatchesXpath($form->createView(), [],
 '/select
-    [count(./option)=2]
+    [count(./option)=5]
 '
         );
     }

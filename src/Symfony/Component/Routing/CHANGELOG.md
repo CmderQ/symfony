@@ -8,6 +8,13 @@ CHANGELOG
  * removed `generator_base_class`, `generator_cache_class`, `matcher_base_class` and `matcher_cache_class` router options
  * `Serializable` implementing methods for `Route` and `CompiledRoute` are final
  * removed referencing service route loaders with a single colon
+ * Removed `ServiceRouterLoader` and `ObjectRouteLoader`.
+
+4.4.0
+-----
+
+ * Deprecated `ServiceRouterLoader` in favor of `ContainerLoader`.
+ * Deprecated `ObjectRouteLoader` in favor of `ObjectLoader`.
 
 4.3.0
 -----
@@ -20,7 +27,7 @@ CHANGELOG
    Instead of overwriting them, use `__serialize` and `__unserialize` as extension points which are forward compatible
    with the new serialization methods in PHP 7.4.
  * exposed `utf8` Route option, defaults "locale" and "format" in configuration loaders and configurators
- * added support for invokable route loader services
+ * added support for invokable service route loaders
 
 4.2.0
 -----

@@ -83,6 +83,7 @@ FrameworkBundle
    has been deprecated.
  * The `ControllerResolver` and `DelegatingLoader` classes have been marked as `final`.
  * The `controller_name_converter` and `resolve_controller_name_subscriber` services have been deprecated.
+ * Deprecated `routing.loader.service`, use `routing.loader.container` instead.
 
 HttpClient
 ----------
@@ -129,6 +130,12 @@ PropertyAccess
 
  * Deprecated passing `null` as 2nd argument of `PropertyAccessor::createCache()` method (`$defaultLifetime`), pass `0` instead.
 
+Routing
+-------
+
+ * Deprecated `ServiceRouterLoader` in favor of `ContainerLoader`.
+ * Deprecated `ObjectRouteLoader` in favor of `ObjectLoader`.
+
 Security
 --------
 
@@ -144,6 +151,74 @@ TwigBridge
 
  * Deprecated to pass `$rootDir` and `$fileLinkFormatter` as 5th and 6th argument respectively to the
    `DebugCommand::__construct()` method, swap the variables position.
+   
+TwigBundle
+----------
+
+ * Deprecated default value `twig.controller.exception::showAction` of the `twig.exception_controller` configuration option, 
+   set it to `null` instead. This will also change the default error response format according to https://tools.ietf.org/html/rfc7807
+   for `json`, `xml`, `atom` and `txt` formats:
+   
+   Before:
+   ```json
+   { 
+       "error": { 
+           "code": 404, 
+           "message": "Sorry, the page you are looking for could not be found" 
+       } 
+   }
+   ```
+   
+   After:
+   ```json
+   { 
+       "title": "Not Found",
+       "status": 404, 
+       "detail": "Sorry, the page you are looking for could not be found"
+   }
+   ```
+   
+ * Deprecated the `ExceptionController` and all built-in error templates, use the error renderer mechanism of the `ErrorRenderer` component
+ * Deprecated loading custom error templates in non-html formats. Custom HTML error pages based on Twig keep working as before: 
+
+   Before (`templates/bundles/TwigBundle/Exception/error.jsonld.twig`):
+   ```twig
+   { 
+     "@id": "https://example.com",
+     "@type": "error",
+     "@context": {
+         "title": "{{ status_text }}",
+         "code": {{ status_code }},
+         "message": "{{ exception.message }}"
+     }
+   }
+   ```
+   
+   After (`App\ErrorRenderer\JsonLdErrorRenderer`):
+   ```php
+   class JsonLdErrorRenderer implements ErrorRendererInterface
+   {
+     public static function getFormat(): string
+     {
+         return 'jsonld';
+     }
+   
+     public function render(FlattenException $exception): string
+     {
+         return json_encode([
+             '@id' => 'https://example.com',
+             '@type' => 'error',
+             '@context' => [
+                 'title' => $exception->getTitle(),
+                 'code' => $exception->getStatusCode(),
+                 'message' => $exception->getMessage(),
+             ],
+         ]);
+     }
+   }
+   ```
+
+  Configure your rendering service tagging it with `error_renderer.renderer`.
 
 Validator
 ---------
@@ -162,7 +237,7 @@ Validator
 WebProfilerBundle
 -----------------
 
- * Deprecated the `ExceptionController::templateExists()` method
+ * Deprecated the `ExceptionController` class in favor of `ExceptionErrorController`
  * Deprecated the `TemplateManager::templateExists()` method
 
 WebServerBundle

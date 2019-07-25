@@ -17,6 +17,7 @@ CHANGELOG
  * Removed cache-related compiler passes and `RequestDataCollector`
  * Removed the `translator.selector` and `session.save_listener` services
  * Removed `SecurityUserValueResolver`, use `UserValueResolver` instead
+ * Removed `routing.loader.service`.
 
 4.4.0
 -----
@@ -27,6 +28,7 @@ CHANGELOG
  * The `ControllerResolver` and `DelegatingLoader` classes have been marked as `final`
  * Added support for configuring chained cache pools
  * Deprecated booting the kernel before running `WebTestCase::createClient()`
+ * Deprecated `routing.loader.service`, use `routing.loader.container` instead.
 
 4.3.0
 -----

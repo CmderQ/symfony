@@ -19,12 +19,10 @@ use Symfony\Component\ErrorRenderer\Exception\FlattenException;
 class TxtErrorRenderer implements ErrorRendererInterface
 {
     private $debug;
-    private $charset;
 
-    public function __construct(bool $debug = true, string $charset = null)
+    public function __construct(bool $debug = false)
     {
         $this->debug = $debug;
-        $this->charset = $charset ?: (ini_get('default_charset') ?: 'UTF-8');
     }
 
     /**
@@ -40,11 +38,12 @@ class TxtErrorRenderer implements ErrorRendererInterface
      */
     public function render(FlattenException $exception): string
     {
+        $debug = $this->debug && ($exception->getHeaders()['X-Debug'] ?? true);
         $content = sprintf("[title] %s\n", $exception->getTitle());
         $content .= sprintf("[status] %s\n", $exception->getStatusCode());
         $content .= sprintf("[detail] %s\n", $exception->getMessage());
 
-        if ($this->debug) {
+        if ($debug) {
             foreach ($exception->toArray() as $i => $e) {
                 $content .= sprintf("[%d] %s: %s\n", $i + 1, $e['class'], $e['message']);
                 foreach ($e['trace'] as $trace) {

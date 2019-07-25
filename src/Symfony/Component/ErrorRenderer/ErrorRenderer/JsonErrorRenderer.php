@@ -20,7 +20,7 @@ class JsonErrorRenderer implements ErrorRendererInterface
 {
     private $debug;
 
-    public function __construct(bool $debug = true)
+    public function __construct(bool $debug = false)
     {
         $this->debug = $debug;
     }
@@ -38,12 +38,14 @@ class JsonErrorRenderer implements ErrorRendererInterface
      */
     public function render(FlattenException $exception): string
     {
+        $debug = $this->debug && ($exception->getHeaders()['X-Debug'] ?? true);
+
         $content = [
             'title' => $exception->getTitle(),
             'status' => $exception->getStatusCode(),
             'detail' => $exception->getMessage(),
         ];
-        if ($this->debug) {
+        if ($debug) {
             $content['exceptions'] = $exception->toArray();
         }
 
