@@ -4,6 +4,7 @@ CHANGELOG
 5.0.0
 -----
 
+ * The `switch_user.stateless` firewall option has been removed.
  * Removed the ability to configure encoders using `argon2i` or `bcrypt` as algorithm, use `auto` instead
  * The `simple_form` and `simple_preauth` authentication listeners have been removed,
    use Guard instead.
@@ -50,6 +51,7 @@ CHANGELOG
 4.1.0
 -----
 
+ * The `switch_user.stateless` firewall option is deprecated, use the `stateless` option instead.
  * The `logout_on_user_change` firewall option is deprecated.
  * deprecated `SecurityUserValueResolver`, use
    `Symfony\Component\Security\Http\Controller\UserValueResolver` instead.

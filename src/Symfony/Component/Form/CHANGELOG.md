@@ -4,6 +4,7 @@ CHANGELOG
 5.0.0
 -----
 
+ * Removed the `scale` option of the `IntegerType`.
  * Using the `date_format`, `date_widget`, and `time_widget` options of the `DateTimeType` when the `widget` option is
    set to `single_text` is not supported anymore.
  * The `format` option of `DateType` and `DateTimeType` cannot be used when the `html5` option is enabled.
@@ -22,6 +23,8 @@ CHANGELOG
 4.4.0
 -----
 
+ * using different values for the "model_timezone" and "view_timezone" options of the `TimeType` without configuring a
+   reference date is deprecated
  * preferred choices are repeated in the list of all choices
  * deprecated using `int` or `float` as data for the `NumberType` when the `input` option is set to `string`
  * The type guesser guesses the HTML accept attribute when a mime type is configured in the File or Image constraint.
