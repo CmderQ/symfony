@@ -13,6 +13,7 @@ namespace Symfony\Component\Serializer\Tests\Normalizer;
 
 use Doctrine\Common\Annotations\AnnotationReader;
 use PHPUnit\Framework\TestCase;
+use Symfony\Bridge\PhpUnit\ForwardCompatTestTrait;
 use Symfony\Component\PropertyInfo\Extractor\PhpDocExtractor;
 use Symfony\Component\PropertyInfo\Extractor\ReflectionExtractor;
 use Symfony\Component\PropertyInfo\PropertyInfoExtractor;
@@ -48,6 +49,7 @@ use Symfony\Component\Serializer\Tests\Normalizer\Features\TypeEnforcementTestTr
  */
 class ObjectNormalizerTest extends TestCase
 {
+    use ForwardCompatTestTrait;
     use AttributesTestTrait;
     use CallbacksTestTrait;
     use CircularReferenceTestTrait;
@@ -68,7 +70,7 @@ class ObjectNormalizerTest extends TestCase
      */
     private $serializer;
 
-    protected function setUp()
+    private function doSetUp()
     {
         $this->createNormalizer();
     }
@@ -228,12 +230,10 @@ class ObjectNormalizerTest extends TestCase
         $this->assertNull($obj->getInner());
     }
 
-    /**
-     * @expectedException \Symfony\Component\Serializer\Exception\RuntimeException
-     * @expectedExceptionMessage Could not determine the class of the parameter "unknown".
-     */
     public function testConstructorWithUnknownObjectTypeHintDenormalize()
     {
+        $this->expectException('Symfony\Component\Serializer\Exception\RuntimeException');
+        $this->expectExceptionMessage('Could not determine the class of the parameter "unknown".');
         $data = [
             'id' => 10,
             'unknown' => [
@@ -488,12 +488,10 @@ class ObjectNormalizerTest extends TestCase
         return $normalizer;
     }
 
-    /**
-     * @expectedException \Symfony\Component\Serializer\Exception\LogicException
-     * @expectedExceptionMessage Cannot normalize attribute "object" because the injected serializer is not a normalizer
-     */
     public function testUnableToNormalizeObjectAttribute()
     {
+        $this->expectException('Symfony\Component\Serializer\Exception\LogicException');
+        $this->expectExceptionMessage('Cannot normalize attribute "object" because the injected serializer is not a normalizer');
         $serializer = $this->getMockBuilder('Symfony\Component\Serializer\SerializerInterface')->getMock();
         $this->normalizer->setSerializer($serializer);
 
@@ -543,11 +541,9 @@ class ObjectNormalizerTest extends TestCase
         }]));
     }
 
-    /**
-     * @expectedException \Symfony\Component\Serializer\Exception\UnexpectedValueException
-     */
     public function testThrowUnexpectedValueException()
     {
+        $this->expectException('Symfony\Component\Serializer\Exception\UnexpectedValueException');
         $this->normalizer->denormalize(['foo' => 'bar'], ObjectTypeHinted::class);
     }
 

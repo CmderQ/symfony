@@ -12,11 +12,14 @@
 namespace Symfony\Component\Validator\Tests\Mapping;
 
 use PHPUnit\Framework\TestCase;
+use Symfony\Bridge\PhpUnit\ForwardCompatTestTrait;
 use Symfony\Component\Validator\Mapping\GetterMetadata;
 use Symfony\Component\Validator\Tests\Fixtures\Entity;
 
 class GetterMetadataTest extends TestCase
 {
+    use ForwardCompatTestTrait;
+
     const CLASSNAME = 'Symfony\Component\Validator\Tests\Fixtures\Entity';
 
     public function testInvalidPropertyName()
@@ -61,12 +64,10 @@ class GetterMetadataTest extends TestCase
         $this->assertEquals('permissions', $metadata->getPropertyValue($entity));
     }
 
-    /**
-     * @expectedException \Symfony\Component\Validator\Exception\ValidatorException
-     * @expectedExceptionMessage The hasLastName() method does not exist in class Symfony\Component\Validator\Tests\Fixtures\Entity.
-     */
     public function testUndefinedMethodNameThrowsException()
     {
+        $this->expectException('Symfony\Component\Validator\Exception\ValidatorException');
+        $this->expectExceptionMessage('The hasLastName() method does not exist in class Symfony\Component\Validator\Tests\Fixtures\Entity.');
         new GetterMetadata(self::CLASSNAME, 'lastName', 'hasLastName');
     }
 }

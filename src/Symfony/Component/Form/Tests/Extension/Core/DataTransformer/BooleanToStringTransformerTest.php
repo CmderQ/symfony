@@ -12,10 +12,13 @@
 namespace Symfony\Component\Form\Tests\Extension\Core\DataTransformer;
 
 use PHPUnit\Framework\TestCase;
+use Symfony\Bridge\PhpUnit\ForwardCompatTestTrait;
 use Symfony\Component\Form\Extension\Core\DataTransformer\BooleanToStringTransformer;
 
 class BooleanToStringTransformerTest extends TestCase
 {
+    use ForwardCompatTestTrait;
+
     const TRUE_VALUE = '1';
 
     /**
@@ -23,12 +26,12 @@ class BooleanToStringTransformerTest extends TestCase
      */
     protected $transformer;
 
-    protected function setUp()
+    private function doSetUp()
     {
         $this->transformer = new BooleanToStringTransformer(self::TRUE_VALUE);
     }
 
-    protected function tearDown()
+    private function doTearDown()
     {
         $this->transformer = null;
     }
@@ -45,19 +48,15 @@ class BooleanToStringTransformerTest extends TestCase
         $this->assertNull($this->transformer->transform(null));
     }
 
-    /**
-     * @expectedException \Symfony\Component\Form\Exception\TransformationFailedException
-     */
     public function testTransformFailsIfString()
     {
+        $this->expectException('Symfony\Component\Form\Exception\TransformationFailedException');
         $this->transformer->transform('1');
     }
 
-    /**
-     * @expectedException \Symfony\Component\Form\Exception\TransformationFailedException
-     */
     public function testReverseTransformFailsIfInteger()
     {
+        $this->expectException('Symfony\Component\Form\Exception\TransformationFailedException');
         $this->transformer->reverseTransform(1);
     }
 
@@ -77,11 +76,9 @@ class BooleanToStringTransformerTest extends TestCase
         $this->assertFalse($customFalseTransformer->reverseTransform(true));
     }
 
-    /**
-     * @expectedException \Symfony\Component\Form\Exception\InvalidArgumentException
-     */
     public function testTrueValueContainedInFalseValues()
     {
+        $this->expectException('Symfony\Component\Form\Exception\InvalidArgumentException');
         new BooleanToStringTransformer('0', [null, '0']);
     }
 

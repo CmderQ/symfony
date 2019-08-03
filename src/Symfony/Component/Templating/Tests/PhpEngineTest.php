@@ -12,6 +12,7 @@
 namespace Symfony\Component\Templating\Tests;
 
 use PHPUnit\Framework\TestCase;
+use Symfony\Bridge\PhpUnit\ForwardCompatTestTrait;
 use Symfony\Component\Templating\Helper\SlotsHelper;
 use Symfony\Component\Templating\Loader\Loader;
 use Symfony\Component\Templating\PhpEngine;
@@ -22,14 +23,16 @@ use Symfony\Component\Templating\TemplateReferenceInterface;
 
 class PhpEngineTest extends TestCase
 {
+    use ForwardCompatTestTrait;
+
     protected $loader;
 
-    protected function setUp()
+    private function doSetUp()
     {
         $this->loader = new ProjectTemplateLoader();
     }
 
-    protected function tearDown()
+    private function doTearDown()
     {
         $this->loader = null;
     }
@@ -124,11 +127,11 @@ class PhpEngineTest extends TestCase
     }
 
     /**
-     * @expectedException \InvalidArgumentException
      * @dataProvider forbiddenParameterNames
      */
     public function testRenderForbiddenParameter($name)
     {
+        $this->expectException('InvalidArgumentException');
         $engine = new ProjectTemplateEngine(new TemplateNameParser(), $this->loader);
         $this->loader->setTemplate('foo.php', 'bar');
         $engine->render('foo.php', [$name => 'foo']);

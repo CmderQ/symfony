@@ -12,6 +12,7 @@
 namespace Symfony\Component\Intl\Tests\Data\Util;
 
 use PHPUnit\Framework\TestCase;
+use Symfony\Bridge\PhpUnit\ForwardCompatTestTrait;
 use Symfony\Component\Intl\Data\Util\RingBuffer;
 
 /**
@@ -19,12 +20,14 @@ use Symfony\Component\Intl\Data\Util\RingBuffer;
  */
 class RingBufferTest extends TestCase
 {
+    use ForwardCompatTestTrait;
+
     /**
      * @var RingBuffer
      */
     private $buffer;
 
-    protected function setUp()
+    private function doSetUp()
     {
         $this->buffer = new RingBuffer(2);
     }
@@ -52,11 +55,9 @@ class RingBufferTest extends TestCase
         $this->assertSame('bam', $this->buffer[2]);
     }
 
-    /**
-     * @expectedException \Symfony\Component\Intl\Exception\OutOfBoundsException
-     */
     public function testReadNonExistingFails()
     {
+        $this->expectException('Symfony\Component\Intl\Exception\OutOfBoundsException');
         $this->buffer['foo'];
     }
 
@@ -72,11 +73,9 @@ class RingBufferTest extends TestCase
         $this->assertArrayNotHasKey('foo', $this->buffer);
     }
 
-    /**
-     * @expectedException \Symfony\Component\Intl\Exception\OutOfBoundsException
-     */
     public function testReadOverwrittenFails()
     {
+        $this->expectException('Symfony\Component\Intl\Exception\OutOfBoundsException');
         $this->buffer[0] = 'foo';
         $this->buffer['bar'] = 'baz';
         $this->buffer[2] = 'bam';

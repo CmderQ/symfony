@@ -843,7 +843,7 @@ class Form implements \IteratorAggregate, FormInterface, ClearableErrorsInterfac
 
         if (!$child instanceof FormInterface) {
             if (!\is_string($child) && !\is_int($child)) {
-                throw new UnexpectedTypeException($child, 'string, integer or Symfony\Component\Form\FormInterface');
+                throw new UnexpectedTypeException($child, 'string or Symfony\Component\Form\FormInterface');
             }
 
             $child = (string) $child;
@@ -1044,8 +1044,6 @@ class Form implements \IteratorAggregate, FormInterface, ClearableErrorsInterfac
     /**
      * Normalizes the underlying data if a model transformer is set.
      *
-     * @param mixed $value The value to transform
-     *
      * @return mixed
      *
      * @throws TransformationFailedException If the underlying data cannot be transformed to "normalized" format
@@ -1065,8 +1063,6 @@ class Form implements \IteratorAggregate, FormInterface, ClearableErrorsInterfac
 
     /**
      * Reverse transforms a value if a model transformer is set.
-     *
-     * @param string $value The value to reverse transform
      *
      * @return mixed
      *
@@ -1089,8 +1085,6 @@ class Form implements \IteratorAggregate, FormInterface, ClearableErrorsInterfac
 
     /**
      * Transforms the value if a view transformer is set.
-     *
-     * @param mixed $value The value to transform
      *
      * @return mixed
      *
@@ -1120,8 +1114,6 @@ class Form implements \IteratorAggregate, FormInterface, ClearableErrorsInterfac
 
     /**
      * Reverse transforms a value if a view transformer is set.
-     *
-     * @param string $value The value to reverse transform
      *
      * @return mixed
      *

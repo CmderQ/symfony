@@ -12,6 +12,7 @@
 namespace Symfony\Component\Form\Tests;
 
 use PHPUnit\Framework\TestCase;
+use Symfony\Bridge\PhpUnit\ForwardCompatTestTrait;
 use Symfony\Component\Form\ButtonBuilder;
 use Symfony\Component\Form\Extension\Core\Type\SubmitType;
 use Symfony\Component\Form\FormBuilder;
@@ -20,18 +21,20 @@ use Symfony\Component\Form\SubmitButtonBuilder;
 
 class FormBuilderTest extends TestCase
 {
+    use ForwardCompatTestTrait;
+
     private $dispatcher;
     private $factory;
     private $builder;
 
-    protected function setUp()
+    private function doSetUp()
     {
         $this->dispatcher = $this->getMockBuilder('Symfony\Component\EventDispatcher\EventDispatcherInterface')->getMock();
         $this->factory = $this->getMockBuilder('Symfony\Component\Form\FormFactoryInterface')->getMock();
         $this->builder = new FormBuilder('name', null, $this->dispatcher, $this->factory);
     }
 
-    protected function tearDown()
+    private function doTearDown()
     {
         $this->dispatcher = null;
         $this->factory = null;
@@ -169,12 +172,8 @@ class FormBuilderTest extends TestCase
 
     public function testGetUnknown()
     {
-        if (method_exists($this, 'expectException')) {
-            $this->expectException('Symfony\Component\Form\Exception\InvalidArgumentException');
-            $this->expectExceptionMessage('The child with the name "foo" does not exist.');
-        } else {
-            $this->setExpectedException('Symfony\Component\Form\Exception\InvalidArgumentException', 'The child with the name "foo" does not exist.');
-        }
+        $this->expectException('Symfony\Component\Form\Exception\InvalidArgumentException');
+        $this->expectExceptionMessage('The child with the name "foo" does not exist.');
 
         $this->builder->get('foo');
     }

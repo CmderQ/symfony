@@ -12,6 +12,7 @@
 namespace Symfony\Component\Form\Tests\Command;
 
 use PHPUnit\Framework\TestCase;
+use Symfony\Bridge\PhpUnit\ForwardCompatTestTrait;
 use Symfony\Component\Console\Application;
 use Symfony\Component\Console\Exception\InvalidArgumentException;
 use Symfony\Component\Console\Tester\CommandTester;
@@ -25,6 +26,8 @@ use Symfony\Component\OptionsResolver\OptionsResolver;
 
 class DebugCommandTest extends TestCase
 {
+    use ForwardCompatTestTrait;
+
     public function testDebugDefaults()
     {
         $tester = $this->createCommandTester();
@@ -41,11 +44,6 @@ class DebugCommandTest extends TestCase
 
         $this->assertEquals(0, $ret, 'Returns 0 in case of success');
         $this->assertSame(<<<TXT
-
-Built-in form types (Symfony\Component\Form\Extension\Core\Type)
-----------------------------------------------------------------
-
- TimeType
 
 Service form types
 ------------------
@@ -84,12 +82,10 @@ TXT
         $this->assertContains('Symfony\Component\Form\Extension\Core\Type\FormType (method)', $tester->getDisplay());
     }
 
-    /**
-     * @expectedException \Symfony\Component\Console\Exception\InvalidArgumentException
-     * @expectedExceptionMessage Could not find type "NonExistentType"
-     */
     public function testDebugSingleFormTypeNotFound()
     {
+        $this->expectException('Symfony\Component\Console\Exception\InvalidArgumentException');
+        $this->expectExceptionMessage('Could not find type "NonExistentType"');
         $tester = $this->createCommandTester();
         $tester->execute(['class' => 'NonExistentType'], ['decorated' => false, 'interactive' => false]);
     }
@@ -104,12 +100,8 @@ Did you mean one of these?
     Symfony\Component\Form\Tests\Fixtures\Debug\B\AmbiguousType
 TXT;
 
-        if (method_exists($this, 'expectException')) {
-            $this->expectException(InvalidArgumentException::class);
-            $this->expectExceptionMessage($expectedMessage);
-        } else {
-            $this->setExpectedException(InvalidArgumentException::class, $expectedMessage);
-        }
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage($expectedMessage);
 
         $tester = $this->createCommandTester([
             'Symfony\Component\Form\Tests\Fixtures\Debug\A',
@@ -145,11 +137,9 @@ TXT
         , $output);
     }
 
-    /**
-     * @expectedException \InvalidArgumentException
-     */
     public function testDebugInvalidFormType()
     {
+        $this->expectException('InvalidArgumentException');
         $this->createCommandTester()->execute(['class' => 'test']);
     }
 

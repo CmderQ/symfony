@@ -12,6 +12,7 @@
 namespace Symfony\Component\Intl\Tests\Data\Bundle\Reader;
 
 use PHPUnit\Framework\TestCase;
+use Symfony\Bridge\PhpUnit\ForwardCompatTestTrait;
 use Symfony\Component\Intl\Data\Bundle\Reader\BundleEntryReader;
 use Symfony\Component\Intl\Exception\ResourceBundleNotFoundException;
 
@@ -20,6 +21,8 @@ use Symfony\Component\Intl\Exception\ResourceBundleNotFoundException;
  */
 class BundleEntryReaderTest extends TestCase
 {
+    use ForwardCompatTestTrait;
+
     const RES_DIR = '/res/dir';
 
     /**
@@ -61,7 +64,7 @@ class BundleEntryReaderTest extends TestCase
         'Foo' => 'Bar',
     ];
 
-    protected function setUp()
+    private function doSetUp()
     {
         $this->readerImpl = $this->getMockBuilder('Symfony\Component\Intl\Data\Bundle\Reader\BundleEntryReaderInterface')->getMock();
         $this->reader = new BundleEntryReader($this->readerImpl);
@@ -102,11 +105,9 @@ class BundleEntryReaderTest extends TestCase
         $this->assertSame('Bar', $this->reader->readEntry(self::RES_DIR, 'root', ['Entries', 'Foo']));
     }
 
-    /**
-     * @expectedException \Symfony\Component\Intl\Exception\MissingResourceException
-     */
     public function testReadNonExistingEntry()
     {
+        $this->expectException('Symfony\Component\Intl\Exception\MissingResourceException');
         $this->readerImpl->expects($this->once())
             ->method('read')
             ->with(self::RES_DIR, 'root')
@@ -130,11 +131,9 @@ class BundleEntryReaderTest extends TestCase
         $this->assertSame('Lah', $this->reader->readEntry(self::RES_DIR, 'en_GB', ['Entries', 'Bam']));
     }
 
-    /**
-     * @expectedException \Symfony\Component\Intl\Exception\MissingResourceException
-     */
     public function testDontFallbackIfEntryDoesNotExistAndFallbackDisabled()
     {
+        $this->expectException('Symfony\Component\Intl\Exception\MissingResourceException');
         $this->readerImpl->expects($this->once())
             ->method('read')
             ->with(self::RES_DIR, 'en_GB')
@@ -158,11 +157,9 @@ class BundleEntryReaderTest extends TestCase
         $this->assertSame('Lah', $this->reader->readEntry(self::RES_DIR, 'en_GB', ['Entries', 'Bam']));
     }
 
-    /**
-     * @expectedException \Symfony\Component\Intl\Exception\MissingResourceException
-     */
     public function testDontFallbackIfLocaleDoesNotExistAndFallbackDisabled()
     {
+        $this->expectException('Symfony\Component\Intl\Exception\MissingResourceException');
         $this->readerImpl->expects($this->once())
             ->method('read')
             ->with(self::RES_DIR, 'en_GB')
@@ -290,11 +287,9 @@ class BundleEntryReaderTest extends TestCase
         $this->assertSame($childData, $this->reader->readEntry(self::RES_DIR, 'en_GB', ['Foo', 'Bar'], true));
     }
 
-    /**
-     * @expectedException \Symfony\Component\Intl\Exception\MissingResourceException
-     */
     public function testFailIfEntryFoundNeitherInParentNorChild()
     {
+        $this->expectException('Symfony\Component\Intl\Exception\MissingResourceException');
         $this->readerImpl->expects($this->at(0))
             ->method('read')
             ->with(self::RES_DIR, 'en_GB')

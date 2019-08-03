@@ -11,6 +11,7 @@
 
 namespace Symfony\Component\Lock\Tests\Store;
 
+use Symfony\Bridge\PhpUnit\ForwardCompatTestTrait;
 use Symfony\Component\Lock\BlockingStoreInterface;
 use Symfony\Component\Lock\Exception\LockConflictedException;
 use Symfony\Component\Lock\Key;
@@ -25,6 +26,7 @@ use Symfony\Component\Lock\Strategy\UnanimousStrategy;
  */
 class CombinedStoreTest extends AbstractStoreTest
 {
+    use ForwardCompatTestTrait;
     use ExpiringStoreTestTrait;
 
     /**
@@ -59,20 +61,18 @@ class CombinedStoreTest extends AbstractStoreTest
     /** @var CombinedStore */
     private $store;
 
-    protected function setUp()
+    private function doSetUp()
     {
         $this->strategy = $this->getMockBuilder(StrategyInterface::class)->getMock();
-        $this->store1 = $this->getMockBuilder([PersistingStoreInterface::class, BlockingStoreInterface::class])->getMock();
-        $this->store2 = $this->getMockBuilder([PersistingStoreInterface::class, BlockingStoreInterface::class])->getMock();
+        $this->store1 = $this->createMock(BlockingStoreInterface::class);
+        $this->store2 = $this->createMock(BlockingStoreInterface::class);
 
         $this->store = new CombinedStore([$this->store1, $this->store2], $this->strategy);
     }
 
-    /**
-     * @expectedException \Symfony\Component\Lock\Exception\LockConflictedException
-     */
     public function testSaveThrowsExceptionOnFailure()
     {
+        $this->expectException('Symfony\Component\Lock\Exception\LockConflictedException');
         $key = new Key(uniqid(__METHOD__, true));
 
         $this->store1
@@ -165,11 +165,9 @@ class CombinedStoreTest extends AbstractStoreTest
         }
     }
 
-    /**
-     * @expectedException \Symfony\Component\Lock\Exception\LockConflictedException
-     */
     public function testputOffExpirationThrowsExceptionOnFailure()
     {
+        $this->expectException('Symfony\Component\Lock\Exception\LockConflictedException');
         $key = new Key(uniqid(__METHOD__, true));
         $ttl = random_int(1, 10);
 

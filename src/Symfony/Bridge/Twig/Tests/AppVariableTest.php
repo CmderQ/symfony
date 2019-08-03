@@ -3,6 +3,7 @@
 namespace Symfony\Bridge\Twig\Tests;
 
 use PHPUnit\Framework\TestCase;
+use Symfony\Bridge\PhpUnit\ForwardCompatTestTrait;
 use Symfony\Bridge\Twig\AppVariable;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Session\Flash\FlashBag;
@@ -10,12 +11,14 @@ use Symfony\Component\HttpFoundation\Session\Session;
 
 class AppVariableTest extends TestCase
 {
+    use ForwardCompatTestTrait;
+
     /**
      * @var AppVariable
      */
     protected $appVariable;
 
-    protected function setUp()
+    private function doSetUp()
     {
         $this->appVariable = new AppVariable();
     }
@@ -51,6 +54,7 @@ class AppVariableTest extends TestCase
     public function testGetSession()
     {
         $request = $this->getMockBuilder('Symfony\Component\HttpFoundation\Request')->getMock();
+        $request->method('hasSession')->willReturn(true);
         $request->method('getSession')->willReturn($session = new Session());
 
         $this->setRequestStack($request);
@@ -113,51 +117,39 @@ class AppVariableTest extends TestCase
         $this->assertNull($this->appVariable->getUser());
     }
 
-    /**
-     * @expectedException \RuntimeException
-     */
     public function testEnvironmentNotSet()
     {
+        $this->expectException('RuntimeException');
         $this->appVariable->getEnvironment();
     }
 
-    /**
-     * @expectedException \RuntimeException
-     */
     public function testDebugNotSet()
     {
+        $this->expectException('RuntimeException');
         $this->appVariable->getDebug();
     }
 
-    /**
-     * @expectedException \RuntimeException
-     */
     public function testGetTokenWithTokenStorageNotSet()
     {
+        $this->expectException('RuntimeException');
         $this->appVariable->getToken();
     }
 
-    /**
-     * @expectedException \RuntimeException
-     */
     public function testGetUserWithTokenStorageNotSet()
     {
+        $this->expectException('RuntimeException');
         $this->appVariable->getUser();
     }
 
-    /**
-     * @expectedException \RuntimeException
-     */
     public function testGetRequestWithRequestStackNotSet()
     {
+        $this->expectException('RuntimeException');
         $this->appVariable->getRequest();
     }
 
-    /**
-     * @expectedException \RuntimeException
-     */
     public function testGetSessionWithRequestStackNotSet()
     {
+        $this->expectException('RuntimeException');
         $this->appVariable->getSession();
     }
 
@@ -267,6 +259,7 @@ class AppVariableTest extends TestCase
         $session->method('getFlashBag')->willReturn($flashBag);
 
         $request = $this->getMockBuilder('Symfony\Component\HttpFoundation\Request')->getMock();
+        $request->method('hasSession')->willReturn(true);
         $request->method('getSession')->willReturn($session);
         $this->setRequestStack($request);
 

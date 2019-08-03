@@ -12,6 +12,7 @@
 namespace Symfony\Bridge\Doctrine\Tests\DependencyInjection;
 
 use PHPUnit\Framework\TestCase;
+use Symfony\Bridge\PhpUnit\ForwardCompatTestTrait;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Definition;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBag;
@@ -21,12 +22,14 @@ use Symfony\Component\DependencyInjection\ParameterBag\ParameterBag;
  */
 class DoctrineExtensionTest extends TestCase
 {
+    use ForwardCompatTestTrait;
+
     /**
      * @var \Symfony\Bridge\Doctrine\DependencyInjection\AbstractDoctrineExtension
      */
     private $extension;
 
-    protected function setUp()
+    private function doSetUp()
     {
         parent::setUp();
 
@@ -49,11 +52,9 @@ class DoctrineExtensionTest extends TestCase
             });
     }
 
-    /**
-     * @expectedException \LogicException
-     */
     public function testFixManagersAutoMappingsWithTwoAutomappings()
     {
+        $this->expectException('LogicException');
         $emConfigs = [
             'em1' => [
                 'auto_mapping' => true,
@@ -234,12 +235,10 @@ class DoctrineExtensionTest extends TestCase
         $this->assertTrue($container->hasAlias('doctrine.orm.default_metadata_cache'));
     }
 
-    /**
-     * @expectedException \InvalidArgumentException
-     * @expectedExceptionMessage "unrecognized_type" is an unrecognized Doctrine cache driver.
-     */
     public function testUnrecognizedCacheDriverException()
     {
+        $this->expectException('InvalidArgumentException');
+        $this->expectExceptionMessage('"unrecognized_type" is an unrecognized Doctrine cache driver.');
         $cacheName = 'metadata_cache';
         $container = $this->createContainer();
         $objectManager = [

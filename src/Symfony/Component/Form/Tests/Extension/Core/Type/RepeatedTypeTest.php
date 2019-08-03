@@ -11,10 +11,13 @@
 
 namespace Symfony\Component\Form\Tests\Extension\Core\Type;
 
+use Symfony\Bridge\PhpUnit\ForwardCompatTestTrait;
 use Symfony\Component\Form\Form;
 
 class RepeatedTypeTest extends BaseTypeTest
 {
+    use ForwardCompatTestTrait;
+
     const TESTED_TYPE = 'Symfony\Component\Form\Extension\Core\Type\RepeatedType';
 
     /**
@@ -22,7 +25,7 @@ class RepeatedTypeTest extends BaseTypeTest
      */
     protected $form;
 
-    protected function setUp()
+    private function doSetUp()
     {
         parent::setUp();
 
@@ -78,33 +81,27 @@ class RepeatedTypeTest extends BaseTypeTest
         $this->assertFalse($form['second']->isRequired());
     }
 
-    /**
-     * @expectedException \Symfony\Component\OptionsResolver\Exception\InvalidOptionsException
-     */
     public function testSetInvalidOptions()
     {
+        $this->expectException('Symfony\Component\OptionsResolver\Exception\InvalidOptionsException');
         $this->factory->create(static::TESTED_TYPE, null, [
             'type' => TextTypeTest::TESTED_TYPE,
             'options' => 'bad value',
         ]);
     }
 
-    /**
-     * @expectedException \Symfony\Component\OptionsResolver\Exception\InvalidOptionsException
-     */
     public function testSetInvalidFirstOptions()
     {
+        $this->expectException('Symfony\Component\OptionsResolver\Exception\InvalidOptionsException');
         $this->factory->create(static::TESTED_TYPE, null, [
             'type' => TextTypeTest::TESTED_TYPE,
             'first_options' => 'bad value',
         ]);
     }
 
-    /**
-     * @expectedException \Symfony\Component\OptionsResolver\Exception\InvalidOptionsException
-     */
     public function testSetInvalidSecondOptions()
     {
+        $this->expectException('Symfony\Component\OptionsResolver\Exception\InvalidOptionsException');
         $this->factory->create(static::TESTED_TYPE, null, [
             'type' => TextTypeTest::TESTED_TYPE,
             'second_options' => 'bad value',

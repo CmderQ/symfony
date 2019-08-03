@@ -13,6 +13,7 @@ namespace Symfony\Bundle\FrameworkBundle\Tests\Translation;
 
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
+use Symfony\Bridge\PhpUnit\ForwardCompatTestTrait;
 use Symfony\Bundle\FrameworkBundle\Translation\Translator;
 use Symfony\Component\Config\Resource\DirectoryResource;
 use Symfony\Component\Config\Resource\FileExistenceResource;
@@ -22,15 +23,17 @@ use Symfony\Component\Translation\MessageCatalogue;
 
 class TranslatorTest extends TestCase
 {
+    use ForwardCompatTestTrait;
+
     protected $tmpDir;
 
-    protected function setUp()
+    private function doSetUp()
     {
         $this->tmpDir = sys_get_temp_dir().'/sf_translation';
         $this->deleteTmpDir();
     }
 
-    protected function tearDown()
+    private function doTearDown()
     {
         $this->deleteTmpDir();
     }
@@ -96,12 +99,10 @@ class TranslatorTest extends TestCase
         $this->assertEquals('foobarbax (sr@latin)', $translator->trans('foobarbax'));
     }
 
-    /**
-     * @expectedException \InvalidArgumentException
-     * @expectedExceptionMessage Invalid "invalid locale" locale.
-     */
     public function testTransWithCachingWithInvalidLocale()
     {
+        $this->expectException('InvalidArgumentException');
+        $this->expectExceptionMessage('Invalid "invalid locale" locale.');
         $loader = $this->getMockBuilder('Symfony\Component\Translation\Loader\LoaderInterface')->getMock();
         $translator = $this->getTranslator($loader, ['cache_dir' => $this->tmpDir], 'loader', '\Symfony\Bundle\FrameworkBundle\Tests\Translation\TranslatorWithInvalidLocale');
 
@@ -131,12 +132,10 @@ class TranslatorTest extends TestCase
         $this->assertSame('en', $translator->getLocale());
     }
 
-    /**
-     * @expectedException \Symfony\Component\Translation\Exception\InvalidArgumentException
-     * @expectedExceptionMessage The Translator does not support the following options: 'foo'
-     */
     public function testInvalidOptions()
     {
+        $this->expectException('Symfony\Component\Translation\Exception\InvalidArgumentException');
+        $this->expectExceptionMessage('The Translator does not support the following options: \'foo\'');
         $container = $this->getMockBuilder('Symfony\Component\DependencyInjection\ContainerInterface')->getMock();
 
         (new Translator($container, new MessageFormatter(), 'en', [], ['foo' => 'bar']));

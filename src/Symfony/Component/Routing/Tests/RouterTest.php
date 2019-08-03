@@ -12,17 +12,20 @@
 namespace Symfony\Component\Routing\Tests;
 
 use PHPUnit\Framework\TestCase;
+use Symfony\Bridge\PhpUnit\ForwardCompatTestTrait;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\RouteCollection;
 use Symfony\Component\Routing\Router;
 
 class RouterTest extends TestCase
 {
+    use ForwardCompatTestTrait;
+
     private $router = null;
 
     private $loader = null;
 
-    protected function setUp()
+    private function doSetUp()
     {
         $this->loader = $this->getMockBuilder('Symfony\Component\Config\Loader\LoaderInterface')->getMock();
         $this->router = new Router($this->loader, 'routing.yml');
@@ -41,12 +44,10 @@ class RouterTest extends TestCase
         $this->assertSame('ResourceType', $this->router->getOption('resource_type'));
     }
 
-    /**
-     * @expectedException \InvalidArgumentException
-     * @expectedExceptionMessage The Router does not support the following options: "option_foo", "option_bar"
-     */
     public function testSetOptionsWithUnsupportedOptions()
     {
+        $this->expectException('InvalidArgumentException');
+        $this->expectExceptionMessage('The Router does not support the following options: "option_foo", "option_bar"');
         $this->router->setOptions([
             'cache_dir' => './cache',
             'option_foo' => true,
@@ -62,21 +63,17 @@ class RouterTest extends TestCase
         $this->assertSame('./cache', $this->router->getOption('cache_dir'));
     }
 
-    /**
-     * @expectedException \InvalidArgumentException
-     * @expectedExceptionMessage The Router does not support the "option_foo" option
-     */
     public function testSetOptionWithUnsupportedOption()
     {
+        $this->expectException('InvalidArgumentException');
+        $this->expectExceptionMessage('The Router does not support the "option_foo" option');
         $this->router->setOption('option_foo', true);
     }
 
-    /**
-     * @expectedException \InvalidArgumentException
-     * @expectedExceptionMessage The Router does not support the "option_foo" option
-     */
     public function testGetOptionWithUnsupportedOption()
     {
+        $this->expectException('InvalidArgumentException');
+        $this->expectExceptionMessage('The Router does not support the "option_foo" option');
         $this->router->getOption('option_foo', true);
     }
 

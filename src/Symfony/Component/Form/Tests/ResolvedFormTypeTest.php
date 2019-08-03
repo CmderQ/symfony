@@ -12,6 +12,7 @@
 namespace Symfony\Component\Form\Tests;
 
 use PHPUnit\Framework\TestCase;
+use Symfony\Bridge\PhpUnit\ForwardCompatTestTrait;
 use Symfony\Component\Form\Form;
 use Symfony\Component\Form\FormConfigInterface;
 use Symfony\Component\Form\FormTypeExtensionInterface;
@@ -24,6 +25,8 @@ use Symfony\Component\OptionsResolver\OptionsResolver;
  */
 class ResolvedFormTypeTest extends TestCase
 {
+    use ForwardCompatTestTrait;
+
     /**
      * @var \PHPUnit_Framework_MockObject_MockObject
      */
@@ -69,7 +72,7 @@ class ResolvedFormTypeTest extends TestCase
      */
     private $resolvedType;
 
-    protected function setUp()
+    private function doSetUp()
     {
         $this->dispatcher = $this->getMockBuilder('Symfony\Component\EventDispatcher\EventDispatcherInterface')->getMock();
         $this->factory = $this->getMockBuilder('Symfony\Component\Form\FormFactoryInterface')->getMock();
@@ -179,12 +182,10 @@ class ResolvedFormTypeTest extends TestCase
         $this->assertSame('\stdClass', $builder->getDataClass());
     }
 
-    /**
-     * @expectedException \Symfony\Component\OptionsResolver\Exception\MissingOptionsException
-     * @expectedExceptionMessage An error has occurred resolving the options of the form "stdClass": The required option "foo" is missing.
-     */
     public function testFailsCreateBuilderOnInvalidFormOptionsResolution()
     {
+        $this->expectException('Symfony\Component\OptionsResolver\Exception\MissingOptionsException');
+        $this->expectExceptionMessage('An error has occurred resolving the options of the form "stdClass": The required option "foo" is missing.');
         $optionsResolver = (new OptionsResolver())
             ->setRequired('foo')
         ;

@@ -12,6 +12,7 @@
 namespace Symfony\Component\Intl\Tests\Data\Bundle\Reader;
 
 use PHPUnit\Framework\TestCase;
+use Symfony\Bridge\PhpUnit\ForwardCompatTestTrait;
 use Symfony\Component\Intl\Data\Bundle\Reader\PhpBundleReader;
 
 /**
@@ -19,12 +20,14 @@ use Symfony\Component\Intl\Data\Bundle\Reader\PhpBundleReader;
  */
 class PhpBundleReaderTest extends TestCase
 {
+    use ForwardCompatTestTrait;
+
     /**
      * @var PhpBundleReader
      */
     private $reader;
 
-    protected function setUp()
+    private function doSetUp()
     {
         $this->reader = new PhpBundleReader();
     }
@@ -33,40 +36,32 @@ class PhpBundleReaderTest extends TestCase
     {
         $data = $this->reader->read(__DIR__.'/Fixtures/php', 'en');
 
-        $this->assertInternalType('array', $data);
+        $this->assertIsArray($data);
         $this->assertSame('Bar', $data['Foo']);
         $this->assertArrayNotHasKey('ExistsNot', $data);
     }
 
-    /**
-     * @expectedException \Symfony\Component\Intl\Exception\ResourceBundleNotFoundException
-     */
     public function testReadFailsIfNonExistingLocale()
     {
+        $this->expectException('Symfony\Component\Intl\Exception\ResourceBundleNotFoundException');
         $this->reader->read(__DIR__.'/Fixtures/php', 'foo');
     }
 
-    /**
-     * @expectedException \Symfony\Component\Intl\Exception\RuntimeException
-     */
     public function testReadFailsIfNonExistingDirectory()
     {
+        $this->expectException('Symfony\Component\Intl\Exception\RuntimeException');
         $this->reader->read(__DIR__.'/foo', 'en');
     }
 
-    /**
-     * @expectedException \Symfony\Component\Intl\Exception\RuntimeException
-     */
     public function testReadFailsIfNotAFile()
     {
+        $this->expectException('Symfony\Component\Intl\Exception\RuntimeException');
         $this->reader->read(__DIR__.'/Fixtures/NotAFile', 'en');
     }
 
-    /**
-     * @expectedException \Symfony\Component\Intl\Exception\ResourceBundleNotFoundException
-     */
     public function testReaderDoesNotBreakOutOfGivenPath()
     {
+        $this->expectException('Symfony\Component\Intl\Exception\ResourceBundleNotFoundException');
         $this->reader->read(__DIR__.'/Fixtures/php', '../invalid_directory/en');
     }
 }

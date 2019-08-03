@@ -12,17 +12,20 @@
 namespace Symfony\Component\PropertyAccess\Tests;
 
 use PHPUnit\Framework\TestCase;
+use Symfony\Bridge\PhpUnit\ForwardCompatTestTrait;
 use Symfony\Component\PropertyAccess\PropertyAccess;
 use Symfony\Component\PropertyAccess\PropertyAccessor;
 
 abstract class PropertyAccessorArrayAccessTest extends TestCase
 {
+    use ForwardCompatTestTrait;
+
     /**
      * @var PropertyAccessor
      */
     protected $propertyAccessor;
 
-    protected function setUp()
+    private function doSetUp()
     {
         $this->propertyAccessor = new PropertyAccessor();
     }
@@ -45,11 +48,9 @@ abstract class PropertyAccessorArrayAccessTest extends TestCase
         $this->assertSame($value, $this->propertyAccessor->getValue($collection, $path));
     }
 
-    /**
-     * @expectedException \Symfony\Component\PropertyAccess\Exception\NoSuchIndexException
-     */
     public function testGetValueFailsIfNoSuchIndex()
     {
+        $this->expectException('Symfony\Component\PropertyAccess\Exception\NoSuchIndexException');
         $this->propertyAccessor = PropertyAccess::createPropertyAccessorBuilder()
             ->enableExceptionOnInvalidIndex()
             ->getPropertyAccessor();

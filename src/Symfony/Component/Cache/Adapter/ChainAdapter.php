@@ -61,7 +61,7 @@ class ChainAdapter implements AdapterInterface, CacheInterface, PruneableInterfa
         $this->adapterCount = \count($this->adapters);
 
         $this->syncItem = \Closure::bind(
-            function ($sourceItem, $item) use ($defaultLifetime) {
+            static function ($sourceItem, $item) use ($defaultLifetime) {
                 $item->value = $sourceItem->value;
                 $item->expiry = $sourceItem->expiry;
                 $item->isHit = $sourceItem->isHit;
@@ -145,7 +145,7 @@ class ChainAdapter implements AdapterInterface, CacheInterface, PruneableInterfa
         return $this->generateItems($this->adapters[0]->getItems($keys), 0);
     }
 
-    private function generateItems($items, $adapterIndex)
+    private function generateItems(iterable $items, int $adapterIndex)
     {
         $missing = [];
         $misses = [];

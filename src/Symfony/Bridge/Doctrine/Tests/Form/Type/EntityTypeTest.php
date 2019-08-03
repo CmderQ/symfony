@@ -28,6 +28,7 @@ use Symfony\Bridge\Doctrine\Tests\Fixtures\SingleIntIdEntity;
 use Symfony\Bridge\Doctrine\Tests\Fixtures\SingleIntIdNoToStringEntity;
 use Symfony\Bridge\Doctrine\Tests\Fixtures\SingleStringCastableIdEntity;
 use Symfony\Bridge\Doctrine\Tests\Fixtures\SingleStringIdEntity;
+use Symfony\Bridge\PhpUnit\ForwardCompatTestTrait;
 use Symfony\Component\Form\ChoiceList\View\ChoiceGroupView;
 use Symfony\Component\Form\ChoiceList\View\ChoiceView;
 use Symfony\Component\Form\Forms;
@@ -36,6 +37,8 @@ use Symfony\Component\Form\Tests\Extension\Core\Type\FormTypeTest;
 
 class EntityTypeTest extends BaseTypeTest
 {
+    use ForwardCompatTestTrait;
+
     const TESTED_TYPE = 'Symfony\Bridge\Doctrine\Form\Type\EntityType';
 
     const ITEM_GROUP_CLASS = 'Symfony\Bridge\Doctrine\Tests\Fixtures\GroupableEntity';
@@ -59,7 +62,7 @@ class EntityTypeTest extends BaseTypeTest
 
     protected static $supportedFeatureSetVersion = 304;
 
-    protected function setUp()
+    private function doSetUp()
     {
         $this->em = DoctrineTestHelper::createTestEntityManager();
         $this->emRegistry = $this->createRegistryMock('default', $this->em);
@@ -89,7 +92,7 @@ class EntityTypeTest extends BaseTypeTest
         }
     }
 
-    protected function tearDown()
+    private function doTearDown()
     {
         parent::tearDown();
 
@@ -115,19 +118,15 @@ class EntityTypeTest extends BaseTypeTest
         // be managed!
     }
 
-    /**
-     * @expectedException \Symfony\Component\OptionsResolver\Exception\MissingOptionsException
-     */
     public function testClassOptionIsRequired()
     {
+        $this->expectException('Symfony\Component\OptionsResolver\Exception\MissingOptionsException');
         $this->factory->createNamed('name', static::TESTED_TYPE);
     }
 
-    /**
-     * @expectedException \Symfony\Component\Form\Exception\RuntimeException
-     */
     public function testInvalidClassOption()
     {
+        $this->expectException('Symfony\Component\Form\Exception\RuntimeException');
         $this->factory->createNamed('name', static::TESTED_TYPE, null, [
             'class' => 'foo',
         ]);
@@ -187,11 +186,9 @@ class EntityTypeTest extends BaseTypeTest
         $this->assertEquals([1 => new ChoiceView($entity1, '1', 'Foo'), 2 => new ChoiceView($entity2, '2', 'Bar')], $view->vars['choices']);
     }
 
-    /**
-     * @expectedException \Symfony\Component\OptionsResolver\Exception\InvalidOptionsException
-     */
     public function testConfigureQueryBuilderWithNonQueryBuilderAndNonClosure()
     {
+        $this->expectException('Symfony\Component\OptionsResolver\Exception\InvalidOptionsException');
         $field = $this->factory->createNamed('name', static::TESTED_TYPE, null, [
             'em' => 'default',
             'class' => self::SINGLE_IDENT_CLASS,
@@ -199,11 +196,9 @@ class EntityTypeTest extends BaseTypeTest
         ]);
     }
 
-    /**
-     * @expectedException \Symfony\Component\Form\Exception\UnexpectedTypeException
-     */
     public function testConfigureQueryBuilderWithClosureReturningNonQueryBuilder()
     {
+        $this->expectException('Symfony\Component\Form\Exception\UnexpectedTypeException');
         $field = $this->factory->createNamed('name', static::TESTED_TYPE, null, [
             'em' => 'default',
             'class' => self::SINGLE_IDENT_CLASS,
@@ -1635,7 +1630,7 @@ class EntityTypeTest extends BaseTypeTest
         ]);
         $form->setData($emptyArray);
         $form->submit(null);
-        $this->assertInternalType('array', $form->getData());
+        $this->assertIsArray($form->getData());
         $this->assertEquals([], $form->getData());
         $this->assertEquals([], $form->getNormData());
         $this->assertSame([], $form->getViewData(), 'View data is always an array');
@@ -1653,7 +1648,7 @@ class EntityTypeTest extends BaseTypeTest
         $existing = [0 => $entity1];
         $form->setData($existing);
         $form->submit(null);
-        $this->assertInternalType('array', $form->getData());
+        $this->assertIsArray($form->getData());
         $this->assertEquals([], $form->getData());
         $this->assertEquals([], $form->getNormData());
         $this->assertSame([], $form->getViewData(), 'View data is always an array');

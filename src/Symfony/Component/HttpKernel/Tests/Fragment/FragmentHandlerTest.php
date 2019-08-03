@@ -12,6 +12,7 @@
 namespace Symfony\Component\HttpKernel\Tests\Fragment;
 
 use PHPUnit\Framework\TestCase;
+use Symfony\Bridge\PhpUnit\ForwardCompatTestTrait;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Fragment\FragmentHandler;
@@ -21,9 +22,11 @@ use Symfony\Component\HttpKernel\Fragment\FragmentHandler;
  */
 class FragmentHandlerTest extends TestCase
 {
+    use ForwardCompatTestTrait;
+
     private $requestStack;
 
-    protected function setUp()
+    private function doSetUp()
     {
         $this->requestStack = $this->getMockBuilder('Symfony\\Component\\HttpFoundation\\RequestStack')
             ->disableOriginalConstructor()
@@ -36,31 +39,25 @@ class FragmentHandlerTest extends TestCase
         ;
     }
 
-    /**
-     * @expectedException \InvalidArgumentException
-     */
     public function testRenderWhenRendererDoesNotExist()
     {
+        $this->expectException('InvalidArgumentException');
         $handler = new FragmentHandler($this->requestStack);
         $handler->render('/', 'foo');
     }
 
-    /**
-     * @expectedException \InvalidArgumentException
-     */
     public function testRenderWithUnknownRenderer()
     {
+        $this->expectException('InvalidArgumentException');
         $handler = $this->getHandler($this->returnValue(new Response('foo')));
 
         $handler->render('/', 'bar');
     }
 
-    /**
-     * @expectedException \RuntimeException
-     * @expectedExceptionMessage Error when rendering "http://localhost/" (Status code is 404).
-     */
     public function testDeliverWithUnsuccessfulResponse()
     {
+        $this->expectException('RuntimeException');
+        $this->expectExceptionMessage('Error when rendering "http://localhost/" (Status code is 404).');
         $handler = $this->getHandler($this->returnValue(new Response('foo', 404)));
 
         $handler->render('/', 'foo');

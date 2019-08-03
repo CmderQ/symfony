@@ -12,16 +12,19 @@
 namespace Symfony\Component\Serializer\Tests\Encoder;
 
 use PHPUnit\Framework\TestCase;
+use Symfony\Bridge\PhpUnit\ForwardCompatTestTrait;
 use Symfony\Component\Serializer\Encoder\JsonEncoder;
 use Symfony\Component\Serializer\Normalizer\CustomNormalizer;
 use Symfony\Component\Serializer\Serializer;
 
 class JsonEncoderTest extends TestCase
 {
+    use ForwardCompatTestTrait;
+
     private $encoder;
     private $serializer;
 
-    protected function setUp()
+    private function doSetUp()
     {
         $this->encoder = new JsonEncoder();
         $this->serializer = new Serializer([new CustomNormalizer()], ['json' => new JsonEncoder()]);
@@ -65,11 +68,9 @@ class JsonEncoderTest extends TestCase
         $this->assertEquals($expected, $this->serializer->serialize($arr, 'json'), 'Context should not be persistent');
     }
 
-    /**
-     * @expectedException \Symfony\Component\Serializer\Exception\UnexpectedValueException
-     */
     public function testEncodeNotUtf8WithoutPartialOnError()
     {
+        $this->expectException('Symfony\Component\Serializer\Exception\UnexpectedValueException');
         $arr = [
             'utf8' => 'Hello World!',
             'notUtf8' => "\xb0\xd0\xb5\xd0",

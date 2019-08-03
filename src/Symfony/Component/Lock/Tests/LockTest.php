@@ -13,6 +13,7 @@ namespace Symfony\Component\Lock\Tests;
 
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
+use Symfony\Bridge\PhpUnit\ForwardCompatTestTrait;
 use Symfony\Component\Lock\BlockingStoreInterface;
 use Symfony\Component\Lock\Exception\LockConflictedException;
 use Symfony\Component\Lock\Key;
@@ -24,6 +25,8 @@ use Symfony\Component\Lock\PersistingStoreInterface;
  */
 class LockTest extends TestCase
 {
+    use ForwardCompatTestTrait;
+
     public function testAcquireNoBlocking()
     {
         $key = new Key(uniqid(__METHOD__, true));
@@ -97,7 +100,7 @@ class LockTest extends TestCase
     public function testAcquireBlocking()
     {
         $key = new Key(uniqid(__METHOD__, true));
-        $store = $this->getMockBuilder([PersistingStoreInterface::class, BlockingStoreInterface::class])->getMock();
+        $store = $this->createMock(BlockingStoreInterface::class);
         $lock = new Lock($key, $store);
 
         $store
@@ -213,7 +216,7 @@ class LockTest extends TestCase
     public function testReleaseOnDestruction()
     {
         $key = new Key(uniqid(__METHOD__, true));
-        $store = $this->getMockBuilder([PersistingStoreInterface::class, BlockingStoreInterface::class])->getMock();
+        $store = $this->createMock(BlockingStoreInterface::class);
         $lock = new Lock($key, $store, 10);
 
         $store
@@ -232,7 +235,7 @@ class LockTest extends TestCase
     public function testNoAutoReleaseWhenNotConfigured()
     {
         $key = new Key(uniqid(__METHOD__, true));
-        $store = $this->getMockBuilder([PersistingStoreInterface::class, BlockingStoreInterface::class])->getMock();
+        $store = $this->createMock(BlockingStoreInterface::class);
         $lock = new Lock($key, $store, 10, false);
 
         $store
@@ -248,11 +251,9 @@ class LockTest extends TestCase
         unset($lock);
     }
 
-    /**
-     * @expectedException \Symfony\Component\Lock\Exception\LockReleasingException
-     */
     public function testReleaseThrowsExceptionWhenDeletionFail()
     {
+        $this->expectException('Symfony\Component\Lock\Exception\LockReleasingException');
         $key = new Key(uniqid(__METHOD__, true));
         $store = $this->getMockBuilder(PersistingStoreInterface::class)->getMock();
         $lock = new Lock($key, $store, 10);
@@ -271,11 +272,9 @@ class LockTest extends TestCase
         $lock->release();
     }
 
-    /**
-     * @expectedException \Symfony\Component\Lock\Exception\LockReleasingException
-     */
     public function testReleaseThrowsExceptionIfNotWellDeleted()
     {
+        $this->expectException('Symfony\Component\Lock\Exception\LockReleasingException');
         $key = new Key(uniqid(__METHOD__, true));
         $store = $this->getMockBuilder(PersistingStoreInterface::class)->getMock();
         $lock = new Lock($key, $store, 10);
@@ -294,11 +293,9 @@ class LockTest extends TestCase
         $lock->release();
     }
 
-    /**
-     * @expectedException \Symfony\Component\Lock\Exception\LockReleasingException
-     */
     public function testReleaseThrowsAndLog()
     {
+        $this->expectException('Symfony\Component\Lock\Exception\LockReleasingException');
         $key = new Key(uniqid(__METHOD__, true));
         $store = $this->getMockBuilder(PersistingStoreInterface::class)->getMock();
         $logger = $this->getMockBuilder(LoggerInterface::class)->getMock();

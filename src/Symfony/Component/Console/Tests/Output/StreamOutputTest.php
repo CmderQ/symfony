@@ -12,19 +12,22 @@
 namespace Symfony\Component\Console\Tests\Output;
 
 use PHPUnit\Framework\TestCase;
+use Symfony\Bridge\PhpUnit\ForwardCompatTestTrait;
 use Symfony\Component\Console\Output\Output;
 use Symfony\Component\Console\Output\StreamOutput;
 
 class StreamOutputTest extends TestCase
 {
+    use ForwardCompatTestTrait;
+
     protected $stream;
 
-    protected function setUp()
+    private function doSetUp()
     {
         $this->stream = fopen('php://memory', 'a', false);
     }
 
-    protected function tearDown()
+    private function doTearDown()
     {
         $this->stream = null;
     }
@@ -36,12 +39,10 @@ class StreamOutputTest extends TestCase
         $this->assertTrue($output->isDecorated(), '__construct() takes the decorated flag as its second argument');
     }
 
-    /**
-     * @expectedException        \InvalidArgumentException
-     * @expectedExceptionMessage The StreamOutput class needs a stream as its first argument.
-     */
     public function testStreamIsRequired()
     {
+        $this->expectException('InvalidArgumentException');
+        $this->expectExceptionMessage('The StreamOutput class needs a stream as its first argument.');
         new StreamOutput('foo');
     }
 

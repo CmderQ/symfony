@@ -12,13 +12,16 @@
 namespace Symfony\Component\Config\Tests\Resource;
 
 use PHPUnit\Framework\TestCase;
+use Symfony\Bridge\PhpUnit\ForwardCompatTestTrait;
 use Symfony\Component\Config\Resource\DirectoryResource;
 
 class DirectoryResourceTest extends TestCase
 {
+    use ForwardCompatTestTrait;
+
     protected $directory;
 
-    protected function setUp()
+    private function doSetUp()
     {
         $this->directory = sys_get_temp_dir().\DIRECTORY_SEPARATOR.'symfonyDirectoryIterator';
         if (!file_exists($this->directory)) {
@@ -27,7 +30,7 @@ class DirectoryResourceTest extends TestCase
         touch($this->directory.'/tmp.xml');
     }
 
-    protected function tearDown()
+    private function doTearDown()
     {
         if (!is_dir($this->directory)) {
             return;
@@ -63,12 +66,10 @@ class DirectoryResourceTest extends TestCase
         $this->assertEquals('bar', $resource->getPattern());
     }
 
-    /**
-     * @expectedException \InvalidArgumentException
-     * @expectedExceptionMessageRegExp /The directory ".*" does not exist./
-     */
     public function testResourceDoesNotExist()
     {
+        $this->expectException('InvalidArgumentException');
+        $this->expectExceptionMessageRegExp('/The directory ".*" does not exist./');
         $resource = new DirectoryResource('/____foo/foobar'.mt_rand(1, 999999));
     }
 

@@ -12,6 +12,7 @@
 namespace Symfony\Component\Form\Tests;
 
 use PHPUnit\Framework\TestCase;
+use Symfony\Bridge\PhpUnit\ForwardCompatTestTrait;
 use Symfony\Component\Form\FormFactory;
 use Symfony\Component\Form\FormTypeGuesserChain;
 use Symfony\Component\Form\Guess\Guess;
@@ -23,6 +24,8 @@ use Symfony\Component\Form\Guess\ValueGuess;
  */
 class FormFactoryTest extends TestCase
 {
+    use ForwardCompatTestTrait;
+
     /**
      * @var \PHPUnit_Framework_MockObject_MockObject
      */
@@ -48,7 +51,7 @@ class FormFactoryTest extends TestCase
      */
     private $factory;
 
-    protected function setUp()
+    private function doSetUp()
     {
         $this->guesser1 = $this->getMockBuilder('Symfony\Component\Form\FormTypeGuesserInterface')->getMock();
         $this->guesser2 = $this->getMockBuilder('Symfony\Component\Form\FormTypeGuesserInterface')->getMock();
@@ -146,21 +149,17 @@ class FormFactoryTest extends TestCase
         $this->assertSame($this->builder, $this->factory->createNamedBuilder('name', 'type', 'DATA', $options));
     }
 
-    /**
-     * @expectedException        \Symfony\Component\Form\Exception\UnexpectedTypeException
-     * @expectedExceptionMessage Expected argument of type "string", "stdClass" given
-     */
     public function testCreateNamedBuilderThrowsUnderstandableException()
     {
+        $this->expectException('Symfony\Component\Form\Exception\UnexpectedTypeException');
+        $this->expectExceptionMessage('Expected argument of type "string", "stdClass" given');
         $this->factory->createNamedBuilder('name', new \stdClass());
     }
 
-    /**
-     * @expectedException        \Symfony\Component\Form\Exception\UnexpectedTypeException
-     * @expectedExceptionMessage Expected argument of type "string", "stdClass" given
-     */
     public function testCreateThrowsUnderstandableException()
     {
+        $this->expectException('Symfony\Component\Form\Exception\UnexpectedTypeException');
+        $this->expectExceptionMessage('Expected argument of type "string", "stdClass" given');
         $this->factory->create(new \stdClass());
     }
 

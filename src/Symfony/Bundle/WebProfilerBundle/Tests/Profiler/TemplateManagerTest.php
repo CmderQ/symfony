@@ -11,6 +11,7 @@
 
 namespace Symfony\Bundle\WebProfilerBundle\Tests\Profiler;
 
+use Symfony\Bridge\PhpUnit\ForwardCompatTestTrait;
 use Symfony\Bundle\WebProfilerBundle\Profiler\TemplateManager;
 use Symfony\Bundle\WebProfilerBundle\Tests\TestCase;
 use Symfony\Component\HttpKernel\Profiler\Profile;
@@ -23,6 +24,8 @@ use Twig\Environment;
  */
 class TemplateManagerTest extends TestCase
 {
+    use ForwardCompatTestTrait;
+
     /**
      * @var Environment
      */
@@ -38,7 +41,7 @@ class TemplateManagerTest extends TestCase
      */
     protected $templateManager;
 
-    protected function setUp()
+    private function doSetUp()
     {
         parent::setUp();
 
@@ -53,11 +56,9 @@ class TemplateManagerTest extends TestCase
         $this->templateManager = new TemplateManager($profiler, $twigEnvironment, $templates);
     }
 
-    /**
-     * @expectedException \Symfony\Component\HttpKernel\Exception\NotFoundHttpException
-     */
     public function testGetNameOfInvalidTemplate()
     {
+        $this->expectException('Symfony\Component\HttpKernel\Exception\NotFoundHttpException');
         $this->templateManager->getName(new Profile('token'), 'notexistingpanel');
     }
 

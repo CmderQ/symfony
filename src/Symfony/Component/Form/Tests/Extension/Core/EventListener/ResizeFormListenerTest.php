@@ -13,6 +13,7 @@ namespace Symfony\Component\Form\Tests\Extension\Core\EventListener;
 
 use Doctrine\Common\Collections\ArrayCollection;
 use PHPUnit\Framework\TestCase;
+use Symfony\Bridge\PhpUnit\ForwardCompatTestTrait;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Component\Form\Extension\Core\DataMapper\PropertyPathMapper;
 use Symfony\Component\Form\Extension\Core\EventListener\ResizeFormListener;
@@ -23,10 +24,12 @@ use Symfony\Component\Form\FormFactoryBuilder;
 
 class ResizeFormListenerTest extends TestCase
 {
+    use ForwardCompatTestTrait;
+
     private $factory;
     private $form;
 
-    protected function setUp()
+    private function doSetUp()
     {
         $this->factory = (new FormFactoryBuilder())->getFormFactory();
         $this->form = $this->getBuilder()
@@ -35,7 +38,7 @@ class ResizeFormListenerTest extends TestCase
             ->getForm();
     }
 
-    protected function tearDown()
+    private function doTearDown()
     {
         $this->factory = null;
         $this->form = null;
@@ -66,11 +69,9 @@ class ResizeFormListenerTest extends TestCase
         $this->assertTrue($this->form->has('2'));
     }
 
-    /**
-     * @expectedException \Symfony\Component\Form\Exception\UnexpectedTypeException
-     */
     public function testPreSetDataRequiresArrayOrTraversable()
     {
+        $this->expectException('Symfony\Component\Form\Exception\UnexpectedTypeException');
         $data = 'no array or traversable';
         $event = new FormEvent($this->form, $data);
         $listener = new ResizeFormListener('text', [], false, false);
@@ -201,11 +202,9 @@ class ResizeFormListenerTest extends TestCase
         $this->assertEquals($data, $event->getData());
     }
 
-    /**
-     * @expectedException \Symfony\Component\Form\Exception\UnexpectedTypeException
-     */
     public function testOnSubmitNormDataRequiresArrayOrTraversable()
     {
+        $this->expectException('Symfony\Component\Form\Exception\UnexpectedTypeException');
         $data = 'no array or traversable';
         $event = new FormEvent($this->form, $data);
         $listener = new ResizeFormListener('text', [], false, false);

@@ -11,6 +11,7 @@
 
 namespace Symfony\Bundle\FrameworkBundle\Tests\Functional;
 
+use Symfony\Bridge\PhpUnit\ForwardCompatTestTrait;
 use Symfony\Bundle\FrameworkBundle\Command\CachePoolClearCommand;
 use Symfony\Bundle\FrameworkBundle\Console\Application;
 use Symfony\Component\Console\Tester\CommandTester;
@@ -20,7 +21,9 @@ use Symfony\Component\Console\Tester\CommandTester;
  */
 class CachePoolClearCommandTest extends AbstractWebTestCase
 {
-    protected function setUp()
+    use ForwardCompatTestTrait;
+
+    private function doSetUp()
     {
         static::bootKernel(['test_case' => 'CachePoolClear', 'root_config' => 'config.yml']);
     }
@@ -65,12 +68,10 @@ class CachePoolClearCommandTest extends AbstractWebTestCase
         $this->assertContains('[OK] Cache was successfully cleared.', $tester->getDisplay());
     }
 
-    /**
-     * @expectedException        \Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException
-     * @expectedExceptionMessage You have requested a non-existent service "unknown_pool"
-     */
     public function testClearUnexistingPool()
     {
+        $this->expectException('Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException');
+        $this->expectExceptionMessage('You have requested a non-existent service "unknown_pool"');
         $this->createCommandTester()
             ->execute(['pools' => ['unknown_pool']], ['decorated' => false]);
     }

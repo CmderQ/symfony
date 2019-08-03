@@ -11,11 +11,14 @@
 
 namespace Symfony\Component\Form\Tests\Extension\Core\Type;
 
+use Symfony\Bridge\PhpUnit\ForwardCompatTestTrait;
 use Symfony\Component\Form\ChoiceList\View\ChoiceGroupView;
 use Symfony\Component\Form\ChoiceList\View\ChoiceView;
 
 class ChoiceTypeTest extends BaseTypeTest
 {
+    use ForwardCompatTestTrait;
+
     const TESTED_TYPE = 'Symfony\Component\Form\Extension\Core\Type\ChoiceType';
 
     private $choices = [
@@ -60,7 +63,7 @@ class ChoiceTypeTest extends BaseTypeTest
         ],
     ];
 
-    protected function setUp()
+    private function doSetUp()
     {
         parent::setUp();
 
@@ -73,28 +76,24 @@ class ChoiceTypeTest extends BaseTypeTest
         ];
     }
 
-    protected function tearDown()
+    private function doTearDown()
     {
         parent::tearDown();
 
         $this->objectChoices = null;
     }
 
-    /**
-     * @expectedException \Symfony\Component\OptionsResolver\Exception\InvalidOptionsException
-     */
     public function testChoicesOptionExpectsArrayOrTraversable()
     {
+        $this->expectException('Symfony\Component\OptionsResolver\Exception\InvalidOptionsException');
         $this->factory->create(static::TESTED_TYPE, null, [
             'choices' => new \stdClass(),
         ]);
     }
 
-    /**
-     * @expectedException \Symfony\Component\OptionsResolver\Exception\InvalidOptionsException
-     */
     public function testChoiceLoaderOptionExpectsChoiceLoaderInterface()
     {
+        $this->expectException('Symfony\Component\OptionsResolver\Exception\InvalidOptionsException');
         $this->factory->create(static::TESTED_TYPE, null, [
             'choice_loader' => new \stdClass(),
         ]);

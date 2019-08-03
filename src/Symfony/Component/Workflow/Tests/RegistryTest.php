@@ -3,6 +3,7 @@
 namespace Symfony\Component\Workflow\Tests;
 
 use PHPUnit\Framework\TestCase;
+use Symfony\Bridge\PhpUnit\ForwardCompatTestTrait;
 use Symfony\Component\Workflow\Definition;
 use Symfony\Component\Workflow\MarkingStore\MarkingStoreInterface;
 use Symfony\Component\Workflow\Registry;
@@ -12,9 +13,11 @@ use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
 class RegistryTest extends TestCase
 {
+    use ForwardCompatTestTrait;
+
     private $registry;
 
-    protected function setUp()
+    private function doSetUp()
     {
         $this->registry = new Registry();
 
@@ -23,7 +26,7 @@ class RegistryTest extends TestCase
         $this->registry->addWorkflow(new Workflow(new Definition([], []), $this->getMockBuilder(MarkingStoreInterface::class)->getMock(), $this->getMockBuilder(EventDispatcherInterface::class)->getMock(), 'workflow3'), $this->createWorkflowSupportStrategy(Subject2::class));
     }
 
-    protected function tearDown()
+    private function doTearDown()
     {
         $this->registry = null;
     }
@@ -43,23 +46,19 @@ class RegistryTest extends TestCase
         $this->assertSame('workflow2', $workflow->getName());
     }
 
-    /**
-     * @expectedException \Symfony\Component\Workflow\Exception\InvalidArgumentException
-     * @expectedExceptionMessage At least two workflows match this subject. Set a different name on each and use the second (name) argument of this method.
-     */
     public function testGetWithMultipleMatch()
     {
+        $this->expectException('Symfony\Component\Workflow\Exception\InvalidArgumentException');
+        $this->expectExceptionMessage('At least two workflows match this subject. Set a different name on each and use the second (name) argument of this method.');
         $w1 = $this->registry->get(new Subject2());
         $this->assertInstanceOf(Workflow::class, $w1);
         $this->assertSame('workflow1', $w1->getName());
     }
 
-    /**
-     * @expectedException \Symfony\Component\Workflow\Exception\InvalidArgumentException
-     * @expectedExceptionMessage Unable to find a workflow for class "stdClass".
-     */
     public function testGetWithNoMatch()
     {
+        $this->expectException('Symfony\Component\Workflow\Exception\InvalidArgumentException');
+        $this->expectExceptionMessage('Unable to find a workflow for class "stdClass".');
         $w1 = $this->registry->get(new \stdClass());
         $this->assertInstanceOf(Workflow::class, $w1);
         $this->assertSame('workflow1', $w1->getName());
@@ -68,7 +67,7 @@ class RegistryTest extends TestCase
     public function testAllWithOneMatchWithSuccess()
     {
         $workflows = $this->registry->all(new Subject1());
-        $this->assertInternalType('array', $workflows);
+        $this->assertIsArray($workflows);
         $this->assertCount(1, $workflows);
         $this->assertInstanceOf(Workflow::class, $workflows[0]);
         $this->assertSame('workflow1', $workflows[0]->getName());
@@ -77,7 +76,7 @@ class RegistryTest extends TestCase
     public function testAllWithMultipleMatchWithSuccess()
     {
         $workflows = $this->registry->all(new Subject2());
-        $this->assertInternalType('array', $workflows);
+        $this->assertIsArray($workflows);
         $this->assertCount(2, $workflows);
         $this->assertInstanceOf(Workflow::class, $workflows[0]);
         $this->assertInstanceOf(Workflow::class, $workflows[1]);
@@ -88,7 +87,7 @@ class RegistryTest extends TestCase
     public function testAllWithNoMatch()
     {
         $workflows = $this->registry->all(new \stdClass());
-        $this->assertInternalType('array', $workflows);
+        $this->assertIsArray($workflows);
         $this->assertCount(0, $workflows);
     }
 

@@ -12,6 +12,7 @@
 namespace Symfony\Component\Serializer\Tests\Normalizer;
 
 use PHPUnit\Framework\TestCase;
+use Symfony\Bridge\PhpUnit\ForwardCompatTestTrait;
 use Symfony\Component\Serializer\Normalizer\JsonSerializableNormalizer;
 use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
 use Symfony\Component\Serializer\SerializerInterface;
@@ -22,6 +23,8 @@ use Symfony\Component\Serializer\Tests\Fixtures\JsonSerializableDummy;
  */
 class JsonSerializableNormalizerTest extends TestCase
 {
+    use ForwardCompatTestTrait;
+
     /**
      * @var JsonSerializableNormalizer
      */
@@ -32,7 +35,7 @@ class JsonSerializableNormalizerTest extends TestCase
      */
     private $serializer;
 
-    protected function setUp()
+    private function doSetUp()
     {
         $this->createNormalizer();
     }
@@ -65,11 +68,9 @@ class JsonSerializableNormalizerTest extends TestCase
         $this->assertEquals('string_object', $this->normalizer->normalize(new JsonSerializableDummy()));
     }
 
-    /**
-     * @expectedException \Symfony\Component\Serializer\Exception\CircularReferenceException
-     */
     public function testCircularNormalize()
     {
+        $this->expectException('Symfony\Component\Serializer\Exception\CircularReferenceException');
         $this->createNormalizer([JsonSerializableNormalizer::CIRCULAR_REFERENCE_LIMIT => 1]);
 
         $this->serializer
@@ -85,12 +86,10 @@ class JsonSerializableNormalizerTest extends TestCase
         $this->assertEquals('string_object', $this->normalizer->normalize(new JsonSerializableDummy()));
     }
 
-    /**
-     * @expectedException \Symfony\Component\Serializer\Exception\InvalidArgumentException
-     * @expectedExceptionMessage The object must implement "JsonSerializable".
-     */
     public function testInvalidDataThrowException()
     {
+        $this->expectException('Symfony\Component\Serializer\Exception\InvalidArgumentException');
+        $this->expectExceptionMessage('The object must implement "JsonSerializable".');
         $this->normalizer->normalize(new \stdClass());
     }
 }

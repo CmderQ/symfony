@@ -115,10 +115,11 @@ DependencyInjection
 DoctrineBridge
 --------------
 
- * Deprecated injecting `ClassMetadataFactory` in `DoctrineExtractor`, an instance of `EntityManagerInterface` should be
+ * Removed the possibility to inject `ClassMetadataFactory` in `DoctrineExtractor`, an instance of `EntityManagerInterface` should be
    injected instead
  * Passing an `IdReader` to the `DoctrineChoiceLoader` when the query cannot be optimized with single id field will throw an exception, pass `null` instead
  * Not passing an `IdReader` to the `DoctrineChoiceLoader` when the query can be optimized with single id field will not apply any optimization
+ * The `RegistryInterface` has been removed.
 
 DomCrawler
 ----------
@@ -217,7 +218,7 @@ FrameworkBundle
 
  * Dropped support for booting the kernel before running `WebTestCase::createClient()`. `createClient()` will throw an
    exception if the kernel was already booted before.
- * Removed the `framework.templating` option, use Twig instead.
+ * Removed the `framework.templating` option, configure the Twig bundle instead.
  * The project dir argument of the constructor of `AssetsInstallCommand` is required.
  * Removed support for `bundle:controller:action` syntax to reference controllers. Use `serviceOrFqcn::method`
    instead where `serviceOrFqcn` is either the service ID when using controllers as services or the FQCN of the controller.
@@ -301,7 +302,7 @@ HttpKernel
  * Removed `PostResponseEvent`, use `TerminateEvent` instead
  * Removed `TranslatorListener` in favor of `LocaleAwareListener`
  * The `DebugHandlersListener` class has been made `final`
- * Removed `SaveSessionListener` in favor of `AbstractSessionListener` 
+ * Removed `SaveSessionListener` in favor of `AbstractSessionListener`
 
 Intl
 ----
@@ -456,16 +457,16 @@ Serializer
 ----------
 
  * The default value of the `CsvEncoder` "as_collection" option was changed to `true`.
- * Individual encoders & normalizers options as constructor arguments were removed. 
+ * Individual encoders & normalizers options as constructor arguments were removed.
    Use the default context instead.
  * The following method and properties:
      - `AbstractNormalizer::$circularReferenceLimit`
      - `AbstractNormalizer::$circularReferenceHandler`
      - `AbstractNormalizer::$callbacks`
      - `AbstractNormalizer::$ignoredAttributes`
-     - `AbstractNormalizer::$camelizedAttributes` 
+     - `AbstractNormalizer::$camelizedAttributes`
      - `AbstractNormalizer::setCircularReferenceLimit()`
-     - `AbstractNormalizer::setCircularReferenceHandler()` 
+     - `AbstractNormalizer::setCircularReferenceHandler()`
      - `AbstractNormalizer::setCallbacks()`
      - `AbstractNormalizer::setIgnoredAttributes()`
      - `AbstractObjectNormalizer::$maxDepthHandler`
@@ -476,6 +477,11 @@ Serializer
    were removed, use the default context instead.
  * The `AbstractNormalizer::handleCircularReference()` method has two new `$format` and `$context` arguments.
  * Removed support for instantiating a `DataUriNormalizer` with a default MIME type guesser when the `symfony/mime` component isn't installed.
+
+Stopwatch
+---------
+
+ * Removed support for passing `null` as 1st (`$id`) argument of `Section::get()` method, pass a valid child section identifier instead.
 
 Translation
 -----------

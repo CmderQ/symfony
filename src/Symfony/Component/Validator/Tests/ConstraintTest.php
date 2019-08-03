@@ -12,6 +12,7 @@
 namespace Symfony\Component\Validator\Tests;
 
 use PHPUnit\Framework\TestCase;
+use Symfony\Bridge\PhpUnit\ForwardCompatTestTrait;
 use Symfony\Component\Validator\Constraint;
 use Symfony\Component\Validator\Tests\Fixtures\ClassConstraint;
 use Symfony\Component\Validator\Tests\Fixtures\ConstraintA;
@@ -22,6 +23,8 @@ use Symfony\Component\Validator\Tests\Fixtures\ConstraintWithValueAsDefault;
 
 class ConstraintTest extends TestCase
 {
+    use ForwardCompatTestTrait;
+
     public function testSetProperties()
     {
         $constraint = new ConstraintA([
@@ -204,11 +207,9 @@ class ConstraintTest extends TestCase
         $this->assertSame(['MyGroup'], $constraint->groups);
     }
 
-    /**
-     * @expectedException \Symfony\Component\Validator\Exception\InvalidArgumentException
-     */
     public function testGetErrorNameForUnknownCode()
     {
+        $this->expectException('Symfony\Component\Validator\Exception\InvalidArgumentException');
         Constraint::getErrorName(1);
     }
 
@@ -223,12 +224,10 @@ class ConstraintTest extends TestCase
         $this->assertEquals($options, $constraint->property2);
     }
 
-    /**
-     * @expectedException \Symfony\Component\Validator\Exception\InvalidOptionsException
-     * @expectedExceptionMessage The options "0", "5" do not exist in constraint "Symfony\Component\Validator\Tests\Fixtures\ConstraintA".
-     */
     public function testInvalidOptions()
     {
+        $this->expectException('Symfony\Component\Validator\Exception\InvalidOptionsException');
+        $this->expectExceptionMessage('The options "0", "5" do not exist in constraint "Symfony\Component\Validator\Tests\Fixtures\ConstraintA".');
         new ConstraintA(['property2' => 'foo', 'bar', 5 => 'baz']);
     }
 
@@ -243,12 +242,10 @@ class ConstraintTest extends TestCase
         $this->assertEquals('foo', $constraint->property1);
     }
 
-    /**
-     * @expectedException \Symfony\Component\Validator\Exception\ConstraintDefinitionException
-     * @expectedExceptionMessage No default option is configured for constraint "Symfony\Component\Validator\Tests\Fixtures\ConstraintB".
-     */
     public function testAnnotationSetUndefinedDefaultOption()
     {
+        $this->expectException('Symfony\Component\Validator\Exception\ConstraintDefinitionException');
+        $this->expectExceptionMessage('No default option is configured for constraint "Symfony\Component\Validator\Tests\Fixtures\ConstraintB".');
         new ConstraintB(['value' => 1]);
     }
 }

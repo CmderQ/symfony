@@ -12,6 +12,7 @@
 namespace Symfony\Component\Console\Tests\Tester;
 
 use PHPUnit\Framework\TestCase;
+use Symfony\Bridge\PhpUnit\ForwardCompatTestTrait;
 use Symfony\Component\Console\Application;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Helper\HelperSet;
@@ -24,10 +25,12 @@ use Symfony\Component\Console\Tester\CommandTester;
 
 class CommandTesterTest extends TestCase
 {
+    use ForwardCompatTestTrait;
+
     protected $command;
     protected $tester;
 
-    protected function setUp()
+    private function doSetUp()
     {
         $this->command = new Command('foo');
         $this->command->addArgument('command');
@@ -38,7 +41,7 @@ class CommandTesterTest extends TestCase
         $this->tester->execute(['foo' => 'bar'], ['interactive' => false, 'decorated' => false, 'verbosity' => Output::VERBOSITY_VERBOSE]);
     }
 
-    protected function tearDown()
+    private function doTearDown()
     {
         $this->command = null;
         $this->tester = null;
@@ -138,12 +141,10 @@ class CommandTesterTest extends TestCase
         $this->assertEquals(implode('', $questions), $tester->getDisplay(true));
     }
 
-    /**
-     * @expectedException \RuntimeException
-     * @expectedExceptionMessage Aborted.
-     */
     public function testCommandWithWrongInputsNumber()
     {
+        $this->expectException('RuntimeException');
+        $this->expectExceptionMessage('Aborted.');
         $questions = [
             'What\'s your name?',
             'How are you?',
@@ -165,12 +166,10 @@ class CommandTesterTest extends TestCase
         $tester->execute([]);
     }
 
-    /**
-     * @expectedException \RuntimeException
-     * @expectedExceptionMessage Aborted.
-     */
     public function testCommandWithQuestionsButNoInputs()
     {
+        $this->expectException('RuntimeException');
+        $this->expectExceptionMessage('Aborted.');
         $questions = [
             'What\'s your name?',
             'How are you?',

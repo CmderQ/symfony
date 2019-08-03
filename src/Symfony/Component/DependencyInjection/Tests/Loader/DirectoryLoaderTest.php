@@ -12,6 +12,7 @@
 namespace Symfony\Component\DependencyInjection\Tests\Loader;
 
 use PHPUnit\Framework\TestCase;
+use Symfony\Bridge\PhpUnit\ForwardCompatTestTrait;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\Config\Loader\LoaderResolver;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
@@ -22,17 +23,19 @@ use Symfony\Component\DependencyInjection\Loader\YamlFileLoader;
 
 class DirectoryLoaderTest extends TestCase
 {
+    use ForwardCompatTestTrait;
+
     private static $fixturesPath;
 
     private $container;
     private $loader;
 
-    public static function setUpBeforeClass()
+    private static function doSetUpBeforeClass()
     {
         self::$fixturesPath = realpath(__DIR__.'/../Fixtures/');
     }
 
-    protected function setUp()
+    private function doSetUp()
     {
         $locator = new FileLocator(self::$fixturesPath);
         $this->container = new ContainerBuilder();
@@ -58,12 +61,10 @@ class DirectoryLoaderTest extends TestCase
         $this->assertEquals(['ini' => 'ini', 'yaml' => 'yaml'], $this->container->getParameterBag()->all(), '->load() takes a single file that imports a directory');
     }
 
-    /**
-     * @expectedException        \InvalidArgumentException
-     * @expectedExceptionMessage The file "foo" does not exist (in:
-     */
     public function testExceptionIsRaisedWhenDirectoryDoesNotExist()
     {
+        $this->expectException('InvalidArgumentException');
+        $this->expectExceptionMessage('The file "foo" does not exist (in:');
         $this->loader->load('foo/');
     }
 

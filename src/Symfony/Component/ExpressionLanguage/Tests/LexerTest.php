@@ -12,18 +12,21 @@
 namespace Symfony\Component\ExpressionLanguage\Tests;
 
 use PHPUnit\Framework\TestCase;
+use Symfony\Bridge\PhpUnit\ForwardCompatTestTrait;
 use Symfony\Component\ExpressionLanguage\Lexer;
 use Symfony\Component\ExpressionLanguage\Token;
 use Symfony\Component\ExpressionLanguage\TokenStream;
 
 class LexerTest extends TestCase
 {
+    use ForwardCompatTestTrait;
+
     /**
      * @var Lexer
      */
     private $lexer;
 
-    protected function setUp()
+    private function doSetUp()
     {
         $this->lexer = new Lexer();
     }
@@ -37,22 +40,18 @@ class LexerTest extends TestCase
         $this->assertEquals(new TokenStream($tokens, $expression), $this->lexer->tokenize($expression));
     }
 
-    /**
-     * @expectedException \Symfony\Component\ExpressionLanguage\SyntaxError
-     * @expectedExceptionMessage Unexpected character "'" around position 33 for expression `service(faulty.expression.example').dummyMethod()`.
-     */
     public function testTokenizeThrowsErrorWithMessage()
     {
+        $this->expectException('Symfony\Component\ExpressionLanguage\SyntaxError');
+        $this->expectExceptionMessage('Unexpected character "\'" around position 33 for expression `service(faulty.expression.example\').dummyMethod()`.');
         $expression = "service(faulty.expression.example').dummyMethod()";
         $this->lexer->tokenize($expression);
     }
 
-    /**
-     * @expectedException \Symfony\Component\ExpressionLanguage\SyntaxError
-     * @expectedExceptionMessage Unclosed "(" around position 7 for expression `service(unclosed.expression.dummyMethod()`.
-     */
     public function testTokenizeThrowsErrorOnUnclosedBrace()
     {
+        $this->expectException('Symfony\Component\ExpressionLanguage\SyntaxError');
+        $this->expectExceptionMessage('Unclosed "(" around position 7 for expression `service(unclosed.expression.dummyMethod()`.');
         $expression = 'service(unclosed.expression.dummyMethod()';
         $this->lexer->tokenize($expression);
     }

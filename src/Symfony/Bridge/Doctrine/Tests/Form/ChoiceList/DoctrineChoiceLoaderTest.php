@@ -18,6 +18,7 @@ use PHPUnit\Framework\TestCase;
 use Symfony\Bridge\Doctrine\Form\ChoiceList\DoctrineChoiceLoader;
 use Symfony\Bridge\Doctrine\Form\ChoiceList\EntityLoaderInterface;
 use Symfony\Bridge\Doctrine\Form\ChoiceList\IdReader;
+use Symfony\Bridge\PhpUnit\ForwardCompatTestTrait;
 use Symfony\Component\Form\ChoiceList\ArrayChoiceList;
 use Symfony\Component\Form\ChoiceList\Factory\ChoiceListFactoryInterface;
 
@@ -26,6 +27,8 @@ use Symfony\Component\Form\ChoiceList\Factory\ChoiceListFactoryInterface;
  */
 class DoctrineChoiceLoaderTest extends TestCase
 {
+    use ForwardCompatTestTrait;
+
     /**
      * @var ChoiceListFactoryInterface|\PHPUnit_Framework_MockObject_MockObject
      */
@@ -71,7 +74,7 @@ class DoctrineChoiceLoaderTest extends TestCase
      */
     private $obj3;
 
-    protected function setUp()
+    private function doSetUp()
     {
         $this->factory = $this->getMockBuilder('Symfony\Component\Form\ChoiceList\Factory\ChoiceListFactoryInterface')->getMock();
         $this->om = $this->getMockBuilder('Doctrine\Common\Persistence\ObjectManager')->getMock();
@@ -375,12 +378,11 @@ class DoctrineChoiceLoaderTest extends TestCase
         $this->assertSame([$this->obj2], $loader->loadChoicesForValues(['2'], $value));
     }
 
-    /**
-     * @expectedException \InvalidArgumentException
-     * @expectedExceptionMessage The second argument `$idReader` of "Symfony\Bridge\Doctrine\Form\ChoiceList\DoctrineChoiceLoader::__construct" must be null when the query cannot be optimized because of composite id fields.
-     */
     public function testPassingIdReaderWithoutSingleIdEntity()
     {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('The second argument `$idReader` of "Symfony\\Bridge\\Doctrine\\Form\\ChoiceList\\DoctrineChoiceLoader::__construct" must be null when the query cannot be optimized because of composite id fields.');
+
         $idReader = $this->createMock(IdReader::class);
         $idReader->expects($this->once())
             ->method('isSingleId')

@@ -12,6 +12,7 @@
 namespace Symfony\Component\HttpFoundation\Tests\Session\Storage\Proxy;
 
 use PHPUnit\Framework\TestCase;
+use Symfony\Bridge\PhpUnit\ForwardCompatTestTrait;
 use Symfony\Component\HttpFoundation\Session\Storage\Proxy\AbstractProxy;
 use Symfony\Component\HttpFoundation\Session\Storage\Proxy\SessionHandlerProxy;
 
@@ -22,17 +23,19 @@ use Symfony\Component\HttpFoundation\Session\Storage\Proxy\SessionHandlerProxy;
  */
 class AbstractProxyTest extends TestCase
 {
+    use ForwardCompatTestTrait;
+
     /**
      * @var AbstractProxy
      */
     protected $proxy;
 
-    protected function setUp()
+    private function doSetUp()
     {
         $this->proxy = $this->getMockForAbstractClass(AbstractProxy::class);
     }
 
-    protected function tearDown()
+    private function doTearDown()
     {
         $this->proxy = null;
     }
@@ -80,10 +83,10 @@ class AbstractProxyTest extends TestCase
     /**
      * @runInSeparateProcess
      * @preserveGlobalState disabled
-     * @expectedException \LogicException
      */
     public function testNameException()
     {
+        $this->expectException('LogicException');
         session_start();
         $this->proxy->setName('foo');
     }
@@ -103,10 +106,10 @@ class AbstractProxyTest extends TestCase
     /**
      * @runInSeparateProcess
      * @preserveGlobalState disabled
-     * @expectedException \LogicException
      */
     public function testIdException()
     {
+        $this->expectException('LogicException');
         session_start();
         $this->proxy->setId('foo');
     }

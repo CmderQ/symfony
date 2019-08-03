@@ -11,6 +11,7 @@
 
 namespace Symfony\Bundle\SecurityBundle\Tests\Functional;
 
+use Symfony\Bridge\PhpUnit\ForwardCompatTestTrait;
 use Symfony\Bundle\FrameworkBundle\Console\Application;
 use Symfony\Bundle\SecurityBundle\Command\UserPasswordEncoderCommand;
 use Symfony\Component\Console\Application as ConsoleApplication;
@@ -27,6 +28,8 @@ use Symfony\Component\Security\Core\Encoder\SodiumPasswordEncoder;
  */
 class UserPasswordEncoderCommandTest extends AbstractWebTestCase
 {
+    use ForwardCompatTestTrait;
+
     /** @var CommandTester */
     private $passwordEncoderCommandTester;
 
@@ -166,12 +169,8 @@ class UserPasswordEncoderCommandTest extends AbstractWebTestCase
 
     public function testEncodePasswordNoConfigForGivenUserClass()
     {
-        if (method_exists($this, 'expectException')) {
-            $this->expectException('\RuntimeException');
-            $this->expectExceptionMessage('No encoder has been configured for account "Foo\Bar\User".');
-        } else {
-            $this->setExpectedException('\RuntimeException', 'No encoder has been configured for account "Foo\Bar\User".');
-        }
+        $this->expectException('\RuntimeException');
+        $this->expectExceptionMessage('No encoder has been configured for account "Foo\Bar\User".');
 
         $this->passwordEncoderCommandTester->execute([
             'command' => 'security:encode-password',
@@ -208,12 +207,10 @@ EOTXT
         $this->assertContains('Encoder used       Symfony\Component\Security\Core\Encoder\PlaintextPasswordEncoder', $this->passwordEncoderCommandTester->getDisplay());
     }
 
-    /**
-     * @expectedException \RuntimeException
-     * @expectedExceptionMessage There are no configured encoders for the "security" extension.
-     */
     public function testThrowsExceptionOnNoConfiguredEncoders()
     {
+        $this->expectException('RuntimeException');
+        $this->expectExceptionMessage('There are no configured encoders for the "security" extension.');
         $application = new ConsoleApplication();
         $application->add(new UserPasswordEncoderCommand($this->getMockBuilder(EncoderFactoryInterface::class)->getMock(), []));
 
@@ -226,7 +223,7 @@ EOTXT
         ], ['interactive' => false]);
     }
 
-    protected function setUp()
+    private function doSetUp()
     {
         putenv('COLUMNS='.(119 + \strlen(PHP_EOL)));
         $kernel = $this->createKernel(['test_case' => 'PasswordEncode']);
@@ -239,7 +236,7 @@ EOTXT
         $this->passwordEncoderCommandTester = new CommandTester($passwordEncoderCommand);
     }
 
-    protected function tearDown()
+    private function doTearDown()
     {
         $this->passwordEncoderCommandTester = null;
     }

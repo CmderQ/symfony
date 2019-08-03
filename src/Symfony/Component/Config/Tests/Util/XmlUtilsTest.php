@@ -12,10 +12,13 @@
 namespace Symfony\Component\Config\Tests\Util;
 
 use PHPUnit\Framework\TestCase;
+use Symfony\Bridge\PhpUnit\ForwardCompatTestTrait;
 use Symfony\Component\Config\Util\XmlUtils;
 
 class XmlUtilsTest extends TestCase
 {
+    use ForwardCompatTestTrait;
+
     public function testLoadFile()
     {
         $fixtures = __DIR__.'/../Fixtures/Util/';
@@ -62,12 +65,10 @@ class XmlUtilsTest extends TestCase
         $this->assertSame([], libxml_get_errors());
     }
 
-    /**
-     * @expectedException \Symfony\Component\Config\Util\Exception\InvalidXmlException
-     * @expectedExceptionMessage The XML is not valid
-     */
     public function testParseWithInvalidValidatorCallable()
     {
+        $this->expectException('Symfony\Component\Config\Util\Exception\InvalidXmlException');
+        $this->expectExceptionMessage('The XML is not valid');
         $fixtures = __DIR__.'/../Fixtures/Util/';
 
         $mock = $this->getMockBuilder(__NAMESPACE__.'\Validator')->getMock();
@@ -166,12 +167,8 @@ class XmlUtilsTest extends TestCase
     {
         $file = __DIR__.'/../Fixtures/foo.xml';
 
-        if (method_exists($this, 'expectException')) {
-            $this->expectException('InvalidArgumentException');
-            $this->expectExceptionMessage(sprintf('File %s does not contain valid XML, it is empty.', $file));
-        } else {
-            $this->setExpectedException('InvalidArgumentException', sprintf('File %s does not contain valid XML, it is empty.', $file));
-        }
+        $this->expectException('InvalidArgumentException');
+        $this->expectExceptionMessage(sprintf('File %s does not contain valid XML, it is empty.', $file));
 
         XmlUtils::loadFile($file);
     }

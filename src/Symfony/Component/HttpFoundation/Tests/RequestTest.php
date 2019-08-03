@@ -12,6 +12,7 @@
 namespace Symfony\Component\HttpFoundation\Tests;
 
 use PHPUnit\Framework\TestCase;
+use Symfony\Bridge\PhpUnit\ForwardCompatTestTrait;
 use Symfony\Component\HttpFoundation\Exception\SuspiciousOperationException;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Session\Session;
@@ -19,7 +20,9 @@ use Symfony\Component\HttpFoundation\Session\Storage\MockArraySessionStorage;
 
 class RequestTest extends TestCase
 {
-    protected function tearDown()
+    use ForwardCompatTestTrait;
+
+    private function doTearDown()
     {
         Request::setTrustedProxies([], -1);
         Request::setTrustedHosts([]);
@@ -918,11 +921,9 @@ class RequestTest extends TestCase
         $this->assertEquals(80, $port, 'With only PROTO set and value is not recognized, getPort() defaults to 80.');
     }
 
-    /**
-     * @expectedException \RuntimeException
-     */
     public function testGetHostWithFakeHttpHostValue()
     {
+        $this->expectException('RuntimeException');
         $request = new Request();
         $request->initialize([], [], [], [], [], ['HTTP_HOST' => 'www.host.com?query=string']);
         $request->getHost();
@@ -1087,11 +1088,11 @@ class RequestTest extends TestCase
     }
 
     /**
-     * @expectedException \Symfony\Component\HttpFoundation\Exception\ConflictingHeadersException
      * @dataProvider getClientIpsWithConflictingHeadersProvider
      */
     public function testGetClientIpsWithConflictingHeaders($httpForwarded, $httpXForwardedFor)
     {
+        $this->expectException('Symfony\Component\HttpFoundation\Exception\ConflictingHeadersException');
         $request = new Request();
 
         $server = [
@@ -1185,7 +1186,7 @@ class RequestTest extends TestCase
     {
         $req = new Request();
         $retval = $req->getContent(true);
-        $this->assertInternalType('resource', $retval);
+        $this->assertIsResource($retval);
         $this->assertEquals('', fread($retval, 1));
         $this->assertTrue(feof($retval));
     }
@@ -1195,7 +1196,7 @@ class RequestTest extends TestCase
         $req = new Request([], [], [], [], [], [], 'MyContent');
         $resource = $req->getContent(true);
 
-        $this->assertInternalType('resource', $resource);
+        $this->assertIsResource($resource);
         $this->assertEquals('MyContent', stream_get_contents($resource));
     }
 
@@ -2067,12 +2068,8 @@ class RequestTest extends TestCase
                 $this->assertSame($expectedPort, $request->getPort());
             }
         } else {
-            if (method_exists($this, 'expectException')) {
-                $this->expectException(SuspiciousOperationException::class);
-                $this->expectExceptionMessage('Invalid Host');
-            } else {
-                $this->setExpectedException(SuspiciousOperationException::class, 'Invalid Host');
-            }
+            $this->expectException(SuspiciousOperationException::class);
+            $this->expectExceptionMessage('Invalid Host');
 
             $request->getHost();
         }

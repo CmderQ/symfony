@@ -12,6 +12,7 @@
 namespace Symfony\Component\Security\Csrf\Tests\TokenStorage;
 
 use PHPUnit\Framework\TestCase;
+use Symfony\Bridge\PhpUnit\ForwardCompatTestTrait;
 use Symfony\Component\Security\Csrf\TokenStorage\NativeSessionTokenStorage;
 
 /**
@@ -22,6 +23,8 @@ use Symfony\Component\Security\Csrf\TokenStorage\NativeSessionTokenStorage;
  */
 class NativeSessionTokenStorageTest extends TestCase
 {
+    use ForwardCompatTestTrait;
+
     const SESSION_NAMESPACE = 'foobar';
 
     /**
@@ -29,7 +32,7 @@ class NativeSessionTokenStorageTest extends TestCase
      */
     private $storage;
 
-    protected function setUp()
+    private function doSetUp()
     {
         $_SESSION = [];
 
@@ -86,11 +89,9 @@ class NativeSessionTokenStorageTest extends TestCase
         $this->assertSame('TOKEN', $this->storage->getToken('token_id'));
     }
 
-    /**
-     * @expectedException \Symfony\Component\Security\Csrf\Exception\TokenNotFoundException
-     */
     public function testGetNonExistingToken()
     {
+        $this->expectException('Symfony\Component\Security\Csrf\Exception\TokenNotFoundException');
         $this->storage->getToken('token_id');
     }
 

@@ -12,6 +12,7 @@
 namespace Symfony\Component\HttpFoundation\Tests;
 
 use PHPUnit\Framework\TestCase;
+use Symfony\Bridge\PhpUnit\ForwardCompatTestTrait;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\FileBag;
 
@@ -23,11 +24,11 @@ use Symfony\Component\HttpFoundation\FileBag;
  */
 class FileBagTest extends TestCase
 {
-    /**
-     * @expectedException \InvalidArgumentException
-     */
+    use ForwardCompatTestTrait;
+
     public function testFileMustBeAnArrayOrUploadedFile()
     {
+        $this->expectException('InvalidArgumentException');
         new FileBag(['file' => 'foo']);
     }
 
@@ -162,12 +163,12 @@ class FileBagTest extends TestCase
         return $tempFile;
     }
 
-    protected function setUp()
+    private function doSetUp()
     {
         mkdir(sys_get_temp_dir().'/form_test', 0777, true);
     }
 
-    protected function tearDown()
+    private function doTearDown()
     {
         foreach (glob(sys_get_temp_dir().'/form_test/*') as $file) {
             unlink($file);
