@@ -11,15 +11,12 @@
 
 namespace Symfony\Component\Validator\Tests\Constraints;
 
-use Symfony\Bridge\PhpUnit\ForwardCompatTestTrait;
 use Symfony\Component\Validator\Constraints\Ip;
 use Symfony\Component\Validator\Constraints\IpValidator;
 use Symfony\Component\Validator\Test\ConstraintValidatorTestCase;
 
 class IpValidatorTest extends ConstraintValidatorTestCase
 {
-    use ForwardCompatTestTrait;
-
     protected function createValidator()
     {
         return new IpValidator();
@@ -354,7 +351,7 @@ class IpValidatorTest extends ConstraintValidatorTestCase
     {
         // Quoting after official filter documentation:
         // "FILTER_FLAG_NO_RES_RANGE = This flag does not apply to IPv6 addresses."
-        // Full description: http://php.net/manual/en/filter.filters.flags.php
+        // Full description: https://php.net/filter.filters.flags
         return $this->getInvalidIpsV6();
     }
 

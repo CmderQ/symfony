@@ -11,14 +11,11 @@
 
 namespace Symfony\Component\Intl\Tests\DateFormatter;
 
-use Symfony\Bridge\PhpUnit\ForwardCompatTestTrait;
 use Symfony\Component\Intl\DateFormatter\IntlDateFormatter;
 use Symfony\Component\Intl\Globals\IntlGlobals;
 
 class IntlDateFormatterTest extends AbstractIntlDateFormatterTest
 {
-    use ForwardCompatTestTrait;
-
     public function testConstructor()
     {
         $formatter = new IntlDateFormatter('en', IntlDateFormatter::MEDIUM, IntlDateFormatter::SHORT, 'UTC', IntlDateFormatter::GREGORIAN, 'y-M-d');
@@ -210,10 +207,8 @@ class IntlDateFormatterTest extends AbstractIntlDateFormatterTest
      * Also in intl, format like 'ss E' for '10 2' (2nd day of year
      * + 10 seconds) are added, then we have 86,400 seconds (24h * 60min * 60s)
      * + 10 seconds
-     *
-     * @return array
      */
-    private function notImplemented(array $dataSets)
+    private function notImplemented(array $dataSets): array
     {
         return array_map(function (array $row) {
             return [$row[0], $row[1], 0];

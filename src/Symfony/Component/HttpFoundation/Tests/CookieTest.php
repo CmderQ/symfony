@@ -12,7 +12,6 @@
 namespace Symfony\Component\HttpFoundation\Tests;
 
 use PHPUnit\Framework\TestCase;
-use Symfony\Bridge\PhpUnit\ForwardCompatTestTrait;
 use Symfony\Component\HttpFoundation\Cookie;
 
 /**
@@ -25,8 +24,6 @@ use Symfony\Component\HttpFoundation\Cookie;
  */
 class CookieTest extends TestCase
 {
-    use ForwardCompatTestTrait;
-
     public function invalidNames()
     {
         return [
@@ -119,7 +116,7 @@ class CookieTest extends TestCase
         $cookie = Cookie::create('foo', 'bar', $value);
         $expire = strtotime($value);
 
-        $this->assertEquals($expire, $cookie->getExpiresTime(), '->getExpiresTime() returns the expire date', 1);
+        $this->assertEqualsWithDelta($expire, $cookie->getExpiresTime(), 1, '->getExpiresTime() returns the expire date');
     }
 
     public function testGetDomain()

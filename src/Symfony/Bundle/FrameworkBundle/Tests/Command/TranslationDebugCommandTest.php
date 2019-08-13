@@ -12,7 +12,6 @@
 namespace Symfony\Bundle\FrameworkBundle\Tests\Command;
 
 use PHPUnit\Framework\TestCase;
-use Symfony\Bridge\PhpUnit\ForwardCompatTestTrait;
 use Symfony\Bundle\FrameworkBundle\Command\TranslationDebugCommand;
 use Symfony\Bundle\FrameworkBundle\Console\Application;
 use Symfony\Component\Console\Tester\CommandTester;
@@ -21,8 +20,6 @@ use Symfony\Component\Filesystem\Filesystem;
 
 class TranslationDebugCommandTest extends TestCase
 {
-    use ForwardCompatTestTrait;
-
     private $fs;
     private $translationDir;
 
@@ -112,7 +109,7 @@ class TranslationDebugCommandTest extends TestCase
         $tester->execute(['locale' => 'en', 'bundle' => 'dir']);
     }
 
-    private function doSetUp()
+    protected function setUp(): void
     {
         $this->fs = new Filesystem();
         $this->translationDir = sys_get_temp_dir().'/'.uniqid('sf_translation', true);
@@ -120,15 +117,12 @@ class TranslationDebugCommandTest extends TestCase
         $this->fs->mkdir($this->translationDir.'/templates');
     }
 
-    private function doTearDown()
+    protected function tearDown(): void
     {
         $this->fs->remove($this->translationDir);
     }
 
-    /**
-     * @return CommandTester
-     */
-    private function createCommandTester($extractedMessages = [], $loadedMessages = [], $kernel = null, array $transPaths = [], array $viewsPaths = [])
+    private function createCommandTester($extractedMessages = [], $loadedMessages = [], $kernel = null, array $transPaths = [], array $viewsPaths = []): CommandTester
     {
         $translator = $this->getMockBuilder('Symfony\Component\Translation\Translator')
             ->disableOriginalConstructor()

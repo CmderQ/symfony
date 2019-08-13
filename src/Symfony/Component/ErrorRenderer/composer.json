@@ -11,6 +11,10 @@
             "email": "fabien@symfony.com"
         },
         {
+            "name": "Yonel Ceruto",
+            "email": "yonelceruto@gmail.com"
+        },
+        {
             "name": "Symfony Community",
             "homepage": "https://symfony.com/contributors"
         }
@@ -36,7 +40,7 @@
     "minimum-stability": "dev",
     "extra": {
         "branch-alias": {
-            "dev-master": "4.4-dev"
+            "dev-master": "5.0-dev"
         }
     }
 }

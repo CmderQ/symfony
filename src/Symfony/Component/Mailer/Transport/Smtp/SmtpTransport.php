@@ -112,7 +112,11 @@ class SmtpTransport extends AbstractTransport
         try {
             $message = parent::send($message, $envelope);
         } catch (TransportExceptionInterface $e) {
-            $this->executeCommand("RSET\r\n", [250]);
+            try {
+                $this->executeCommand("RSET\r\n", [250]);
+            } catch (TransportExceptionInterface $_) {
+                // ignore this exception as it probably means that the server error was final
+            }
 
             throw $e;
         }
@@ -120,6 +124,15 @@ class SmtpTransport extends AbstractTransport
         $this->checkRestartThreshold();
 
         return $message;
+    }
+
+    public function getName(): string
+    {
+        if ($this->stream instanceof SocketStream) {
+            return sprintf('smtp://%s:%d', $this->stream->getHost(), $this->stream->getPort());
+        }
+
+        return sprintf('smtp://sendmail');
     }
 
     /**
@@ -157,8 +170,11 @@ class SmtpTransport extends AbstractTransport
             }
             $this->stream->flush();
             $this->executeCommand("\r\n.\r\n", [250]);
-        } finally {
             $message->appendDebug($this->stream->getDebug());
+        } catch (TransportExceptionInterface $e) {
+            $e->appendDebug($this->stream->getDebug());
+
+            throw $e;
         }
     }
 

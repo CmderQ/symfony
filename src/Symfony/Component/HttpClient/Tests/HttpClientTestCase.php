@@ -11,12 +11,14 @@
 
 namespace Symfony\Component\HttpClient\Tests;
 
-use Symfony\Bridge\PhpUnit\ForwardCompatTestTrait;
 use Symfony\Contracts\HttpClient\Test\HttpClientTestCase as BaseHttpClientTestCase;
 
 abstract class HttpClientTestCase extends BaseHttpClientTestCase
 {
-    use ForwardCompatTestTrait;
+    public function testMaxDuration()
+    {
+        $this->markTestSkipped('Implemented as of version 4.4');
+    }
 
     public function testToStream()
     {

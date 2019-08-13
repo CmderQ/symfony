@@ -12,7 +12,6 @@
 namespace Symfony\Component\HttpKernel\Tests\EventListener;
 
 use PHPUnit\Framework\TestCase;
-use Symfony\Bridge\PhpUnit\ForwardCompatTestTrait;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
@@ -30,11 +29,9 @@ use Symfony\Component\Routing\RequestContext;
 
 class RouterListenerTest extends TestCase
 {
-    use ForwardCompatTestTrait;
-
     private $requestStack;
 
-    private function doSetUp()
+    protected function setUp(): void
     {
         $this->requestStack = $this->getMockBuilder('Symfony\Component\HttpFoundation\RequestStack')->disableOriginalConstructor()->getMock();
     }
@@ -202,7 +199,7 @@ class RouterListenerTest extends TestCase
         $request = Request::create('http://localhost/');
         $response = $kernel->handle($request);
         $this->assertSame(404, $response->getStatusCode());
-        $this->assertContains('Welcome', $response->getContent());
+        $this->assertStringContainsString('Welcome', $response->getContent());
     }
 
     public function testRequestWithBadHost()

@@ -28,6 +28,9 @@ use Symfony\Component\VarDumper\Cloner\VarCloner;
  */
 abstract class DataCollector implements DataCollectorInterface
 {
+    /**
+     * @var array|Data
+     */
     protected $data = [];
 
     /**
@@ -91,6 +94,10 @@ abstract class DataCollector implements DataCollectorInterface
     public function __sleep()
     {
         return ['data'];
+    }
+
+    public function __wakeup()
+    {
     }
 
     /**

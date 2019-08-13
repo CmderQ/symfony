@@ -15,14 +15,14 @@ use Symfony\Component\Lock\Exception\InvalidArgumentException;
 use Symfony\Component\Lock\Exception\InvalidTtlException;
 use Symfony\Component\Lock\Exception\LockConflictedException;
 use Symfony\Component\Lock\Key;
-use Symfony\Component\Lock\StoreInterface;
+use Symfony\Component\Lock\PersistingStoreInterface;
 
 /**
  * MemcachedStore is a PersistingStoreInterface implementation using Memcached as store engine.
  *
  * @author Jérémy Derussé <jeremy@derusse.com>
  */
-class MemcachedStore implements StoreInterface
+class MemcachedStore implements PersistingStoreInterface
 {
     use ExpiringStoreTrait;
 
@@ -71,19 +71,8 @@ class MemcachedStore implements StoreInterface
 
     /**
      * {@inheritdoc}
-     *
-     * @deprecated since Symfony 4.4.
      */
-    public function waitAndSave(Key $key)
-    {
-        @trigger_error(sprintf('%s() is deprecated since Symfony 4.4 and will be removed in Symfony 5.0.', __METHOD__), E_USER_DEPRECATED);
-        throw new InvalidArgumentException(sprintf('The store "%s" does not supports blocking locks.', \get_class($this)));
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function putOffExpiration(Key $key, $ttl)
+    public function putOffExpiration(Key $key, float $ttl)
     {
         if ($ttl < 1) {
             throw new InvalidTtlException(sprintf('%s() expects a TTL greater or equals to 1 second. Got %s.', __METHOD__, $ttl));

@@ -12,15 +12,12 @@
 namespace Symfony\Component\HttpFoundation\Tests;
 
 use PHPUnit\Framework\TestCase;
-use Symfony\Bridge\PhpUnit\ForwardCompatTestTrait;
 
 class ResponseFunctionalTest extends TestCase
 {
-    use ForwardCompatTestTrait;
-
     private static $server;
 
-    private static function doSetUpBeforeClass()
+    public static function setUpBeforeClass(): void
     {
         $spec = [
             1 => ['file', '/dev/null', 'w'],
@@ -32,7 +29,7 @@ class ResponseFunctionalTest extends TestCase
         sleep(1);
     }
 
-    private static function doTearDownAfterClass()
+    public static function tearDownAfterClass(): void
     {
         if (self::$server) {
             proc_terminate(self::$server);

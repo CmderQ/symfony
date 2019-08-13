@@ -12,7 +12,6 @@
 namespace Symfony\Component\Yaml\Tests;
 
 use PHPUnit\Framework\TestCase;
-use Symfony\Bridge\PhpUnit\ForwardCompatTestTrait;
 use Symfony\Component\Yaml\Exception\ParseException;
 use Symfony\Component\Yaml\Inline;
 use Symfony\Component\Yaml\Tag\TaggedValue;
@@ -20,9 +19,7 @@ use Symfony\Component\Yaml\Yaml;
 
 class InlineTest extends TestCase
 {
-    use ForwardCompatTestTrait;
-
-    private function doSetUp()
+    protected function setUp(): void
     {
         Inline::initialize(0, 0);
     }
@@ -104,7 +101,7 @@ class InlineTest extends TestCase
             }
 
             $this->assertEquals('1.2', Inline::dump(1.2));
-            $this->assertContains('fr', strtolower(setlocale(LC_NUMERIC, 0)));
+            $this->assertStringContainsStringIgnoringCase('fr', setlocale(LC_NUMERIC, 0));
         } finally {
             setlocale(LC_NUMERIC, $locale);
         }
@@ -656,7 +653,6 @@ class InlineTest extends TestCase
     }
 
     /**
-     *
      * @dataProvider getNotPhpCompatibleMappingKeyData
      */
     public function testImplicitStringCastingOfMappingKeysIsDeprecated($yaml, $expected)

@@ -51,7 +51,7 @@ class CurrencyDataGenerator extends AbstractDataGenerator
     /**
      * {@inheritdoc}
      */
-    protected function scanLocales(LocaleScanner $scanner, $sourceDir)
+    protected function scanLocales(LocaleScanner $scanner, string $sourceDir)
     {
         return $scanner->scanLocales($sourceDir.'/curr');
     }
@@ -59,7 +59,7 @@ class CurrencyDataGenerator extends AbstractDataGenerator
     /**
      * {@inheritdoc}
      */
-    protected function compileTemporaryBundles(BundleCompilerInterface $compiler, $sourceDir, $tempDir)
+    protected function compileTemporaryBundles(BundleCompilerInterface $compiler, string $sourceDir, string $tempDir)
     {
         $compiler->compile($sourceDir.'/curr', $tempDir);
         $compiler->compile($sourceDir.'/misc/currencyNumericCodes.txt', $tempDir);
@@ -76,7 +76,7 @@ class CurrencyDataGenerator extends AbstractDataGenerator
     /**
      * {@inheritdoc}
      */
-    protected function generateDataForLocale(BundleEntryReaderInterface $reader, $tempDir, $displayLocale)
+    protected function generateDataForLocale(BundleEntryReaderInterface $reader, string $tempDir, string $displayLocale)
     {
         $localeBundle = $reader->read($tempDir, $displayLocale);
 
@@ -95,7 +95,7 @@ class CurrencyDataGenerator extends AbstractDataGenerator
     /**
      * {@inheritdoc}
      */
-    protected function generateDataForRoot(BundleEntryReaderInterface $reader, $tempDir)
+    protected function generateDataForRoot(BundleEntryReaderInterface $reader, string $tempDir)
     {
         $rootBundle = $reader->read($tempDir, 'root');
 
@@ -108,7 +108,7 @@ class CurrencyDataGenerator extends AbstractDataGenerator
     /**
      * {@inheritdoc}
      */
-    protected function generateDataForMeta(BundleEntryReaderInterface $reader, $tempDir)
+    protected function generateDataForMeta(BundleEntryReaderInterface $reader, string $tempDir)
     {
         $rootBundle = $reader->read($tempDir, 'root');
         $supplementalDataBundle = $reader->read($tempDir, 'supplementalData');
@@ -130,10 +130,7 @@ class CurrencyDataGenerator extends AbstractDataGenerator
         return $data;
     }
 
-    /**
-     * @return array
-     */
-    private function generateSymbolNamePairs(ArrayAccessibleResourceBundle $rootBundle)
+    private function generateSymbolNamePairs(ArrayAccessibleResourceBundle $rootBundle): array
     {
         $symbolNamePairs = iterator_to_array($rootBundle['Currencies']);
 
@@ -143,14 +140,14 @@ class CurrencyDataGenerator extends AbstractDataGenerator
         return $symbolNamePairs;
     }
 
-    private function generateCurrencyMeta(ArrayAccessibleResourceBundle $supplementalDataBundle)
+    private function generateCurrencyMeta(ArrayAccessibleResourceBundle $supplementalDataBundle): array
     {
         // The metadata is already de-duplicated. It contains one key "DEFAULT"
         // which is used for currencies that don't have dedicated entries.
         return iterator_to_array($supplementalDataBundle['CurrencyMeta']);
     }
 
-    private function generateAlpha3ToNumericMapping(ArrayAccessibleResourceBundle $numericCodesBundle, array $currencyCodes)
+    private function generateAlpha3ToNumericMapping(ArrayAccessibleResourceBundle $numericCodesBundle, array $currencyCodes): array
     {
         $alpha3ToNumericMapping = iterator_to_array($numericCodesBundle['codeMap']);
 
@@ -162,7 +159,7 @@ class CurrencyDataGenerator extends AbstractDataGenerator
         return $alpha3ToNumericMapping;
     }
 
-    private function generateNumericToAlpha3Mapping(array $alpha3ToNumericMapping)
+    private function generateNumericToAlpha3Mapping(array $alpha3ToNumericMapping): array
     {
         $numericToAlpha3Mapping = [];
 

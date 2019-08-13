@@ -15,16 +15,13 @@ use Cache\IntegrationTests\CachePoolTest;
 use PHPUnit\Framework\Assert;
 use Psr\Cache\CacheItemInterface;
 use Psr\Cache\CacheItemPoolInterface;
-use Symfony\Bridge\PhpUnit\ForwardCompatTestTrait;
 use Symfony\Component\Cache\CacheItem;
 use Symfony\Component\Cache\PruneableInterface;
 use Symfony\Contracts\Cache\CallbackInterface;
 
 abstract class AdapterTestCase extends CachePoolTest
 {
-    use ForwardCompatTestTrait;
-
-    private function doSetUp()
+    protected function setUp(): void
     {
         parent::setUp();
 
@@ -123,7 +120,7 @@ abstract class AdapterTestCase extends CachePoolTest
             CacheItem::METADATA_EXPIRY => 9.5 + time(),
             CacheItem::METADATA_CTIME => 1000,
         ];
-        $this->assertEquals($expected, $item->getMetadata(), 'Item metadata should embed expiry and ctime.', .6);
+        $this->assertEqualsWithDelta($expected, $item->getMetadata(), .6, 'Item metadata should embed expiry and ctime.');
     }
 
     public function testDefaultLifeTime()
@@ -254,6 +251,14 @@ abstract class AdapterTestCase extends CachePoolTest
         $cache->prune();
         $this->assertFalse($this->isPruned($cache, 'foo'));
         $this->assertTrue($this->isPruned($cache, 'qux'));
+    }
+
+    /**
+     * @runInSeparateProcess https://github.com/symfony/symfony/issues/32995
+     */
+    public function testSavingObject()
+    {
+        parent::testSavingObject();
     }
 
     public function testClearPrefix()

@@ -11,8 +11,8 @@
 
 namespace Symfony\Component\Translation\Tests;
 
+use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
-use Symfony\Bridge\PhpUnit\ForwardCompatTestTrait;
 use Symfony\Component\Config\Resource\SelfCheckingResourceInterface;
 use Symfony\Component\Translation\Loader\ArrayLoader;
 use Symfony\Component\Translation\Loader\LoaderInterface;
@@ -21,17 +21,15 @@ use Symfony\Component\Translation\Translator;
 
 class TranslatorCacheTest extends TestCase
 {
-    use ForwardCompatTestTrait;
-
     protected $tmpDir;
 
-    private function doSetUp()
+    protected function setUp(): void
     {
         $this->tmpDir = sys_get_temp_dir().'/sf_translation';
         $this->deleteTmpDir();
     }
 
-    private function doTearDown()
+    protected function tearDown(): void
     {
         $this->deleteTmpDir();
     }
@@ -102,7 +100,7 @@ class TranslatorCacheTest extends TestCase
         $catalogue = new MessageCatalogue($locale, []);
         $catalogue->addResource(new StaleResource()); // better use a helper class than a mock, because it gets serialized in the cache and re-loaded
 
-        /** @var LoaderInterface|\PHPUnit_Framework_MockObject_MockObject $loader */
+        /** @var LoaderInterface|MockObject $loader */
         $loader = $this->getMockBuilder('Symfony\Component\Translation\Loader\LoaderInterface')->getMock();
         $loader
             ->expects($this->exactly(2))
@@ -289,10 +287,7 @@ class TranslatorCacheTest extends TestCase
         return [[true], [false]];
     }
 
-    /**
-     * @return LoaderInterface
-     */
-    private function createFailingLoader()
+    private function createFailingLoader(): LoaderInterface
     {
         $loader = $this->getMockBuilder('Symfony\Component\Translation\Loader\LoaderInterface')->getMock();
         $loader

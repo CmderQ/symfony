@@ -18,10 +18,12 @@ CHANGELOG
  * Removed the `translator.selector` and `session.save_listener` services
  * Removed `SecurityUserValueResolver`, use `UserValueResolver` instead
  * Removed `routing.loader.service`.
+ * Service route loaders must be tagged with `routing.route_loader`. 
 
 4.4.0
 -----
 
+ * Added `MailerAssertionsTrait`
  * Deprecated support for `templating` engine in `TemplateController`, use Twig instead
  * Deprecated the `$parser` argument of `ControllerResolver::__construct()` and `DelegatingLoader::__construct()`
  * Deprecated the `controller_name_converter` and `resolve_controller_name_subscriber` services
@@ -29,7 +31,9 @@ CHANGELOG
  * Added support for configuring chained cache pools
  * Deprecated booting the kernel before running `WebTestCase::createClient()`
  * Deprecated `routing.loader.service`, use `routing.loader.container` instead.
-
+ * Not tagging service route loaders with `routing.route_loader` has been deprecated.
+ * Overriding the methods `KernelTestCase::tearDown()` and `WebTestCase::tearDown()` without the `void` return-type is deprecated.
+ 
 4.3.0
 -----
 

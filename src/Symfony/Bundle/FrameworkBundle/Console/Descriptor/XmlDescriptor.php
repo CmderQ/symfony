@@ -142,8 +142,6 @@ class XmlDescriptor extends Descriptor
 
     /**
      * Writes DOM document.
-     *
-     * @return \DOMDocument|string
      */
     private function writeDocument(\DOMDocument $dom)
     {
@@ -392,7 +390,7 @@ class XmlDescriptor extends Descriptor
     /**
      * @return \DOMNode[]
      */
-    private function getArgumentNodes(array $arguments, \DOMDocument $dom)
+    private function getArgumentNodes(array $arguments, \DOMDocument $dom): array
     {
         $nodes = [];
 

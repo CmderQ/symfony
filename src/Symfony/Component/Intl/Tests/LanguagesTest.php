@@ -11,6 +11,7 @@
 
 namespace Symfony\Component\Intl\Tests;
 
+use Symfony\Component\Intl\Exception\MissingResourceException;
 use Symfony\Component\Intl\Languages;
 
 /**
@@ -644,11 +645,9 @@ class LanguagesTest extends ResourceBundleTestCase
         'ab' => 'abk',
         'af' => 'afr',
         'ak' => 'aka',
-        'sq' => 'sqi',
         'am' => 'amh',
         'ar' => 'ara',
         'an' => 'arg',
-        'hy' => 'hye',
         'as' => 'asm',
         'av' => 'ava',
         'ae' => 'ave',
@@ -656,7 +655,6 @@ class LanguagesTest extends ResourceBundleTestCase
         'az' => 'aze',
         'ba' => 'bak',
         'bm' => 'bam',
-        'eu' => 'eus',
         'be' => 'bel',
         'bn' => 'ben',
         'bi' => 'bis',
@@ -664,12 +662,10 @@ class LanguagesTest extends ResourceBundleTestCase
         'bs' => 'bos',
         'br' => 'bre',
         'bg' => 'bul',
-        'my' => 'mya',
         'ca' => 'cat',
         'cs' => 'ces',
         'ch' => 'cha',
         'ce' => 'che',
-        'zh' => 'zho',
         'cu' => 'chu',
         'cv' => 'chv',
         'kw' => 'cor',
@@ -679,13 +675,12 @@ class LanguagesTest extends ResourceBundleTestCase
         'da' => 'dan',
         'de' => 'deu',
         'dv' => 'div',
-        'nl' => 'nld',
         'dz' => 'dzo',
-        'et' => 'est',
         'el' => 'ell',
         'en' => 'eng',
         'eo' => 'epo',
-        'ik' => 'ipk',
+        'et' => 'est',
+        'eu' => 'eus',
         'ee' => 'ewe',
         'fo' => 'fao',
         'fa' => 'fas',
@@ -694,8 +689,6 @@ class LanguagesTest extends ResourceBundleTestCase
         'fr' => 'fra',
         'fy' => 'fry',
         'ff' => 'ful',
-        'om' => 'orm',
-        'ka' => 'kat',
         'gd' => 'gla',
         'ga' => 'gle',
         'gl' => 'glg',
@@ -710,32 +703,34 @@ class LanguagesTest extends ResourceBundleTestCase
         'ho' => 'hmo',
         'hr' => 'hrv',
         'hu' => 'hun',
+        'hy' => 'hye',
         'ig' => 'ibo',
-        'is' => 'isl',
         'io' => 'ido',
         'ii' => 'iii',
         'iu' => 'iku',
         'ie' => 'ile',
         'ia' => 'ina',
         'id' => 'ind',
+        'ik' => 'ipk',
+        'is' => 'isl',
         'it' => 'ita',
         'jv' => 'jav',
         'ja' => 'jpn',
         'kl' => 'kal',
         'kn' => 'kan',
         'ks' => 'kas',
+        'ka' => 'kat',
         'kr' => 'kau',
         'kk' => 'kaz',
-        'mn' => 'mon',
         'km' => 'khm',
         'ki' => 'kik',
         'rw' => 'kin',
         'ky' => 'kir',
-        'ku' => 'kur',
-        'kg' => 'kon',
         'kv' => 'kom',
+        'kg' => 'kon',
         'ko' => 'kor',
         'kj' => 'kua',
+        'ku' => 'kur',
         'lo' => 'lao',
         'la' => 'lat',
         'lv' => 'lav',
@@ -745,32 +740,36 @@ class LanguagesTest extends ResourceBundleTestCase
         'lb' => 'ltz',
         'lu' => 'lub',
         'lg' => 'lug',
-        'mk' => 'mkd',
         'mh' => 'mah',
         'ml' => 'mal',
-        'mi' => 'mri',
         'mr' => 'mar',
-        'ms' => 'msa',
+        'mk' => 'mkd',
         'mg' => 'mlg',
         'mt' => 'mlt',
+        'mn' => 'mon',
+        'mi' => 'mri',
+        'ms' => 'msa',
+        'my' => 'mya',
         'na' => 'nau',
         'nv' => 'nav',
         'nr' => 'nbl',
         'nd' => 'nde',
         'ng' => 'ndo',
         'ne' => 'nep',
+        'nl' => 'nld',
         'nn' => 'nno',
         'nb' => 'nob',
         'ny' => 'nya',
         'oc' => 'oci',
         'oj' => 'oji',
         'or' => 'ori',
+        'om' => 'orm',
         'os' => 'oss',
         'pa' => 'pan',
-        'ps' => 'pus',
         'pi' => 'pli',
         'pl' => 'pol',
         'pt' => 'por',
+        'ps' => 'pus',
         'qu' => 'que',
         'rm' => 'roh',
         'ro' => 'ron',
@@ -778,7 +777,6 @@ class LanguagesTest extends ResourceBundleTestCase
         'ru' => 'rus',
         'sg' => 'sag',
         'sa' => 'san',
-        'sr' => 'srp',
         'si' => 'sin',
         'sk' => 'slk',
         'sl' => 'slv',
@@ -789,7 +787,9 @@ class LanguagesTest extends ResourceBundleTestCase
         'so' => 'som',
         'st' => 'sot',
         'es' => 'spa',
+        'sq' => 'sqi',
         'sc' => 'srd',
+        'sr' => 'srp',
         'ss' => 'ssw',
         'su' => 'sun',
         'sw' => 'swa',
@@ -819,6 +819,7 @@ class LanguagesTest extends ResourceBundleTestCase
         'yi' => 'yid',
         'yo' => 'yor',
         'za' => 'zha',
+        'zh' => 'zho',
         'zu' => 'zul',
     ];
 
@@ -924,5 +925,67 @@ class LanguagesTest extends ResourceBundleTestCase
     {
         $this->assertTrue(Languages::exists('nl'));
         $this->assertFalse(Languages::exists('zxx'));
+    }
+
+    public function testGetAlpha3Codes()
+    {
+        $this->assertSame(self::$alpha2ToAlpha3, Languages::getAlpha3Codes());
+    }
+
+    public function testGetAlpha2Code()
+    {
+        foreach (self::$alpha2ToAlpha3 as $alpha2Code => $alpha3Code) {
+            $this->assertSame($alpha2Code, Languages::getAlpha2Code($alpha3Code));
+        }
+    }
+
+    public function testAlpha3CodeExists()
+    {
+        $this->assertTrue(Languages::alpha3CodeExists('nob'));
+        $this->assertTrue(Languages::alpha3CodeExists('nld'));
+        $this->assertFalse(Languages::alpha3CodeExists('foo'));
+        $this->assertFalse(Languages::alpha3CodeExists('zzz'));
+    }
+
+    /**
+     * @dataProvider provideLocales
+     */
+    public function testGetAlpha3Name($displayLocale)
+    {
+        $names = Languages::getNames($displayLocale);
+
+        foreach ($names as $alpha2 => $name) {
+            $alpha3 = self::$alpha2ToAlpha3[$alpha2] ?? false;
+            if ($alpha3) {
+                $this->assertSame($name, Languages::getAlpha3Name($alpha3, $displayLocale));
+            }
+        }
+    }
+
+    public function testGetAlpha3NameWithInvalidCountryCode()
+    {
+        $this->expectException(MissingResourceException::class);
+
+        Languages::getAlpha3Name('ZZZ');
+    }
+
+    /**
+     * @dataProvider provideLocales
+     */
+    public function testGetAlpha3Names($displayLocale)
+    {
+        $names = Languages::getAlpha3Names($displayLocale);
+
+        $alpha3Codes = array_keys($names);
+        sort($alpha3Codes);
+        $this->assertSame(array_values(self::$alpha2ToAlpha3), $alpha3Codes);
+
+        $alpha2Names = Languages::getNames($displayLocale);
+        foreach ($alpha2Names as $alpha2Code => $name) {
+            if (!isset(self::$alpha2ToAlpha3[$alpha2Code])) {
+                unset($alpha2Names[$alpha2Code]);
+            }
+        }
+        $this->assertSame(array_values($alpha2Names), array_values($names));
     }
 }

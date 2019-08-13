@@ -12,7 +12,6 @@
 namespace Symfony\Component\HttpKernel\Tests\Profiler;
 
 use PHPUnit\Framework\TestCase;
-use Symfony\Bridge\PhpUnit\ForwardCompatTestTrait;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\DataCollector\DataCollectorInterface;
@@ -22,8 +21,6 @@ use Symfony\Component\HttpKernel\Profiler\Profiler;
 
 class ProfilerTest extends TestCase
 {
-    use ForwardCompatTestTrait;
-
     private $tmp;
     private $storage;
 
@@ -31,6 +28,7 @@ class ProfilerTest extends TestCase
     {
         $request = new Request();
         $request->query->set('foo', 'bar');
+        $request->server->set('REMOTE_ADDR', '127.0.0.1');
         $response = new Response('', 204);
         $collector = new RequestDataCollector();
 
@@ -85,7 +83,7 @@ class ProfilerTest extends TestCase
         $this->assertCount(0, $profiler->find(null, null, null, null, null, null, '204'));
     }
 
-    private function doSetUp()
+    protected function setUp(): void
     {
         $this->tmp = tempnam(sys_get_temp_dir(), 'sf_profiler');
         if (file_exists($this->tmp)) {
@@ -96,7 +94,7 @@ class ProfilerTest extends TestCase
         $this->storage->purge();
     }
 
-    private function doTearDown()
+    protected function tearDown(): void
     {
         if (null !== $this->storage) {
             $this->storage->purge();

@@ -124,7 +124,7 @@ class Inline
                     throw new DumpException(sprintf('Unable to dump PHP resources in a YAML file ("%s").', get_resource_type($value)));
                 }
 
-                return 'null';
+                return self::dumpNull($flags);
             case $value instanceof \DateTimeInterface:
                 return $value->format('c');
             case \is_object($value):
@@ -150,11 +150,11 @@ class Inline
                     throw new DumpException('Object support when dumping a YAML file has been disabled.');
                 }
 
-                return 'null';
+                return self::dumpNull($flags);
             case \is_array($value):
                 return self::dumpArray($value, $flags);
             case null === $value:
-                return 'null';
+                return self::dumpNull($flags);
             case true === $value:
                 return 'true';
             case false === $value:
@@ -249,6 +249,15 @@ class Inline
         }
 
         return sprintf('{ %s }', implode(', ', $output));
+    }
+
+    private static function dumpNull(int $flags): string
+    {
+        if (Yaml::DUMP_NULL_AS_TILDE & $flags) {
+            return '~';
+        }
+
+        return 'null';
     }
 
     /**

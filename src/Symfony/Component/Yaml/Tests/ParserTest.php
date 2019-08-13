@@ -12,25 +12,21 @@
 namespace Symfony\Component\Yaml\Tests;
 
 use PHPUnit\Framework\TestCase;
-use Symfony\Bridge\PhpUnit\ForwardCompatTestTrait;
-use Symfony\Component\Yaml\Exception\ParseException;
 use Symfony\Component\Yaml\Parser;
 use Symfony\Component\Yaml\Tag\TaggedValue;
 use Symfony\Component\Yaml\Yaml;
 
 class ParserTest extends TestCase
 {
-    use ForwardCompatTestTrait;
-
     /** @var Parser */
     protected $parser;
 
-    private function doSetUp()
+    protected function setUp(): void
     {
         $this->parser = new Parser();
     }
 
-    private function doTearDown()
+    protected function tearDown(): void
     {
         $this->parser = null;
 
@@ -785,7 +781,6 @@ EOF
     }
 
     /**
-     *
      * > It is an error for two equal keys to appear in the same mapping node.
      * > In such a case the YAML processor may continue, ignoring the second
      * > "key: value" pair and issuing an appropriate warning. This strategy
@@ -2111,6 +2106,48 @@ parameters:
 YAML;
 
         $this->assertSame(['parameters' => 'abc'], $this->parser->parse($yaml));
+    }
+
+    public function testParseValueWithModifiers()
+    {
+        $yaml = <<<YAML
+parameters:
+    abc: |+5 # plus five spaces indent
+         one
+         two
+         three
+         four
+         five
+YAML;
+        $this->assertSame(
+            [
+                'parameters' => [
+                    'abc' => implode("\n", ['one', 'two', 'three', 'four', 'five']),
+                ],
+            ],
+            $this->parser->parse($yaml)
+        );
+    }
+
+    public function testParseValueWithNegativeModifiers()
+    {
+        $yaml = <<<YAML
+parameters:
+    abc: |-3 # minus
+       one
+       two
+       three
+       four
+       five
+YAML;
+        $this->assertSame(
+            [
+                'parameters' => [
+                    'abc' => implode("\n", ['one', 'two', 'three', 'four', 'five']),
+                ],
+            ],
+            $this->parser->parse($yaml)
+        );
     }
 }
 

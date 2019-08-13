@@ -12,7 +12,6 @@
 namespace Symfony\Bridge\Twig\Tests\Command;
 
 use PHPUnit\Framework\TestCase;
-use Symfony\Bridge\PhpUnit\ForwardCompatTestTrait;
 use Symfony\Bridge\Twig\Command\LintCommand;
 use Symfony\Component\Console\Application;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -22,8 +21,6 @@ use Twig\Loader\FilesystemLoader;
 
 class LintCommandTest extends TestCase
 {
-    use ForwardCompatTestTrait;
-
     private $files;
 
     public function testLintCorrectFile()
@@ -34,7 +31,7 @@ class LintCommandTest extends TestCase
         $ret = $tester->execute(['filename' => [$filename]], ['verbosity' => OutputInterface::VERBOSITY_VERBOSE, 'decorated' => false]);
 
         $this->assertEquals(0, $ret, 'Returns 0 in case of success');
-        $this->assertContains('OK in', trim($tester->getDisplay()));
+        $this->assertStringContainsString('OK in', trim($tester->getDisplay()));
     }
 
     public function testLintIncorrectFile()
@@ -69,10 +66,7 @@ class LintCommandTest extends TestCase
         $this->assertRegExp('/ERROR  in \S+ \(line /', trim($tester->getDisplay()));
     }
 
-    /**
-     * @return CommandTester
-     */
-    private function createCommandTester()
+    private function createCommandTester(): CommandTester
     {
         $command = new LintCommand(new Environment(new FilesystemLoader()));
 
@@ -83,10 +77,7 @@ class LintCommandTest extends TestCase
         return new CommandTester($command);
     }
 
-    /**
-     * @return string Path to the new file
-     */
-    private function createFile($content)
+    private function createFile($content): string
     {
         $filename = tempnam(sys_get_temp_dir(), 'sf-');
         file_put_contents($filename, $content);
@@ -96,12 +87,12 @@ class LintCommandTest extends TestCase
         return $filename;
     }
 
-    private function doSetUp()
+    protected function setUp(): void
     {
         $this->files = [];
     }
 
-    private function doTearDown()
+    protected function tearDown(): void
     {
         foreach ($this->files as $file) {
             if (file_exists($file)) {

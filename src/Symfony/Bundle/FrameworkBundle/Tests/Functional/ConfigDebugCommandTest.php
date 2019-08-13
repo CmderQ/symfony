@@ -11,7 +11,6 @@
 
 namespace Symfony\Bundle\FrameworkBundle\Tests\Functional;
 
-use Symfony\Bridge\PhpUnit\ForwardCompatTestTrait;
 use Symfony\Bundle\FrameworkBundle\Console\Application;
 use Symfony\Component\Console\Input\ArrayInput;
 use Symfony\Component\Console\Output\NullOutput;
@@ -22,11 +21,9 @@ use Symfony\Component\Console\Tester\CommandTester;
  */
 class ConfigDebugCommandTest extends AbstractWebTestCase
 {
-    use ForwardCompatTestTrait;
-
     private $application;
 
-    private function doSetUp()
+    protected function setUp(): void
     {
         $kernel = static::createKernel(['test_case' => 'ConfigDump', 'root_config' => 'config.yml']);
         $this->application = new Application($kernel);
@@ -39,7 +36,7 @@ class ConfigDebugCommandTest extends AbstractWebTestCase
         $ret = $tester->execute(['name' => 'TestBundle']);
 
         $this->assertSame(0, $ret, 'Returns 0 in case of success');
-        $this->assertContains('custom: foo', $tester->getDisplay());
+        $this->assertStringContainsString('custom: foo', $tester->getDisplay());
     }
 
     public function testDumpBundleOption()
@@ -48,7 +45,7 @@ class ConfigDebugCommandTest extends AbstractWebTestCase
         $ret = $tester->execute(['name' => 'TestBundle', 'path' => 'custom']);
 
         $this->assertSame(0, $ret, 'Returns 0 in case of success');
-        $this->assertContains('foo', $tester->getDisplay());
+        $this->assertStringContainsString('foo', $tester->getDisplay());
     }
 
     public function testParametersValuesAreResolved()
@@ -57,8 +54,8 @@ class ConfigDebugCommandTest extends AbstractWebTestCase
         $ret = $tester->execute(['name' => 'framework']);
 
         $this->assertSame(0, $ret, 'Returns 0 in case of success');
-        $this->assertContains("locale: '%env(LOCALE)%'", $tester->getDisplay());
-        $this->assertContains('secret: test', $tester->getDisplay());
+        $this->assertStringContainsString("locale: '%env(LOCALE)%'", $tester->getDisplay());
+        $this->assertStringContainsString('secret: test', $tester->getDisplay());
     }
 
     public function testDumpUndefinedBundleOption()
@@ -66,7 +63,7 @@ class ConfigDebugCommandTest extends AbstractWebTestCase
         $tester = $this->createCommandTester();
         $tester->execute(['name' => 'TestBundle', 'path' => 'foo']);
 
-        $this->assertContains('Unable to find configuration for "test.foo"', $tester->getDisplay());
+        $this->assertStringContainsString('Unable to find configuration for "test.foo"', $tester->getDisplay());
     }
 
     public function testDumpWithPrefixedEnv()
@@ -74,13 +71,10 @@ class ConfigDebugCommandTest extends AbstractWebTestCase
         $tester = $this->createCommandTester();
         $tester->execute(['name' => 'FrameworkBundle']);
 
-        $this->assertContains("cookie_httponly: '%env(bool:COOKIE_HTTPONLY)%'", $tester->getDisplay());
+        $this->assertStringContainsString("cookie_httponly: '%env(bool:COOKIE_HTTPONLY)%'", $tester->getDisplay());
     }
 
-    /**
-     * @return CommandTester
-     */
-    private function createCommandTester()
+    private function createCommandTester(): CommandTester
     {
         $command = $this->application->find('debug:config');
 

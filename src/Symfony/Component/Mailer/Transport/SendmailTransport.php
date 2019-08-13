@@ -73,6 +73,15 @@ class SendmailTransport extends AbstractTransport
         return parent::send($message, $envelope);
     }
 
+    public function getName(): string
+    {
+        if ($this->transport) {
+            return $this->transport->getName();
+        }
+
+        return 'smtp://sendmail';
+    }
+
     protected function doSend(SentMessage $message): void
     {
         $this->getLogger()->debug(sprintf('Email transport "%s" starting', __CLASS__));

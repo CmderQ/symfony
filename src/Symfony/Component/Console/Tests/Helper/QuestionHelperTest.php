@@ -11,7 +11,6 @@
 
 namespace Symfony\Component\Console\Tests\Helper;
 
-use Symfony\Bridge\PhpUnit\ForwardCompatTestTrait;
 use Symfony\Component\Console\Formatter\OutputFormatter;
 use Symfony\Component\Console\Helper\FormatterHelper;
 use Symfony\Component\Console\Helper\HelperSet;
@@ -26,8 +25,6 @@ use Symfony\Component\Console\Question\Question;
  */
 class QuestionHelperTest extends AbstractQuestionHelperTest
 {
-    use ForwardCompatTestTrait;
-
     public function testAskChoice()
     {
         $questionHelper = new QuestionHelper();
@@ -56,7 +53,7 @@ class QuestionHelperTest extends AbstractQuestionHelperTest
 
         rewind($output->getStream());
         $stream = stream_get_contents($output->getStream());
-        $this->assertContains('Input "Fabien" is not a superhero!', $stream);
+        $this->assertStringContainsString('Input "Fabien" is not a superhero!', $stream);
 
         try {
             $question = new ChoiceQuestion('What is your favorite superhero?', $heroes, '1');

@@ -116,7 +116,7 @@ class Response
      * Status codes translation table.
      *
      * The list of codes is complete according to the
-     * {@link http://www.iana.org/assignments/http-status-codes/ Hypertext Transfer Protocol (HTTP) Status Code Registry}
+     * {@link https://www.iana.org/assignments/http-status-codes/http-status-codes.xhtml Hypertext Transfer Protocol (HTTP) Status Code Registry}
      * (last updated 2016-03-01).
      *
      * Unless otherwise noted, the status code is defined in RFC2616.
@@ -191,7 +191,7 @@ class Response
     /**
      * @throws \InvalidArgumentException When the HTTP status code is not valid
      */
-    public function __construct($content = '', int $status = 200, array $headers = [])
+    public function __construct(?string $content = '', int $status = 200, array $headers = [])
     {
         $this->headers = new ResponseHeaderBag($headers);
         $this->setContent($content);
@@ -207,13 +207,9 @@ class Response
      *     return Response::create($body, 200)
      *         ->setSharedMaxAge(300);
      *
-     * @param mixed $content The response content, see setContent()
-     * @param int   $status  The response status code
-     * @param array $headers An array of response headers
-     *
      * @return static
      */
-    public static function create($content = '', $status = 200, $headers = [])
+    public static function create(?string $content = '', int $status = 200, array $headers = [])
     {
         return new static($content, $status, $headers);
     }
@@ -382,21 +378,13 @@ class Response
     /**
      * Sets the response content.
      *
-     * Valid types are strings, numbers, null, and objects that implement a __toString() method.
-     *
-     * @param mixed $content Content that can be cast to string
-     *
      * @return $this
      *
      * @throws \UnexpectedValueException
      */
-    public function setContent($content)
+    public function setContent(?string $content)
     {
-        if (null !== $content && !\is_string($content) && !is_numeric($content) && !\is_callable([$content, '__toString'])) {
-            throw new \UnexpectedValueException(sprintf('The Response content must be a string or object implementing __toString(), "%s" given.', \gettype($content)));
-        }
-
-        $this->content = (string) $content;
+        $this->content = $content ?? '';
 
         return $this;
     }
@@ -985,7 +973,7 @@ class Response
      *
      * @return $this
      *
-     * @see http://tools.ietf.org/html/rfc2616#section-10.3.5
+     * @see https://tools.ietf.org/html/rfc2616#section-10.3.5
      *
      * @final
      */
@@ -1019,7 +1007,7 @@ class Response
      */
     public function getVary(): array
     {
-        if (!$vary = $this->headers->get('Vary', null, false)) {
+        if (!$vary = $this->headers->all('Vary')) {
             return [];
         }
 
@@ -1087,7 +1075,7 @@ class Response
     /**
      * Is response invalid?
      *
-     * @see http://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html
+     * @see https://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html
      *
      * @final
      */
@@ -1203,7 +1191,7 @@ class Response
      *
      * @final
      */
-    public static function closeOutputBuffers(int $targetLevel, bool $flush)
+    public static function closeOutputBuffers(int $targetLevel, bool $flush): void
     {
         $status = ob_get_status(true);
         $level = \count($status);
@@ -1225,7 +1213,7 @@ class Response
      *
      * @final
      */
-    protected function ensureIEOverSSLCompatibility(Request $request)
+    protected function ensureIEOverSSLCompatibility(Request $request): void
     {
         if (false !== stripos($this->headers->get('Content-Disposition'), 'attachment') && 1 == preg_match('/MSIE (.*?);/i', $request->server->get('HTTP_USER_AGENT'), $match) && true === $request->isSecure()) {
             if ((int) preg_replace('/(MSIE )(.*?);/', '$2', $match[0]) < 9) {

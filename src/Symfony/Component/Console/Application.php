@@ -41,8 +41,8 @@ use Symfony\Component\Console\Output\ConsoleOutput;
 use Symfony\Component\Console\Output\ConsoleOutputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
-use Symfony\Component\Debug\ErrorHandler;
-use Symfony\Component\Debug\Exception\FatalThrowableError;
+use Symfony\Component\ErrorHandler\ErrorHandler;
+use Symfony\Component\ErrorHandler\Exception\FatalThrowableError;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Contracts\Service\ResetInterface;
 
@@ -133,9 +133,9 @@ class Application implements ResetInterface
         if ($phpHandler = set_exception_handler($renderException)) {
             restore_exception_handler();
             if (!\is_array($phpHandler) || !$phpHandler[0] instanceof ErrorHandler) {
-                $debugHandler = true;
-            } elseif ($debugHandler = $phpHandler[0]->setExceptionHandler($renderException)) {
-                $phpHandler[0]->setExceptionHandler($debugHandler);
+                $errorHandler = true;
+            } elseif ($errorHandler = $phpHandler[0]->setExceptionHandler($renderException)) {
+                $phpHandler[0]->setExceptionHandler($errorHandler);
             }
         }
 
@@ -167,7 +167,7 @@ class Application implements ResetInterface
                     restore_exception_handler();
                 }
                 restore_exception_handler();
-            } elseif (!$debugHandler) {
+            } elseif (!$errorHandler) {
                 $finalHandler = $phpHandler[0]->setExceptionHandler(null);
                 if ($finalHandler !== $renderException) {
                     $phpHandler[0]->setExceptionHandler($finalHandler);
@@ -1001,10 +1001,8 @@ class Application implements ResetInterface
 
     /**
      * Returns abbreviated suggestions in string format.
-     *
-     * @return string A formatted string of abbreviated suggestions
      */
-    private function getAbbreviationSuggestions(array $abbrevs)
+    private function getAbbreviationSuggestions(array $abbrevs): string
     {
         return '    '.implode("\n    ", $abbrevs);
     }
@@ -1030,7 +1028,7 @@ class Application implements ResetInterface
      *
      * @return string[] A sorted array of similar string
      */
-    private function findAlternatives(string $name, iterable $collection)
+    private function findAlternatives(string $name, iterable $collection): array
     {
         $threshold = 1e3;
         $alternatives = [];
@@ -1140,7 +1138,7 @@ class Application implements ResetInterface
      *
      * @return string[] The namespaces of the command
      */
-    private function extractAllNamespaces(string $name)
+    private function extractAllNamespaces(string $name): array
     {
         // -1 as third argument is needed to skip the command short name when exploding
         $parts = explode(':', $name, -1);

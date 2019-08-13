@@ -12,9 +12,7 @@
 namespace Symfony\Component\DependencyInjection\Tests\Loader;
 
 use PHPUnit\Framework\TestCase;
-use PHPUnit\Framework\Warning;
 use Psr\Container\ContainerInterface as PsrContainerInterface;
-use Symfony\Bridge\PhpUnit\ForwardCompatTestTrait;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\Config\Loader\LoaderResolver;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
@@ -36,11 +34,9 @@ use Symfony\Component\DependencyInjection\Tests\Fixtures\Prototype\Sub\BarInterf
 
 class FileLoaderTest extends TestCase
 {
-    use ForwardCompatTestTrait;
-
     protected static $fixturesPath;
 
-    private static function doSetUpBeforeClass()
+    public static function setUpBeforeClass(): void
     {
         self::$fixturesPath = realpath(__DIR__.'/../');
     }
@@ -110,12 +106,11 @@ class FileLoaderTest extends TestCase
         );
     }
 
+    /**
+     * @runInSeparateProcess https://github.com/symfony/symfony/issues/32995
+     */
     public function testRegisterClassesWithExclude()
     {
-        if (\PHP_VERSION_ID >= 70400) {
-            throw new Warning('PHP 7.4 breaks this test, see https://bugs.php.net/78351.');
-        }
-
         $container = new ContainerBuilder();
         $container->setParameter('other_dir', 'OtherDir');
         $loader = new TestFileLoader($container, new FileLocator(self::$fixturesPath.'/Fixtures'));
@@ -143,6 +138,9 @@ class FileLoaderTest extends TestCase
         );
     }
 
+    /**
+     * @runInSeparateProcess https://github.com/symfony/symfony/issues/32995
+     */
     public function testRegisterClassesWithExcludeAsArray()
     {
         $container = new ContainerBuilder();
@@ -162,12 +160,11 @@ class FileLoaderTest extends TestCase
         $this->assertFalse($container->has(DeeperBaz::class));
     }
 
+    /**
+     * @runInSeparateProcess https://github.com/symfony/symfony/issues/32995
+     */
     public function testNestedRegisterClasses()
     {
-        if (\PHP_VERSION_ID >= 70400) {
-            throw new Warning('PHP 7.4 breaks this test, see https://bugs.php.net/78351.');
-        }
-
         $container = new ContainerBuilder();
         $loader = new TestFileLoader($container, new FileLocator(self::$fixturesPath.'/Fixtures'));
 
@@ -194,12 +191,11 @@ class FileLoaderTest extends TestCase
         $this->assertFalse($alias->isPrivate());
     }
 
+    /**
+     * @runInSeparateProcess https://github.com/symfony/symfony/issues/32995
+     */
     public function testMissingParentClass()
     {
-        if (\PHP_VERSION_ID >= 70400) {
-            throw new Warning('PHP 7.4 breaks this test, see https://bugs.php.net/78351.');
-        }
-
         $container = new ContainerBuilder();
         $container->setParameter('bad_classes_dir', 'BadClasses');
         $loader = new TestFileLoader($container, new FileLocator(self::$fixturesPath.'/Fixtures'));

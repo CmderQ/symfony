@@ -11,7 +11,6 @@
 
 namespace Symfony\Component\HttpFoundation\Tests;
 
-use Symfony\Bridge\PhpUnit\ForwardCompatTestTrait;
 use Symfony\Component\HttpFoundation\Cookie;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -21,8 +20,6 @@ use Symfony\Component\HttpFoundation\Response;
  */
 class ResponseTest extends ResponseTestCase
 {
-    use ForwardCompatTestTrait;
-
     public function testCreate()
     {
         $response = Response::create('foo', 301, ['Foo' => 'bar']);
@@ -537,7 +534,6 @@ class ResponseTest extends ResponseTestCase
         $response->prepare($request);
         $this->assertEquals('', $response->getContent());
         $this->assertFalse($response->headers->has('Content-Type'));
-        $this->assertFalse($response->headers->has('Content-Type'));
 
         $response->setContent('content');
         $response->setStatusCode(304);
@@ -605,7 +601,7 @@ class ResponseTest extends ResponseTestCase
             $this->fail('->setCache() throws an InvalidArgumentException if an option is not supported');
         } catch (\Exception $e) {
             $this->assertInstanceOf('InvalidArgumentException', $e, '->setCache() throws an InvalidArgumentException if an option is not supported');
-            $this->assertContains('"wrong option"', $e->getMessage());
+            $this->assertStringContainsString('"wrong option"', $e->getMessage());
         }
 
         $options = ['etag' => '"whatever"'];
@@ -658,7 +654,7 @@ class ResponseTest extends ResponseTestCase
         ob_start();
         $response->sendContent();
         $string = ob_get_clean();
-        $this->assertContains('test response rendering', $string);
+        $this->assertStringContainsString('test response rendering', $string);
     }
 
     public function testSetPublic()
@@ -904,16 +900,6 @@ class ResponseTest extends ResponseTestCase
         $this->assertEquals((string) $content, $response->getContent());
     }
 
-    /**
-     * @dataProvider invalidContentProvider
-     */
-    public function testSetContentInvalid($content)
-    {
-        $this->expectException('UnexpectedValueException');
-        $response = new Response();
-        $response->setContent($content);
-    }
-
     public function testSettersAreChainable()
     {
         $response = new Response();
@@ -952,15 +938,6 @@ class ResponseTest extends ResponseTestCase
             'obj' => [new StringableObject()],
             'string' => ['Foo'],
             'int' => [2],
-        ];
-    }
-
-    public function invalidContentProvider()
-    {
-        return [
-            'obj' => [new \stdClass()],
-            'array' => [[]],
-            'bool' => [true, '1'],
         ];
     }
 

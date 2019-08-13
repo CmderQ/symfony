@@ -12,7 +12,6 @@
 namespace Symfony\Component\Security\Http\Tests\RememberMe;
 
 use PHPUnit\Framework\TestCase;
-use Symfony\Bridge\PhpUnit\ForwardCompatTestTrait;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Security\Http\RememberMe\AbstractRememberMeServices;
@@ -20,8 +19,6 @@ use Symfony\Component\Security\Http\RememberMe\RememberMeServicesInterface;
 
 class AbstractRememberMeServicesTest extends TestCase
 {
-    use ForwardCompatTestTrait;
-
     public function testGetRememberMeParameter()
     {
         $service = $this->getService(null, ['remember_me_parameter' => 'foo']);
@@ -127,7 +124,6 @@ class AbstractRememberMeServicesTest extends TestCase
         $service = $this->getService(null, ['name' => 'foo', 'always_remember_me' => true, 'path' => null, 'domain' => null]);
         $request = new Request();
         $response = new Response();
-        $account = $this->getMockBuilder('Symfony\Component\Security\Core\User\UserInterface')->getMock();
         $token = $this->getMockBuilder('Symfony\Component\Security\Core\Authentication\Token\TokenInterface')->getMock();
         $token
             ->expects($this->once())

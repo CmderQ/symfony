@@ -17,7 +17,6 @@ require_once __DIR__.'/Fixtures/includes/ProjectExtension.php';
 
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface as PsrContainerInterface;
-use Symfony\Bridge\PhpUnit\ForwardCompatTestTrait;
 use Symfony\Component\Config\Resource\ComposerResource;
 use Symfony\Component\Config\Resource\DirectoryResource;
 use Symfony\Component\Config\Resource\FileResource;
@@ -49,8 +48,6 @@ use Symfony\Component\ExpressionLanguage\Expression;
 
 class ContainerBuilderTest extends TestCase
 {
-    use ForwardCompatTestTrait;
-
     public function testDefaultRegisteredDefinitions()
     {
         $builder = new ContainerBuilder();
@@ -1291,8 +1288,8 @@ class ContainerBuilderTest extends TestCase
 
     public function testNoClassFromNamespaceClassIdWithLeadingSlash()
     {
-        $this->expectException('Symfony\Component\DependencyInjection\Exception\RuntimeException');
-        $this->expectExceptionMessage('The definition for "\Symfony\Component\DependencyInjection\Tests\FooClass" has no class attribute, and appears to reference a class or interface. Please specify the class attribute explicitly or remove the leading backslash by renaming the service to "Symfony\Component\DependencyInjection\Tests\FooClass" to get rid of this error.');
+        $this->expectException('Symfony\Component\DependencyInjection\Exception\InvalidArgumentException');
+        $this->expectExceptionMessage('Service definition "\Symfony\Component\DependencyInjection\Tests\FooClass" has no class, and its name looks like a FQCN but it starts with a backslash; remove the leading backslash.');
         $container = new ContainerBuilder();
 
         $container->register('\\'.FooClass::class);

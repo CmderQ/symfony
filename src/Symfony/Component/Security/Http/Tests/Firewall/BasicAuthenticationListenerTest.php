@@ -12,7 +12,6 @@
 namespace Symfony\Component\Security\Http\Tests\Firewall;
 
 use PHPUnit\Framework\TestCase;
-use Symfony\Bridge\PhpUnit\ForwardCompatTestTrait;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Event\RequestEvent;
@@ -23,8 +22,6 @@ use Symfony\Component\Security\Http\Firewall\BasicAuthenticationListener;
 
 class BasicAuthenticationListenerTest extends TestCase
 {
-    use ForwardCompatTestTrait;
-
     public function testHandleWithValidUsernameAndPasswordServerParameters()
     {
         $request = new Request([], [], [], [], [], [
@@ -77,8 +74,6 @@ class BasicAuthenticationListenerTest extends TestCase
             'PHP_AUTH_USER' => 'TheUsername',
             'PHP_AUTH_PW' => 'ThePassword',
         ]);
-
-        $token = $this->getMockBuilder('Symfony\Component\Security\Core\Authentication\Token\TokenInterface')->getMock();
 
         $tokenStorage = $this->getMockBuilder('Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface')->getMock();
         $tokenStorage

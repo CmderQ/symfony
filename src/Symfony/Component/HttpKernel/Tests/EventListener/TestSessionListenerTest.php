@@ -12,7 +12,6 @@
 namespace Symfony\Component\HttpKernel\Tests\EventListener;
 
 use PHPUnit\Framework\TestCase;
-use Symfony\Bridge\PhpUnit\ForwardCompatTestTrait;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\Session\SessionInterface;
@@ -31,8 +30,6 @@ use Symfony\Component\HttpKernel\HttpKernelInterface;
  */
 class TestSessionListenerTest extends TestCase
 {
-    use ForwardCompatTestTrait;
-
     /**
      * @var TestSessionListener
      */
@@ -43,7 +40,7 @@ class TestSessionListenerTest extends TestCase
      */
     private $session;
 
-    private function doSetUp()
+    protected function setUp(): void
     {
         $this->listener = $this->getMockForAbstractClass('Symfony\Component\HttpKernel\EventListener\AbstractTestSessionListener');
         $this->session = $this->getSession();
@@ -126,7 +123,7 @@ class TestSessionListenerTest extends TestCase
 
         $response = $this->filterResponse(new Request(), HttpKernelInterface::MASTER_REQUEST, $response);
 
-        $this->assertSame($expected, $response->headers->get('Set-Cookie', null, false));
+        $this->assertSame($expected, $response->headers->all()['set-cookie']);
     }
 
     public function anotherCookieProvider()

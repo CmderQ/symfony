@@ -11,17 +11,14 @@
 
 namespace Symfony\Component\Form\Tests\Extension\Core\Type;
 
-use Symfony\Bridge\PhpUnit\ForwardCompatTestTrait;
 use Symfony\Component\Form\ChoiceList\View\ChoiceView;
 use Symfony\Component\Intl\Util\IntlTestHelper;
 
 class CurrencyTypeTest extends BaseTypeTest
 {
-    use ForwardCompatTestTrait;
-
     const TESTED_TYPE = 'Symfony\Component\Form\Extension\Core\Type\CurrencyType';
 
-    private function doSetUp()
+    protected function setUp(): void
     {
         IntlTestHelper::requireIntl($this, false);
 
@@ -33,9 +30,9 @@ class CurrencyTypeTest extends BaseTypeTest
         $choices = $this->factory->create(static::TESTED_TYPE)
             ->createView()->vars['choices'];
 
-        $this->assertContains(new ChoiceView('EUR', 'EUR', 'Euro'), $choices, '', false, false);
-        $this->assertContains(new ChoiceView('USD', 'USD', 'US Dollar'), $choices, '', false, false);
-        $this->assertContains(new ChoiceView('SIT', 'SIT', 'Slovenian Tolar'), $choices, '', false, false);
+        $this->assertContainsEquals(new ChoiceView('EUR', 'EUR', 'Euro'), $choices);
+        $this->assertContainsEquals(new ChoiceView('USD', 'USD', 'US Dollar'), $choices);
+        $this->assertContainsEquals(new ChoiceView('SIT', 'SIT', 'Slovenian Tolar'), $choices);
     }
 
     /**
@@ -50,9 +47,9 @@ class CurrencyTypeTest extends BaseTypeTest
             ->createView()->vars['choices'];
 
         // Don't check objects for identity
-        $this->assertContains(new ChoiceView('EUR', 'EUR', 'євро'), $choices, '', false, false);
-        $this->assertContains(new ChoiceView('USD', 'USD', 'долар США'), $choices, '', false, false);
-        $this->assertContains(new ChoiceView('SIT', 'SIT', 'словенський толар'), $choices, '', false, false);
+        $this->assertContainsEquals(new ChoiceView('EUR', 'EUR', 'євро'), $choices);
+        $this->assertContainsEquals(new ChoiceView('USD', 'USD', 'долар США'), $choices);
+        $this->assertContainsEquals(new ChoiceView('SIT', 'SIT', 'словенський толар'), $choices);
     }
 
     public function testSubmitNull($expected = null, $norm = null, $view = null)

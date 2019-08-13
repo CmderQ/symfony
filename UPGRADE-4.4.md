@@ -9,8 +9,9 @@ Cache
 Debug
 -----
 
- * Deprecated `FlattenException`, use the `FlattenException` of the `ErrorRenderer` component
- * Deprecated the whole component in favor of `ErrorHandler` component
+ * Deprecated the `Debug` class, use the one from the `ErrorRenderer` component instead
+ * Deprecated the `FlattenException` class, use the one from the `ErrorRenderer` component instead
+ * Deprecated the component in favor of the `ErrorHandler` component
 
 DependencyInjection
 -------------------
@@ -83,6 +84,7 @@ Form
  * Using different values for the "model_timezone" and "view_timezone" options of the `TimeType` without configuring a
    reference date is deprecated.
  * Using `int` or `float` as data for the `NumberType` when the `input` option is set to `string` is deprecated.
+ * Overriding the methods `FormIntegrationTestCase::setUp()`, `TypeTestCase::setUp()` and `TypeTestCase::tearDown()` without the `void` return-type is deprecated.
 
 FrameworkBundle
 ---------------
@@ -94,7 +96,9 @@ FrameworkBundle
  * The `ControllerResolver` and `DelegatingLoader` classes have been marked as `final`.
  * The `controller_name_converter` and `resolve_controller_name_subscriber` services have been deprecated.
  * Deprecated `routing.loader.service`, use `routing.loader.container` instead.
-
+ * Not tagging service route loaders with `routing.route_loader` has been deprecated.
+ * Overriding the methods `KernelTestCase::tearDown()` and `WebTestCase::tearDown()` without the `void` return-type is deprecated.
+ 
 HttpClient
 ----------
 
@@ -104,6 +108,7 @@ HttpFoundation
 --------------
 
  * `ApacheRequest` is deprecated, use `Request` class instead.
+ * Passing a third argument to `HeaderBag::get()` is deprecated since Symfony 4.4, use method `all()` instead
 
 HttpKernel
 ----------
@@ -149,6 +154,7 @@ Routing
 Security
 --------
 
+ * The `LdapUserProvider` class has been deprecated, use `Symfony\Component\Ldap\Security\LdapUserProvider` instead.
  * Implementations of `PasswordEncoderInterface` and `UserPasswordEncoderInterface` should add a new `needsRehash()` method
 
 Stopwatch
@@ -243,6 +249,7 @@ Validator
    when the `min` option is used.
    Set it to `true` to keep the current behavior and `false` to reject empty strings.
    In 5.0, it'll become optional and will default to `false`.
+ * Overriding the methods `ConstraintValidatorTestCase::setUp()` and `ConstraintValidatorTestCase::tearDown()` without the `void` return-type is deprecated.
 
 WebProfilerBundle
 -----------------

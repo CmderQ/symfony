@@ -11,8 +11,8 @@
 
 namespace Symfony\Component\Serializer\Tests\Encoder;
 
+use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
-use Symfony\Bridge\PhpUnit\ForwardCompatTestTrait;
 use Symfony\Component\Serializer\Encoder\XmlEncoder;
 use Symfony\Component\Serializer\Normalizer\CustomNormalizer;
 use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
@@ -23,8 +23,6 @@ use Symfony\Component\Serializer\Tests\Fixtures\ScalarDummy;
 
 class XmlEncoderTest extends TestCase
 {
-    use ForwardCompatTestTrait;
-
     /**
      * @var XmlEncoder
      */
@@ -32,7 +30,7 @@ class XmlEncoderTest extends TestCase
 
     private $exampleDateTimeString = '2017-02-19T15:16:08+0300';
 
-    private function doSetUp()
+    protected function setUp(): void
     {
         $this->encoder = new XmlEncoder();
         $serializer = new Serializer([new CustomNormalizer()], ['xml' => new XmlEncoder()]);
@@ -798,10 +796,7 @@ XML;
         $this->assertEquals($expected, $encoder->encode($data, 'xml'));
     }
 
-    /**
-     * @return XmlEncoder
-     */
-    private function createXmlEncoderWithDateTimeNormalizer()
+    private function createXmlEncoderWithDateTimeNormalizer(): XmlEncoder
     {
         $encoder = new XmlEncoder();
         $serializer = new Serializer([$this->createMockDateTimeNormalizer()], ['xml' => new XmlEncoder()]);
@@ -811,7 +806,7 @@ XML;
     }
 
     /**
-     * @return \PHPUnit_Framework_MockObject_MockObject|NormalizerInterface
+     * @return MockObject|NormalizerInterface
      */
     private function createMockDateTimeNormalizer()
     {
@@ -832,20 +827,14 @@ XML;
         return $mock;
     }
 
-    /**
-     * @return string
-     */
-    private function createXmlWithDateTime()
+    private function createXmlWithDateTime(): string
     {
         return sprintf('<?xml version="1.0"?>
 <response><dateTime>%s</dateTime></response>
 ', $this->exampleDateTimeString);
     }
 
-    /**
-     * @return string
-     */
-    private function createXmlWithDateTimeField()
+    private function createXmlWithDateTimeField(): string
     {
         return sprintf('<?xml version="1.0"?>
 <response><foo dateTime="%s"/></response>

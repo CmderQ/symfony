@@ -12,7 +12,7 @@
 namespace Symfony\Bridge\ProxyManager\Tests\LazyProxy\PhpDumper;
 
 use PHPUnit\Framework\TestCase;
-use Symfony\Bridge\PhpUnit\ForwardCompatTestTrait;
+use ProxyManager\Version;
 use Symfony\Bridge\ProxyManager\LazyProxy\PhpDumper\ProxyDumper;
 use Symfony\Component\DependencyInjection\Definition;
 use Symfony\Component\DependencyInjection\LazyProxy\PhpDumper\DumperInterface;
@@ -24,8 +24,6 @@ use Symfony\Component\DependencyInjection\LazyProxy\PhpDumper\DumperInterface;
  */
 class ProxyDumperTest extends TestCase
 {
-    use ForwardCompatTestTrait;
-
     /**
      * @var ProxyDumper
      */
@@ -34,7 +32,7 @@ class ProxyDumperTest extends TestCase
     /**
      * {@inheritdoc}
      */
-    private function doSetUp()
+    protected function setUp(): void
     {
         $this->dumper = new ProxyDumper();
     }
@@ -60,6 +58,20 @@ class ProxyDumperTest extends TestCase
                 .'\Symfony\Bridge\ProxyManager\Tests\LazyProxy\PhpDumper\ProxyDumperTest%a',
             $code
         );
+    }
+
+    public function testStaticBinding()
+    {
+        if (!class_exists(Version::class) || version_compare(\defined(Version::class.'::VERSION') ? Version::VERSION : Version::getVersion(), '2.1', '<')) {
+            $this->markTestSkipped('ProxyManager prior to version 2.1 does not support static binding');
+        }
+
+        $definition = new Definition(__CLASS__);
+        $definition->setLazy(true);
+
+        $code = $this->dumper->getProxyCode($definition);
+
+        $this->assertStringContainsString('\Closure::bind(static function (\PHPUnit\Framework\TestCase $instance) {', $code);
     }
 
     public function testDeterministicProxyCode()
@@ -147,12 +159,12 @@ return new class
 EOPHP;
 
         $implem = preg_replace('#\n    /\*\*.*?\*/#s', '', $implem);
-        $implem = str_replace('getWrappedValueHolderValue() : ?object', 'getWrappedValueHolderValue()', $implem);
         $implem = str_replace("array(\n        \n    );", "[\n        \n    ];", $implem);
-        $this->assertStringEqualsFile(__DIR__.'/Fixtures/proxy-implem.php', $implem);
+
+        $this->assertStringMatchesFormatFile(__DIR__.'/Fixtures/proxy-implem.php', $implem);
         $this->assertStringEqualsFile(__DIR__.'/Fixtures/proxy-factory.php', $factory);
 
-        require_once __DIR__.'/Fixtures/proxy-implem.php';
+        eval(preg_replace('/^<\?php/', '', $implem));
         $factory = require __DIR__.'/Fixtures/proxy-factory.php';
 
         $foo = $factory->getFooService();

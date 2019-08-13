@@ -12,7 +12,6 @@
 namespace Symfony\Component\VarDumper\Tests\Caster;
 
 use PHPUnit\Framework\TestCase;
-use Symfony\Bridge\PhpUnit\ForwardCompatTestTrait;
 use Symfony\Component\VarDumper\Caster\Caster;
 use Symfony\Component\VarDumper\Caster\ExceptionCaster;
 use Symfony\Component\VarDumper\Caster\FrameStub;
@@ -22,7 +21,6 @@ use Symfony\Component\VarDumper\Test\VarDumperTestTrait;
 
 class ExceptionCasterTest extends TestCase
 {
-    use ForwardCompatTestTrait;
     use VarDumperTestTrait;
 
     private function getTestException($msg, &$ref = null)
@@ -30,7 +28,7 @@ class ExceptionCasterTest extends TestCase
         return new \Exception(''.$msg);
     }
 
-    private function doTearDown()
+    protected function tearDown(): void
     {
         ExceptionCaster::$srcContext = 1;
         ExceptionCaster::$traceArgs = true;
@@ -46,15 +44,14 @@ Exception {
   #message: "foo"
   #code: 0
   #file: "%sExceptionCasterTest.php"
-  #line: 30
+  #line: 28
   trace: {
-    %s%eTests%eCaster%eExceptionCasterTest.php:30 {
+    %s%eTests%eCaster%eExceptionCasterTest.php:28 {
       › {
       ›     return new \Exception(''.$msg);
       › }
     }
-    %s%eTests%eCaster%eExceptionCasterTest.php:42 { …}
-    Symfony\Component\VarDumper\Tests\Caster\ExceptionCasterTest->testDefaultSettings() {}
+    %s%eTests%eCaster%eExceptionCasterTest.php:40 { …}
 %A
 EODUMP;
 
@@ -68,13 +65,12 @@ EODUMP;
 
         $expectedDump = <<<'EODUMP'
 {
-  %s%eTests%eCaster%eExceptionCasterTest.php:30 {
+  %s%eTests%eCaster%eExceptionCasterTest.php:28 {
     › {
     ›     return new \Exception(''.$msg);
     › }
   }
-  %s%eTests%eCaster%eExceptionCasterTest.php:67 { …}
-  Symfony\Component\VarDumper\Tests\Caster\ExceptionCasterTest->testSeek() {}
+  %s%eTests%eCaster%eExceptionCasterTest.php:64 { …}
 %A
 EODUMP;
 
@@ -91,15 +87,14 @@ Exception {
   #message: "1"
   #code: 0
   #file: "%sExceptionCasterTest.php"
-  #line: 30
+  #line: 28
   trace: {
-    %sExceptionCasterTest.php:30 {
+    %sExceptionCasterTest.php:28 {
       › {
       ›     return new \Exception(''.$msg);
       › }
     }
-    %s%eTests%eCaster%eExceptionCasterTest.php:86 { …}
-    Symfony\Component\VarDumper\Tests\Caster\ExceptionCasterTest->testNoArgs() {}
+    %s%eTests%eCaster%eExceptionCasterTest.php:82 { …}
 %A
 EODUMP;
 
@@ -116,9 +111,9 @@ Exception {
   #message: "1"
   #code: 0
   #file: "%sExceptionCasterTest.php"
-  #line: 30
+  #line: 28
   trace: {
-    %s%eTests%eCaster%eExceptionCasterTest.php:30
+    %s%eTests%eCaster%eExceptionCasterTest.php:28
     %s%eTests%eCaster%eExceptionCasterTest.php:%d
 %A
 EODUMP;
@@ -148,10 +143,10 @@ EODUMP;
   #<span class=sf-dump-protected title="Protected property">code</span>: <span class=sf-dump-num>0</span>
   #<span class=sf-dump-protected title="Protected property">file</span>: "<span class=sf-dump-str title="%sExceptionCasterTest.php
 %d characters"><span class="sf-dump-ellipsis sf-dump-ellipsis-path">%s%eVarDumper</span><span class=sf-dump-ellipsis>%e</span>Tests%eCaster%eExceptionCasterTest.php</span>"
-  #<span class=sf-dump-protected title="Protected property">line</span>: <span class=sf-dump-num>30</span>
+  #<span class=sf-dump-protected title="Protected property">line</span>: <span class=sf-dump-num>28</span>
   <span class=sf-dump-meta>trace</span>: {<samp>
     <span class=sf-dump-meta title="%sExceptionCasterTest.php
-Stack level %d."><span class="sf-dump-ellipsis sf-dump-ellipsis-path">%s%eVarDumper</span><span class=sf-dump-ellipsis>%e</span>Tests%eCaster%eExceptionCasterTest.php</span>:<span class=sf-dump-num>30</span>
+Stack level %d."><span class="sf-dump-ellipsis sf-dump-ellipsis-path">%s%eVarDumper</span><span class=sf-dump-ellipsis>%e</span>Tests%eCaster%eExceptionCasterTest.php</span>:<span class=sf-dump-num>28</span>
      &hellip;%d
   </samp>}
 </samp>}
@@ -223,7 +218,7 @@ Exception {
   #message: "foo"
   #code: 0
   #file: "%sExceptionCasterTest.php"
-  #line: 30
+  #line: 28
 }
 EODUMP;
 

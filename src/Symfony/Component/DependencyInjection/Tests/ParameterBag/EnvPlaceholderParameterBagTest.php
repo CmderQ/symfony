@@ -12,13 +12,10 @@
 namespace Symfony\Component\DependencyInjection\Tests\ParameterBag;
 
 use PHPUnit\Framework\TestCase;
-use Symfony\Bridge\PhpUnit\ForwardCompatTestTrait;
 use Symfony\Component\DependencyInjection\ParameterBag\EnvPlaceholderParameterBag;
 
 class EnvPlaceholderParameterBagTest extends TestCase
 {
-    use ForwardCompatTestTrait;
-
     public function testGetThrowsInvalidArgumentExceptionIfEnvNameContainsNonWordCharacters()
     {
         $this->expectException('Symfony\Component\DependencyInjection\Exception\InvalidArgumentException');
@@ -44,7 +41,7 @@ class EnvPlaceholderParameterBagTest extends TestCase
 
         $this->assertCount(1, $placeholderForVariable);
         $this->assertIsString($placeholder);
-        $this->assertContains($envVariableName, $placeholder);
+        $this->assertStringContainsString($envVariableName, $placeholder);
     }
 
     public function testMergeWhereFirstBagIsEmptyWillWork()
@@ -67,7 +64,7 @@ class EnvPlaceholderParameterBagTest extends TestCase
 
         $this->assertCount(1, $placeholderForVariable);
         $this->assertIsString($placeholder);
-        $this->assertContains($envVariableName, $placeholder);
+        $this->assertStringContainsString($envVariableName, $placeholder);
     }
 
     public function testMergeWherePlaceholderOnlyExistsInSecond()

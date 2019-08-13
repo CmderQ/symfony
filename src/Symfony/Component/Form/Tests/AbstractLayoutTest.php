@@ -12,7 +12,6 @@
 namespace Symfony\Component\Form\Tests;
 
 use PHPUnit\Framework\SkippedTestError;
-use Symfony\Bridge\PhpUnit\ForwardCompatTestTrait;
 use Symfony\Component\Form\Extension\Core\Type\PercentType;
 use Symfony\Component\Form\Extension\Csrf\CsrfExtension;
 use Symfony\Component\Form\FormError;
@@ -21,13 +20,12 @@ use Symfony\Component\Form\Test\FormIntegrationTestCase;
 
 abstract class AbstractLayoutTest extends FormIntegrationTestCase
 {
-    use ForwardCompatTestTrait;
     use VersionAwareTest;
 
     protected $csrfTokenManager;
     protected $testableFeatures = [];
 
-    private function doSetUp()
+    protected function setUp(): void
     {
         if (!\extension_loaded('intl')) {
             $this->markTestSkipped('Extension intl is required.');
@@ -47,7 +45,7 @@ abstract class AbstractLayoutTest extends FormIntegrationTestCase
         ];
     }
 
-    private function doTearDown()
+    protected function tearDown(): void
     {
         $this->csrfTokenManager = null;
 
@@ -2497,7 +2495,7 @@ abstract class AbstractLayoutTest extends FormIntegrationTestCase
 
         $html = $this->renderWidget($form->createView());
 
-        $this->assertNotContains('foo="', $html);
+        $this->assertStringNotContainsString('foo="', $html);
     }
 
     public function testButtonAttributes()
@@ -2533,7 +2531,7 @@ abstract class AbstractLayoutTest extends FormIntegrationTestCase
 
         $html = $this->renderWidget($form->createView());
 
-        $this->assertNotContains('foo="', $html);
+        $this->assertStringNotContainsString('foo="', $html);
     }
 
     public function testTextareaWithWhitespaceOnlyContentRetainsValue()
@@ -2542,7 +2540,7 @@ abstract class AbstractLayoutTest extends FormIntegrationTestCase
 
         $html = $this->renderWidget($form->createView());
 
-        $this->assertContains('>  </textarea>', $html);
+        $this->assertStringContainsString('>  </textarea>', $html);
     }
 
     public function testTextareaWithWhitespaceOnlyContentRetainsValueWhenRenderingForm()
@@ -2553,7 +2551,7 @@ abstract class AbstractLayoutTest extends FormIntegrationTestCase
 
         $html = $this->renderForm($form->createView());
 
-        $this->assertContains('>  </textarea>', $html);
+        $this->assertStringContainsString('>  </textarea>', $html);
     }
 
     public function testWidgetContainerAttributeHiddenIfFalse()
@@ -2565,7 +2563,7 @@ abstract class AbstractLayoutTest extends FormIntegrationTestCase
         $html = $this->renderWidget($form->createView());
 
         // no foo
-        $this->assertNotContains('foo="', $html);
+        $this->assertStringNotContainsString('foo="', $html);
     }
 
     public function testTranslatedAttributes()

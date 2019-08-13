@@ -9,22 +9,27 @@
  * file that was distributed with this source code.
  */
 
-namespace Symfony\Component\Security\Core\User;
+namespace Symfony\Component\Ldap\Security;
 
 use Symfony\Component\Ldap\Entry;
 use Symfony\Component\Ldap\Exception\ConnectionException;
+use Symfony\Component\Ldap\Exception\ExceptionInterface;
 use Symfony\Component\Ldap\LdapInterface;
 use Symfony\Component\Security\Core\Exception\InvalidArgumentException;
 use Symfony\Component\Security\Core\Exception\UnsupportedUserException;
 use Symfony\Component\Security\Core\Exception\UsernameNotFoundException;
+use Symfony\Component\Security\Core\User\PasswordUpgraderInterface;
+use Symfony\Component\Security\Core\User\UserInterface;
+use Symfony\Component\Security\Core\User\UserProviderInterface;
 
 /**
- * LdapUserProvider is a simple user provider on top of ldap.
+ * LdapUserProvider is a simple user provider on top of LDAP.
  *
  * @author Grégoire Pineau <lyrixx@lyrixx.info>
  * @author Charles Sarrazin <charles@sarraz.in>
+ * @author Robin Chalas <robin.chalas@gmail.com>
  */
-class LdapUserProvider implements UserProviderInterface
+class LdapUserProvider implements UserProviderInterface, PasswordUpgraderInterface
 {
     private $ldap;
     private $baseDn;
@@ -99,11 +104,35 @@ class LdapUserProvider implements UserProviderInterface
      */
     public function refreshUser(UserInterface $user)
     {
-        if (!$user instanceof User) {
+        if (!$user instanceof LdapUser) {
             throw new UnsupportedUserException(sprintf('Instances of "%s" are not supported.', \get_class($user)));
         }
 
-        return new User($user->getUsername(), null, $user->getRoles());
+        return new LdapUser($user->getEntry(), $user->getUsername(), $user->getPassword(), $user->getRoles());
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function upgradePassword(UserInterface $user, string $newEncodedPassword): void
+    {
+        if (!$user instanceof LdapUser) {
+            throw new UnsupportedUserException(sprintf('Instances of "%s" are not supported.', \get_class($user)));
+        }
+
+        if (null === $this->passwordAttribute) {
+            return;
+        }
+
+        try {
+            if ($user->isEqualTo($this->loadUserByUsername($user->getUsername()))) {
+                $user->getEntry()->setAttribute($this->passwordAttribute, [$newEncodedPassword]);
+                $this->ldap->getEntryManager()->update($user->getEntry());
+                $user->setPassword($newEncodedPassword);
+            }
+        } catch (ExceptionInterface $e) {
+            // ignore failed password upgrades
+        }
     }
 
     /**
@@ -111,15 +140,15 @@ class LdapUserProvider implements UserProviderInterface
      */
     public function supportsClass(string $class)
     {
-        return 'Symfony\Component\Security\Core\User\User' === $class;
+        return LdapUser::class === $class;
     }
 
     /**
      * Loads a user from an LDAP entry.
      *
-     * @return User
+     * @return LdapUser
      */
-    protected function loadUser(string $username, Entry $entry)
+    protected function loadUser($username, Entry $entry)
     {
         $password = null;
         $extraFields = [];
@@ -132,12 +161,9 @@ class LdapUserProvider implements UserProviderInterface
             $extraFields[$field] = $this->getAttributeValue($entry, $field);
         }
 
-        return new User($username, $password, $this->defaultRoles, true, true, true, true, $extraFields);
+        return new LdapUser($entry, $username, $password, $this->defaultRoles, $extraFields);
     }
 
-    /**
-     * Fetches a required unique attribute value from an LDAP entry.
-     */
     private function getAttributeValue(Entry $entry, string $attribute)
     {
         if (!$entry->hasAttribute($attribute)) {

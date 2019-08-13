@@ -12,21 +12,18 @@
 namespace Symfony\Component\HttpKernel\Tests\CacheClearer;
 
 use PHPUnit\Framework\TestCase;
-use Symfony\Bridge\PhpUnit\ForwardCompatTestTrait;
 use Symfony\Component\HttpKernel\CacheClearer\ChainCacheClearer;
 
 class ChainCacheClearerTest extends TestCase
 {
-    use ForwardCompatTestTrait;
-
     protected static $cacheDir;
 
-    private static function doSetUpBeforeClass()
+    public static function setUpBeforeClass(): void
     {
         self::$cacheDir = tempnam(sys_get_temp_dir(), 'sf_cache_clearer_dir');
     }
 
-    private static function doTearDownAfterClass()
+    public static function tearDownAfterClass(): void
     {
         @unlink(self::$cacheDir);
     }

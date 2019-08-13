@@ -58,10 +58,10 @@ class ValidatorCacheWarmer extends AbstractPhpFileCacheWarmer
                     if ($metadataFactory->hasMetadataFor($mappedClass)) {
                         $metadataFactory->getMetadataFor($mappedClass);
                     }
-                } catch (\ReflectionException $e) {
-                    // ignore failing reflection
                 } catch (AnnotationException $e) {
                     // ignore failing annotations
+                } catch (\Exception $e) {
+                    $this->ignoreAutoloadException($mappedClass, $e);
                 }
             }
         }
@@ -80,7 +80,7 @@ class ValidatorCacheWarmer extends AbstractPhpFileCacheWarmer
      *
      * @return XmlFileLoader[]|YamlFileLoader[]
      */
-    private function extractSupportedLoaders(array $loaders)
+    private function extractSupportedLoaders(array $loaders): array
     {
         $supportedLoaders = [];
 

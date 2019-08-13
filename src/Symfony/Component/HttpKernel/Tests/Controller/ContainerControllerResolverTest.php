@@ -13,15 +13,12 @@ namespace Symfony\Component\HttpKernel\Tests\Controller;
 
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
-use Symfony\Bridge\PhpUnit\ForwardCompatTestTrait;
 use Symfony\Component\DependencyInjection\Container;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Controller\ContainerControllerResolver;
 
 class ContainerControllerResolverTest extends ControllerResolverTest
 {
-    use ForwardCompatTestTrait;
-
     public function testGetControllerServiceWithSingleColon()
     {
         $service = new ControllerTestService('foo');
@@ -120,6 +117,36 @@ class ContainerControllerResolverTest extends ControllerResolverTest
         $controller = $resolver->getController($request);
 
         $this->assertSame($service, $controller);
+    }
+
+    /**
+     * @dataProvider getControllers
+     */
+    public function testInstantiateControllerWhenControllerStartsWithABackslash($controller)
+    {
+        $service = new ControllerTestService('foo');
+        $class = ControllerTestService::class;
+
+        $container = $this->createMockContainer();
+        $container->expects($this->once())->method('has')->with($class)->willReturn(true);
+        $container->expects($this->once())->method('get')->with($class)->willReturn($service);
+
+        $resolver = $this->createControllerResolver(null, $container);
+        $request = Request::create('/');
+        $request->attributes->set('_controller', $controller);
+
+        $controller = $resolver->getController($request);
+
+        $this->assertInstanceOf(ControllerTestService::class, $controller[0]);
+        $this->assertSame('action', $controller[1]);
+    }
+
+    public function getControllers()
+    {
+        return [
+            ['\\'.ControllerTestService::class.'::action'],
+            ['\\'.ControllerTestService::class.':action'],
+        ];
     }
 
     public function testExceptionWhenUsingRemovedControllerServiceWithClassNameAsName()

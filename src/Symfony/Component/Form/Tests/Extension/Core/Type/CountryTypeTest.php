@@ -11,17 +11,14 @@
 
 namespace Symfony\Component\Form\Tests\Extension\Core\Type;
 
-use Symfony\Bridge\PhpUnit\ForwardCompatTestTrait;
 use Symfony\Component\Form\ChoiceList\View\ChoiceView;
 use Symfony\Component\Intl\Util\IntlTestHelper;
 
 class CountryTypeTest extends BaseTypeTest
 {
-    use ForwardCompatTestTrait;
-
     const TESTED_TYPE = 'Symfony\Component\Form\Extension\Core\Type\CountryType';
 
-    private function doSetUp()
+    protected function setUp(): void
     {
         IntlTestHelper::requireIntl($this, false);
 
@@ -34,11 +31,11 @@ class CountryTypeTest extends BaseTypeTest
             ->createView()->vars['choices'];
 
         // Don't check objects for identity
-        $this->assertContains(new ChoiceView('DE', 'DE', 'Germany'), $choices, '', false, false);
-        $this->assertContains(new ChoiceView('GB', 'GB', 'United Kingdom'), $choices, '', false, false);
-        $this->assertContains(new ChoiceView('US', 'US', 'United States'), $choices, '', false, false);
-        $this->assertContains(new ChoiceView('FR', 'FR', 'France'), $choices, '', false, false);
-        $this->assertContains(new ChoiceView('MY', 'MY', 'Malaysia'), $choices, '', false, false);
+        $this->assertContainsEquals(new ChoiceView('DE', 'DE', 'Germany'), $choices);
+        $this->assertContainsEquals(new ChoiceView('GB', 'GB', 'United Kingdom'), $choices);
+        $this->assertContainsEquals(new ChoiceView('US', 'US', 'United States'), $choices);
+        $this->assertContainsEquals(new ChoiceView('FR', 'FR', 'France'), $choices);
+        $this->assertContainsEquals(new ChoiceView('MY', 'MY', 'Malaysia'), $choices);
     }
 
     /**
@@ -53,11 +50,11 @@ class CountryTypeTest extends BaseTypeTest
             ->createView()->vars['choices'];
 
         // Don't check objects for identity
-        $this->assertContains(new ChoiceView('DE', 'DE', 'Німеччина'), $choices, '', false, false);
-        $this->assertContains(new ChoiceView('GB', 'GB', 'Велика Британія'), $choices, '', false, false);
-        $this->assertContains(new ChoiceView('US', 'US', 'Сполучені Штати'), $choices, '', false, false);
-        $this->assertContains(new ChoiceView('FR', 'FR', 'Франція'), $choices, '', false, false);
-        $this->assertContains(new ChoiceView('MY', 'MY', 'Малайзія'), $choices, '', false, false);
+        $this->assertContainsEquals(new ChoiceView('DE', 'DE', 'Німеччина'), $choices);
+        $this->assertContainsEquals(new ChoiceView('GB', 'GB', 'Велика Британія'), $choices);
+        $this->assertContainsEquals(new ChoiceView('US', 'US', 'Сполучені Штати'), $choices);
+        $this->assertContainsEquals(new ChoiceView('FR', 'FR', 'Франція'), $choices);
+        $this->assertContainsEquals(new ChoiceView('MY', 'MY', 'Малайзія'), $choices);
     }
 
     public function testUnknownCountryIsNotIncluded()

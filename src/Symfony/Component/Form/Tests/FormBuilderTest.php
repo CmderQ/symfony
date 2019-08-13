@@ -12,7 +12,6 @@
 namespace Symfony\Component\Form\Tests;
 
 use PHPUnit\Framework\TestCase;
-use Symfony\Bridge\PhpUnit\ForwardCompatTestTrait;
 use Symfony\Component\Form\ButtonBuilder;
 use Symfony\Component\Form\Extension\Core\Type\SubmitType;
 use Symfony\Component\Form\FormBuilder;
@@ -21,20 +20,18 @@ use Symfony\Component\Form\SubmitButtonBuilder;
 
 class FormBuilderTest extends TestCase
 {
-    use ForwardCompatTestTrait;
-
     private $dispatcher;
     private $factory;
     private $builder;
 
-    private function doSetUp()
+    protected function setUp(): void
     {
         $this->dispatcher = $this->getMockBuilder('Symfony\Component\EventDispatcher\EventDispatcherInterface')->getMock();
         $this->factory = $this->getMockBuilder('Symfony\Component\Form\FormFactoryInterface')->getMock();
         $this->builder = new FormBuilder('name', null, $this->dispatcher, $this->factory);
     }
 
-    private function doTearDown()
+    protected function tearDown(): void
     {
         $this->dispatcher = null;
         $this->factory = null;
@@ -121,13 +118,6 @@ class FormBuilderTest extends TestCase
         $children = $this->builder->all();
 
         $this->assertSame(['foo', 'bar', 'baz'], array_keys($children));
-    }
-
-    public function testAddFormType()
-    {
-        $this->assertFalse($this->builder->has('foo'));
-        $this->builder->add('foo', $this->getMockBuilder('Symfony\Component\Form\FormTypeInterface')->getMock());
-        $this->assertTrue($this->builder->has('foo'));
     }
 
     public function testRemove()

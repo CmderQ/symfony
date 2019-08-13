@@ -11,7 +11,6 @@
 
 namespace Symfony\Component\Form\Tests;
 
-use Symfony\Bridge\PhpUnit\ForwardCompatTestTrait;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Component\Form\Exception\TransformationFailedException;
 use Symfony\Component\Form\Form;
@@ -19,6 +18,7 @@ use Symfony\Component\Form\FormConfigBuilder;
 use Symfony\Component\Form\FormError;
 use Symfony\Component\Form\FormEvent;
 use Symfony\Component\Form\FormEvents;
+use Symfony\Component\Form\FormInterface;
 use Symfony\Component\Form\Tests\Fixtures\FixedDataTransformer;
 use Symfony\Component\Form\Tests\Fixtures\FixedFilterListener;
 use Symfony\Component\PropertyAccess\PropertyPath;
@@ -55,8 +55,6 @@ class SimpleFormTest_Traversable implements \IteratorAggregate
 
 class SimpleFormTest extends AbstractFormTest
 {
-    use ForwardCompatTestTrait;
-
     /**
      * @dataProvider provideFormNames
      */
@@ -1099,7 +1097,7 @@ class SimpleFormTest extends AbstractFormTest
         $form->setData('foo');
     }
 
-    protected function createForm()
+    protected function createForm(): FormInterface
     {
         return $this->getBuilder()->getForm();
     }

@@ -5,7 +5,7 @@ namespace Symfony\Bundle\FrameworkBundle\Tests\CacheWarmer;
 use Doctrine\Common\Annotations\AnnotationReader;
 use Doctrine\Common\Annotations\CachedReader;
 use Doctrine\Common\Annotations\Reader;
-use Symfony\Bridge\PhpUnit\ForwardCompatTestTrait;
+use PHPUnit\Framework\MockObject\MockObject;
 use Symfony\Bundle\FrameworkBundle\CacheWarmer\AnnotationsCacheWarmer;
 use Symfony\Bundle\FrameworkBundle\Tests\TestCase;
 use Symfony\Component\Cache\Adapter\NullAdapter;
@@ -15,11 +15,9 @@ use Symfony\Component\Filesystem\Filesystem;
 
 class AnnotationsCacheWarmerTest extends TestCase
 {
-    use ForwardCompatTestTrait;
-
     private $cacheDir;
 
-    private function doSetUp()
+    protected function setUp(): void
     {
         $this->cacheDir = sys_get_temp_dir().'/'.uniqid();
         $fs = new Filesystem();
@@ -27,7 +25,7 @@ class AnnotationsCacheWarmerTest extends TestCase
         parent::setUp();
     }
 
-    private function doTearDown()
+    protected function tearDown(): void
     {
         $fs = new Filesystem();
         $fs->remove($this->cacheDir);
@@ -75,7 +73,55 @@ class AnnotationsCacheWarmerTest extends TestCase
     }
 
     /**
-     * @return \PHPUnit_Framework_MockObject_MockObject|Reader
+     * Test that the cache warming process is not broken if a class loader
+     * throws an exception (on class / file not found for example).
+     */
+    public function testClassAutoloadException()
+    {
+        $this->assertFalse(class_exists($annotatedClass = 'C\C\C', false));
+
+        file_put_contents($this->cacheDir.'/annotations.map', sprintf('<?php return %s;', var_export([$annotatedClass], true)));
+        $warmer = new AnnotationsCacheWarmer(new AnnotationReader(), tempnam($this->cacheDir, __FUNCTION__));
+
+        spl_autoload_register($classLoader = function ($class) use ($annotatedClass) {
+            if ($class === $annotatedClass) {
+                throw new \DomainException('This exception should be caught by the warmer.');
+            }
+        }, true, true);
+
+        $warmer->warmUp($this->cacheDir);
+
+        spl_autoload_unregister($classLoader);
+    }
+
+    /**
+     * Test that the cache warming process is broken if a class loader throws an
+     * exception but that is unrelated to the class load.
+     */
+    public function testClassAutoloadExceptionWithUnrelatedException()
+    {
+        $this->expectException(\DomainException::class);
+        $this->expectExceptionMessage('This exception should not be caught by the warmer.');
+
+        $this->assertFalse(class_exists($annotatedClass = 'AClassThatDoesNotExist_FWB_CacheWarmer_AnnotationsCacheWarmerTest', false));
+
+        file_put_contents($this->cacheDir.'/annotations.map', sprintf('<?php return %s;', var_export([$annotatedClass], true)));
+        $warmer = new AnnotationsCacheWarmer(new AnnotationReader(), tempnam($this->cacheDir, __FUNCTION__));
+
+        spl_autoload_register($classLoader = function ($class) use ($annotatedClass) {
+            if ($class === $annotatedClass) {
+                eval('class '.$annotatedClass.'{}');
+                throw new \DomainException('This exception should not be caught by the warmer.');
+            }
+        }, true, true);
+
+        $warmer->warmUp($this->cacheDir);
+
+        spl_autoload_unregister($classLoader);
+    }
+
+    /**
+     * @return MockObject|Reader
      */
     private function getReadOnlyReader()
     {

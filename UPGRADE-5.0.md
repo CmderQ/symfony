@@ -54,7 +54,9 @@ Console
 Debug
 -----
 
- * Removed the component
+ * Removed the `Debug` class, use the one from the `ErrorRenderer` component instead
+ * Removed the `FlattenException` class, use the one from the `ErrorRenderer` component instead
+ * Removed the component component in favor of the `ErrorHandler` component
 
 DependencyInjection
 -------------------
@@ -212,6 +214,7 @@ Form
    ```
 
  * The `regions` option was removed from the `TimezoneType`.
+ * Added support for PHPUnit 8. A `void` return-type was added to the `FormIntegrationTestCase::setUp()`, `TypeTestCase::setUp()` and `TypeTestCase::tearDown()` methods.
 
 FrameworkBundle
 ---------------
@@ -255,6 +258,7 @@ FrameworkBundle
  * Removed support for `templating` engine in `TemplateController`, use Twig instead
  * Removed `ResolveControllerNameSubscriber`.
  * Removed `routing.loader.service`.
+ * Added support for PHPUnit 8. A `void` return-type was added to the `KernelTestCase::tearDown()` and `WebTestCase::tearDown()` method.
 
 HttpClient
 ----------
@@ -282,6 +286,7 @@ HttpFoundation
  * The `FileinfoMimeTypeGuesser` class has been removed,
    use `Symfony\Component\Mime\FileinfoMimeTypeGuesser` instead.
  * `ApacheRequest` has been removed, use the `Request` class instead.
+ * The third argument of the `HeaderBag::get()` method has been removed, use method `all()` instead.
 
 HttpKernel
 ----------
@@ -373,10 +378,12 @@ Routing
    Instead of overwriting them, use `__serialize` and `__unserialize` as extension points which are forward compatible
    with the new serialization methods in PHP 7.4.
  * Removed `ServiceRouterLoader` and `ObjectRouteLoader`.
+ * Service route loaders must be tagged with `routing.route_loader`.
 
 Security
 --------
 
+ * The `LdapUserProvider` class has been removed, use `Symfony\Component\Ldap\Security\LdapUserProvider` instead.
  * Implementations of `PasswordEncoderInterface` and `UserPasswordEncoderInterface` must have a new `needsRehash()` method
  * The `Role` and `SwitchUserRole` classes have been removed.
  * The `getReachableRoles()` method of the `RoleHierarchy` class has been removed. It has been replaced by the new
@@ -527,6 +534,7 @@ Validator
  * The `egulias/email-validator` component is now required for using the `Email` constraint in strict mode
  * The `symfony/expression-language` component is now required for using the `Expression` constraint
  * Changed the default value of `Length::$allowEmptyString` to `false` and made it optional
+ * Added support for PHPUnit 8. A `void` return-type was added to the `ConstraintValidatorTestCase::setUp()` and `ConstraintValidatorTestCase::tearDown()` methods.
 
 WebProfilerBundle
 -----------------

@@ -14,7 +14,6 @@ namespace Symfony\Component\HttpKernel\Tests\Log;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use Psr\Log\LogLevel;
-use Symfony\Bridge\PhpUnit\ForwardCompatTestTrait;
 use Symfony\Component\HttpKernel\Log\Logger;
 
 /**
@@ -23,8 +22,6 @@ use Symfony\Component\HttpKernel\Log\Logger;
  */
 class LoggerTest extends TestCase
 {
-    use ForwardCompatTestTrait;
-
     /**
      * @var LoggerInterface
      */
@@ -35,13 +32,13 @@ class LoggerTest extends TestCase
      */
     private $tmpFile;
 
-    private function doSetUp()
+    protected function setUp(): void
     {
         $this->tmpFile = tempnam(sys_get_temp_dir(), 'log');
         $this->logger = new Logger(LogLevel::DEBUG, $this->tmpFile);
     }
 
-    private function doTearDown()
+    protected function tearDown(): void
     {
         if (!@unlink($this->tmpFile)) {
             file_put_contents($this->tmpFile, '');
@@ -142,7 +139,7 @@ class LoggerTest extends TestCase
         if (method_exists($this, 'createPartialMock')) {
             $dummy = $this->createPartialMock(DummyTest::class, ['__toString']);
         } else {
-            $dummy = $this->getMock(DummyTest::class, ['__toString']);
+            $dummy = $this->createPartialMock(DummyTest::class, ['__toString']);
         }
         $dummy->expects($this->atLeastOnce())
             ->method('__toString')

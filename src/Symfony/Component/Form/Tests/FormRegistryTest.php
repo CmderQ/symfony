@@ -11,12 +11,13 @@
 
 namespace Symfony\Component\Form\Tests;
 
+use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
-use Symfony\Bridge\PhpUnit\ForwardCompatTestTrait;
 use Symfony\Component\Form\FormRegistry;
 use Symfony\Component\Form\FormTypeGuesserChain;
 use Symfony\Component\Form\ResolvedFormType;
 use Symfony\Component\Form\ResolvedFormTypeFactoryInterface;
+use Symfony\Component\Form\ResolvedFormTypeInterface;
 use Symfony\Component\Form\Tests\Fixtures\FooSubType;
 use Symfony\Component\Form\Tests\Fixtures\FooType;
 use Symfony\Component\Form\Tests\Fixtures\FooTypeBarExtension;
@@ -32,25 +33,23 @@ use Symfony\Component\Form\Tests\Fixtures\TestExtension;
  */
 class FormRegistryTest extends TestCase
 {
-    use ForwardCompatTestTrait;
-
     /**
      * @var FormRegistry
      */
     private $registry;
 
     /**
-     * @var \PHPUnit_Framework_MockObject_MockObject|ResolvedFormTypeFactoryInterface
+     * @var MockObject|ResolvedFormTypeFactoryInterface
      */
     private $resolvedTypeFactory;
 
     /**
-     * @var \PHPUnit_Framework_MockObject_MockObject
+     * @var MockObject
      */
     private $guesser1;
 
     /**
-     * @var \PHPUnit_Framework_MockObject_MockObject
+     * @var MockObject
      */
     private $guesser2;
 
@@ -64,7 +63,7 @@ class FormRegistryTest extends TestCase
      */
     private $extension2;
 
-    private function doSetUp()
+    protected function setUp(): void
     {
         $this->resolvedTypeFactory = $this->getMockBuilder('Symfony\Component\Form\ResolvedFormTypeFactory')->getMock();
         $this->guesser1 = $this->getMockBuilder('Symfony\Component\Form\FormTypeGuesserInterface')->getMock();
@@ -208,6 +207,11 @@ class FormRegistryTest extends TestCase
 
     public function testHasTypeIfFQCN()
     {
+        $this->resolvedTypeFactory
+            ->expects($this->any())
+            ->method('createResolvedType')
+            ->willReturn($this->createMock(ResolvedFormTypeInterface::class));
+
         $this->assertTrue($this->registry->hasType('Symfony\Component\Form\Tests\Fixtures\FooType'));
     }
 

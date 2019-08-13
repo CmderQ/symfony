@@ -571,7 +571,7 @@ class YamlFileLoader extends FileLoader
     /**
      * Parses a callable.
      *
-     * @param string|array $callable  A callable reference
+     * @param string|array $callable A callable reference
      *
      * @throws InvalidArgumentException When errors occur
      *
@@ -645,11 +645,9 @@ class YamlFileLoader extends FileLoader
     /**
      * Validates a YAML file.
      *
-     * @return array
-     *
      * @throws InvalidArgumentException When service file is not valid
      */
-    private function validate($content, string $file)
+    private function validate($content, string $file): ?array
     {
         if (null === $content) {
             return $content;

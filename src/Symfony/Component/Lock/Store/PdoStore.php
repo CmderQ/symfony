@@ -19,7 +19,7 @@ use Symfony\Component\Lock\Exception\InvalidTtlException;
 use Symfony\Component\Lock\Exception\LockConflictedException;
 use Symfony\Component\Lock\Exception\NotSupportedException;
 use Symfony\Component\Lock\Key;
-use Symfony\Component\Lock\StoreInterface;
+use Symfony\Component\Lock\PersistingStoreInterface;
 
 /**
  * PdoStore is a PersistingStoreInterface implementation using a PDO connection.
@@ -34,7 +34,7 @@ use Symfony\Component\Lock\StoreInterface;
  *
  * @author Jérémy Derussé <jeremy@derusse.com>
  */
-class PdoStore implements StoreInterface
+class PdoStore implements PersistingStoreInterface
 {
     use ExpiringStoreTrait;
 
@@ -152,7 +152,7 @@ class PdoStore implements StoreInterface
     /**
      * {@inheritdoc}
      */
-    public function putOffExpiration(Key $key, $ttl)
+    public function putOffExpiration(Key $key, float $ttl)
     {
         if ($ttl < 1) {
             throw new InvalidTtlException(sprintf('%s() expects a TTL greater or equals to 1 second. Got %s.', __METHOD__, $ttl));

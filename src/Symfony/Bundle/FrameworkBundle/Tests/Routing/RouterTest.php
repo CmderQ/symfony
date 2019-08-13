@@ -13,17 +13,16 @@ namespace Symfony\Bundle\FrameworkBundle\Tests\Routing;
 
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
-use Symfony\Bridge\PhpUnit\ForwardCompatTestTrait;
 use Symfony\Bundle\FrameworkBundle\Routing\Router;
 use Symfony\Component\Config\Loader\LoaderInterface;
 use Symfony\Component\DependencyInjection\Config\ContainerParametersResource;
+use Symfony\Component\DependencyInjection\Container;
+use Symfony\Component\DependencyInjection\Exception\RuntimeException;
 use Symfony\Component\Routing\Route;
 use Symfony\Component\Routing\RouteCollection;
 
 class RouterTest extends TestCase
 {
-    use ForwardCompatTestTrait;
-
     public function testConstructThrowsOnNonSymfonyNorPsr11Container()
     {
         $this->expectException('LogicException');
@@ -281,13 +280,13 @@ class RouterTest extends TestCase
         $routes->add('foo', new Route('/before/%parameter.foo%/after/%%escaped%%'));
 
         $sc = $this->getServiceContainer($routes);
-        $sc->setParameter('parameter.foo', 'foo');
+        $sc->setParameter('parameter.foo', 'foo-%%escaped%%');
 
         $router = new Router($sc, 'foo');
         $route = $router->getRouteCollection()->get('foo');
 
         $this->assertEquals(
-            '/before/foo/after/%escaped%',
+            '/before/foo-%escaped%/after/%escaped%',
             $route->getPath()
         );
     }
@@ -313,6 +312,22 @@ class RouterTest extends TestCase
         $routes->add('foo', new Route('/%env(FOO)%'));
 
         $router = new Router($this->getServiceContainer($routes), 'foo');
+        $router->getRouteCollection();
+    }
+
+    public function testIndirectEnvPlaceholders()
+    {
+        $routes = new RouteCollection();
+
+        $routes->add('foo', new Route('/%foo%'));
+
+        $router = new Router($container = $this->getServiceContainer($routes), 'foo');
+        $container->setParameter('foo', 'foo-%bar%');
+        $container->setParameter('bar', '%env(string:FOO)%');
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Using "%env(string:FOO)%" is not allowed in routing configuration.');
+
         $router->getRouteCollection();
     }
 
@@ -487,10 +502,7 @@ class RouterTest extends TestCase
         return [[null], [false], [true], [new \stdClass()], [['foo', 'bar']], [[[]]]];
     }
 
-    /**
-     * @return \Symfony\Component\DependencyInjection\Container
-     */
-    private function getServiceContainer(RouteCollection $routes)
+    private function getServiceContainer(RouteCollection $routes): Container
     {
         $loader = $this->getMockBuilder('Symfony\Component\Config\Loader\LoaderInterface')->getMock();
 

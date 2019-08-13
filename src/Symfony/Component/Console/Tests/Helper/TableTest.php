@@ -12,7 +12,6 @@
 namespace Symfony\Component\Console\Tests\Helper;
 
 use PHPUnit\Framework\TestCase;
-use Symfony\Bridge\PhpUnit\ForwardCompatTestTrait;
 use Symfony\Component\Console\Formatter\OutputFormatter;
 use Symfony\Component\Console\Helper\Table;
 use Symfony\Component\Console\Helper\TableCell;
@@ -23,16 +22,14 @@ use Symfony\Component\Console\Output\StreamOutput;
 
 class TableTest extends TestCase
 {
-    use ForwardCompatTestTrait;
-
     protected $stream;
 
-    private function doSetUp()
+    protected function setUp(): void
     {
         $this->stream = fopen('php://memory', 'r+');
     }
 
-    private function doTearDown()
+    protected function tearDown(): void
     {
         fclose($this->stream);
         $this->stream = null;

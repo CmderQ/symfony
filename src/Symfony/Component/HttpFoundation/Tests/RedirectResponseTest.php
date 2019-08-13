@@ -12,13 +12,10 @@
 namespace Symfony\Component\HttpFoundation\Tests;
 
 use PHPUnit\Framework\TestCase;
-use Symfony\Bridge\PhpUnit\ForwardCompatTestTrait;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 
 class RedirectResponseTest extends TestCase
 {
-    use ForwardCompatTestTrait;
-
     public function testGenerateMetaRedirect()
     {
         $response = new RedirectResponse('foo.bar');
@@ -63,13 +60,6 @@ class RedirectResponseTest extends TestCase
         $response->setTargetUrl('baz.beep');
 
         $this->assertEquals('baz.beep', $response->getTargetUrl());
-    }
-
-    public function testSetTargetUrlNull()
-    {
-        $this->expectException('InvalidArgumentException');
-        $response = new RedirectResponse('foo.bar');
-        $response->setTargetUrl(null);
     }
 
     public function testCreate()

@@ -11,20 +11,17 @@
 
 namespace Symfony\Bridge\Twig\Tests\Extension;
 
-use Fig\Link\Link;
 use PHPUnit\Framework\TestCase;
-use Symfony\Bridge\PhpUnit\ForwardCompatTestTrait;
 use Symfony\Bridge\Twig\Extension\WebLinkExtension;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
+use Symfony\Component\WebLink\Link;
 
 /**
  * @author Kévin Dunglas <dunglas@gmail.com>
  */
 class WebLinkExtensionTest extends TestCase
 {
-    use ForwardCompatTestTrait;
-
     /**
      * @var Request
      */
@@ -35,7 +32,7 @@ class WebLinkExtensionTest extends TestCase
      */
     private $extension;
 
-    private function doSetUp()
+    protected function setUp(): void
     {
         $this->request = new Request();
 

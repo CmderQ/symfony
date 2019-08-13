@@ -11,6 +11,7 @@
 
 namespace Symfony\Bundle\FrameworkBundle\Tests\Command;
 
+use PHPUnit\Framework\MockObject\MockObject;
 use Psr\Cache\CacheItemPoolInterface;
 use Symfony\Bundle\FrameworkBundle\Command\CachePoolDeleteCommand;
 use Symfony\Bundle\FrameworkBundle\Console\Application;
@@ -44,7 +45,7 @@ class CachePoolDeleteCommandTest extends TestCase
         $tester = $this->getCommandTester($this->getKernel());
         $tester->execute(['pool' => 'foo', 'key' => 'bar']);
 
-        $this->assertContains('[OK] Cache item "bar" was successfully deleted.', $tester->getDisplay());
+        $this->assertStringContainsString('[OK] Cache item "bar" was successfully deleted.', $tester->getDisplay());
     }
 
     public function testCommandWithInValidKey()
@@ -61,7 +62,7 @@ class CachePoolDeleteCommandTest extends TestCase
         $tester = $this->getCommandTester($this->getKernel());
         $tester->execute(['pool' => 'foo', 'key' => 'bar']);
 
-        $this->assertContains('[NOTE] Cache item "bar" does not exist in cache pool "foo".', $tester->getDisplay());
+        $this->assertStringContainsString('[NOTE] Cache item "bar" does not exist in cache pool "foo".', $tester->getDisplay());
     }
 
     public function testCommandDeleteFailed()
@@ -83,7 +84,7 @@ class CachePoolDeleteCommandTest extends TestCase
     }
 
     /**
-     * @return \PHPUnit_Framework_MockObject_MockObject|KernelInterface
+     * @return MockObject|KernelInterface
      */
     private function getKernel()
     {

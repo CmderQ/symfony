@@ -11,10 +11,13 @@
 
 namespace Symfony\Component\Mailer;
 
+use Symfony\Component\Mailer\Event\MessageEvent;
+use Symfony\Component\Mailer\Exception\TransportException;
 use Symfony\Component\Mailer\Messenger\SendEmailMessage;
 use Symfony\Component\Mailer\Transport\TransportInterface;
 use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Mime\RawMessage;
+use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
 /**
  * @author Fabien Potencier <fabien@symfony.com>
@@ -23,8 +26,9 @@ class Mailer implements MailerInterface
 {
     private $transport;
     private $bus;
+    private $dispatcher;
 
-    public function __construct(TransportInterface $transport, MessageBusInterface $bus = null)
+    public function __construct(TransportInterface $transport, MessageBusInterface $bus = null, EventDispatcherInterface $dispatcher = null)
     {
         $this->transport = $transport;
         $this->bus = $bus;
@@ -36,6 +40,21 @@ class Mailer implements MailerInterface
             $this->transport->send($message, $envelope);
 
             return;
+        }
+
+        if (null !== $this->dispatcher) {
+            $message = clone $message;
+            if (null !== $envelope) {
+                $envelope = clone $envelope;
+            } else {
+                try {
+                    $envelope = new DelayedSmtpEnvelope($message);
+                } catch (\Exception $e) {
+                    throw new TransportException('Cannot send message without a valid envelope.', 0, $e);
+                }
+            }
+            $event = new MessageEvent($message, $envelope, $this->transport->getName());
+            $this->dispatcher->dispatch($event);
         }
 
         $this->bus->dispatch(new SendEmailMessage($message, $envelope));

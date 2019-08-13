@@ -11,28 +11,25 @@
 
 namespace Symfony\Component\Form\Tests\Extension\Core\Type;
 
-use Symfony\Bridge\PhpUnit\ForwardCompatTestTrait;
 use Symfony\Component\Form\ChoiceList\View\ChoiceView;
 use Symfony\Component\Form\FormError;
 use Symfony\Component\Intl\Util\IntlTestHelper;
 
 class DateTypeTest extends BaseTypeTest
 {
-    use ForwardCompatTestTrait;
-
     const TESTED_TYPE = 'Symfony\Component\Form\Extension\Core\Type\DateType';
 
     private $defaultTimezone;
     private $defaultLocale;
 
-    private function doSetUp()
+    protected function setUp(): void
     {
         parent::setUp();
         $this->defaultTimezone = date_default_timezone_get();
         $this->defaultLocale = \Locale::getDefault();
     }
 
-    private function doTearDown()
+    protected function tearDown(): void
     {
         date_default_timezone_set($this->defaultTimezone);
         \Locale::setDefault($this->defaultLocale);
@@ -510,6 +507,7 @@ class DateTypeTest extends BaseTypeTest
 
     public function testMonthsOption()
     {
+        \Locale::setDefault('en');
         $form = $this->factory->create(static::TESTED_TYPE, null, [
             'months' => [6, 7],
             'format' => \IntlDateFormatter::SHORT,
@@ -518,8 +516,8 @@ class DateTypeTest extends BaseTypeTest
         $view = $form->createView();
 
         $this->assertEquals([
-            new ChoiceView(6, '6', '06'),
-            new ChoiceView(7, '7', '07'),
+            new ChoiceView(6, '6', '6'),
+            new ChoiceView(7, '7', '7'),
         ], $view['month']->vars['choices']);
     }
 
@@ -583,14 +581,15 @@ class DateTypeTest extends BaseTypeTest
 
     public function testIsDayWithinRangeReturnsTrueIfWithin()
     {
+        \Locale::setDefault('en');
         $view = $this->factory->create(static::TESTED_TYPE, null, [
             'days' => [6, 7],
         ])
             ->createView();
 
         $this->assertEquals([
-            new ChoiceView(6, '6', '06'),
-            new ChoiceView(7, '7', '07'),
+            new ChoiceView(6, '6', '6'),
+            new ChoiceView(7, '7', '7'),
         ], $view['day']->vars['choices']);
     }
 

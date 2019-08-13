@@ -125,12 +125,10 @@ class RegisterEventListenersAndSubscribersPass implements CompilerPassInterface
      * and knowing that the \SplPriorityQueue class does not respect the FIFO method,
      * we should not use this class.
      *
-     * @see https://bugs.php.net/bug.php?id=53710
-     * @see https://bugs.php.net/bug.php?id=60926
-     *
-     * @return array
+     * @see https://bugs.php.net/53710
+     * @see https://bugs.php.net/60926
      */
-    private function findAndSortTags(string $tagName, ContainerBuilder $container)
+    private function findAndSortTags(string $tagName, ContainerBuilder $container): array
     {
         $sortedTags = [];
 

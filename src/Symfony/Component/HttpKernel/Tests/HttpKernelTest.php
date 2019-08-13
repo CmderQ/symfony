@@ -12,7 +12,6 @@
 namespace Symfony\Component\HttpKernel\Tests;
 
 use PHPUnit\Framework\TestCase;
-use Symfony\Bridge\PhpUnit\ForwardCompatTestTrait;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\HttpFoundation\RedirectResponse;
@@ -30,8 +29,6 @@ use Symfony\Component\HttpKernel\KernelEvents;
 
 class HttpKernelTest extends TestCase
 {
-    use ForwardCompatTestTrait;
-
     public function testHandleWhenControllerThrowsAnExceptionAndCatchIsTrue()
     {
         $this->expectException('RuntimeException');
@@ -221,7 +218,7 @@ class HttpKernelTest extends TestCase
 
             // `file` index the array starting at 0, and __FILE__ starts at 1
             $line = file($first['file'])[$first['line'] - 2];
-            $this->assertContains('// call controller', $line);
+            $this->assertStringContainsString('// call controller', $line);
         }
     }
 

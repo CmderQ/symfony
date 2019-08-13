@@ -132,7 +132,7 @@ class Store implements StoreInterface
         $key = $this->getCacheKey($request);
 
         if (!$entries = $this->getMetadata($key)) {
-            return;
+            return null;
         }
 
         // find a cached entry that matches the request.
@@ -146,7 +146,7 @@ class Store implements StoreInterface
         }
 
         if (null === $match) {
-            return;
+            return null;
         }
 
         $headers = $match[1];
@@ -157,6 +157,7 @@ class Store implements StoreInterface
         // TODO the metaStore referenced an entity that doesn't exist in
         // the entityStore. We definitely want to return nil but we should
         // also purge the entry from the meta-store when this is detected.
+        return null;
     }
 
     /**
@@ -178,7 +179,7 @@ class Store implements StoreInterface
         if (!$response->headers->has('X-Content-Digest')) {
             $digest = $this->generateContentDigest($response);
 
-            if (false === $this->save($digest, $response->getContent())) {
+            if (!$this->save($digest, $response->getContent())) {
                 throw new \RuntimeException('Unable to store the entity.');
             }
 
@@ -197,7 +198,7 @@ class Store implements StoreInterface
                 $entry[1]['vary'] = [''];
             }
 
-            if ($entry[1]['vary'][0] != $vary || !$this->requestsMatch($vary, $entry[0], $storedEnv)) {
+            if ($entry[1]['vary'][0] != $vary || !$this->requestsMatch($vary ?? '', $entry[0], $storedEnv)) {
                 $entries[] = $entry;
             }
         }
@@ -207,7 +208,7 @@ class Store implements StoreInterface
 
         array_unshift($entries, [$storedEnv, $headers]);
 
-        if (false === $this->save($key, serialize($entries))) {
+        if (!$this->save($key, serialize($entries))) {
             throw new \RuntimeException('Unable to store the metadata.');
         }
 
@@ -246,7 +247,7 @@ class Store implements StoreInterface
             }
         }
 
-        if ($modified && false === $this->save($key, serialize($entries))) {
+        if ($modified && !$this->save($key, serialize($entries))) {
             throw new \RuntimeException('Unable to store the metadata.');
         }
     }
@@ -255,13 +256,11 @@ class Store implements StoreInterface
      * Determines whether two Request HTTP header sets are non-varying based on
      * the vary response header value provided.
      *
-     * @param string $vary A Response vary header
-     * @param array  $env1 A Request HTTP header array
-     * @param array  $env2 A Request HTTP header array
-     *
-     * @return bool true if the two environments match, false otherwise
+     * @param string|null $vary A Response vary header
+     * @param array       $env1 A Request HTTP header array
+     * @param array       $env2 A Request HTTP header array
      */
-    private function requestsMatch(?string $vary, array $env1, array $env2)
+    private function requestsMatch(?string $vary, array $env1, array $env2): bool
     {
         if (empty($vary)) {
             return true;
@@ -283,10 +282,8 @@ class Store implements StoreInterface
      * Gets all data associated with the given key.
      *
      * Use this method only if you know what you are doing.
-     *
-     * @return array An array of data associated with the key
      */
-    private function getMetadata(string $key)
+    private function getMetadata(string $key): array
     {
         if (!$entries = $this->load($key)) {
             return [];
@@ -300,11 +297,9 @@ class Store implements StoreInterface
      *
      * This method purges both the HTTP and the HTTPS version of the cache entry.
      *
-     * @param string $url A URL
-     *
      * @return bool true if the URL exists with either HTTP or HTTPS scheme and has been purged, false otherwise
      */
-    public function purge($url)
+    public function purge(string $url)
     {
         $http = preg_replace('#^https:#', 'http:', $url);
         $https = preg_replace('#^http:#', 'https:', $url);
@@ -317,10 +312,8 @@ class Store implements StoreInterface
 
     /**
      * Purges data for the given URL.
-     *
-     * @return bool true if the URL exists and has been purged, false otherwise
      */
-    private function doPurge(string $url)
+    private function doPurge(string $url): bool
     {
         $key = $this->getCacheKey(Request::create($url));
         if (isset($this->locks[$key])) {
@@ -340,22 +333,18 @@ class Store implements StoreInterface
 
     /**
      * Loads data for the given key.
-     *
-     * @return string The data associated with the key
      */
-    private function load(string $key)
+    private function load(string $key): ?string
     {
         $path = $this->getPath($key);
 
-        return file_exists($path) ? file_get_contents($path) : false;
+        return file_exists($path) && false !== ($contents = file_get_contents($path)) ? $contents : null;
     }
 
     /**
      * Save data for the given key.
-     *
-     * @return bool
      */
-    private function save(string $key, string $data)
+    private function save(string $key, string $data): bool
     {
         $path = $this->getPath($key);
 
@@ -397,6 +386,8 @@ class Store implements StoreInterface
         }
 
         @chmod($path, 0666 & ~umask());
+
+        return true;
     }
 
     public function getPath($key)
@@ -423,10 +414,8 @@ class Store implements StoreInterface
 
     /**
      * Returns a cache key for the given Request.
-     *
-     * @return string A key for the given Request
      */
-    private function getCacheKey(Request $request)
+    private function getCacheKey(Request $request): string
     {
         if (isset($this->keyCache[$request])) {
             return $this->keyCache[$request];
@@ -437,20 +426,16 @@ class Store implements StoreInterface
 
     /**
      * Persists the Request HTTP headers.
-     *
-     * @return array An array of HTTP headers
      */
-    private function persistRequest(Request $request)
+    private function persistRequest(Request $request): array
     {
         return $request->headers->all();
     }
 
     /**
      * Persists the Response HTTP headers.
-     *
-     * @return array An array of HTTP headers
      */
-    private function persistResponse(Response $response)
+    private function persistResponse(Response $response): array
     {
         $headers = $response->headers->all();
         $headers['X-Status'] = [$response->getStatusCode()];
@@ -460,10 +445,8 @@ class Store implements StoreInterface
 
     /**
      * Restores a Response from the HTTP headers and body.
-     *
-     * @return Response
      */
-    private function restoreResponse(array $headers, string $body = null)
+    private function restoreResponse(array $headers, string $body = null): Response
     {
         $status = $headers['X-Status'][0];
         unset($headers['X-Status']);

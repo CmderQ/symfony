@@ -13,7 +13,6 @@ namespace Symfony\Bundle\FrameworkBundle\Tests\DependencyInjection;
 
 use Doctrine\Common\Annotations\Annotation;
 use Psr\Log\LoggerAwareInterface;
-use Symfony\Bridge\PhpUnit\ForwardCompatTestTrait;
 use Symfony\Bundle\FrameworkBundle\DependencyInjection\Compiler\AddAnnotationsCachedReaderPass;
 use Symfony\Bundle\FrameworkBundle\DependencyInjection\FrameworkExtension;
 use Symfony\Bundle\FrameworkBundle\Tests\TestCase;
@@ -58,8 +57,6 @@ use Symfony\Component\Workflow;
 
 abstract class FrameworkExtensionTest extends TestCase
 {
-    use ForwardCompatTestTrait;
-
     private static $containerCache = [];
 
     abstract protected function loadFromFile(ContainerBuilder $container, $file);
@@ -686,6 +683,9 @@ abstract class FrameworkExtensionTest extends TestCase
         $this->assertEquals('translator.default', (string) $container->getAlias('translator'), '->registerTranslatorConfiguration() redefines translator service from identity to real translator');
         $options = $container->getDefinition('translator.default')->getArgument(4);
 
+        $this->assertArrayHasKey('cache_dir', $options);
+        $this->assertSame($container->getParameter('kernel.cache_dir').'/translations', $options['cache_dir']);
+
         $files = array_map('realpath', $options['resource_files']['en']);
         $ref = new \ReflectionClass('Symfony\Component\Validator\Validation');
         $this->assertContains(
@@ -740,6 +740,13 @@ abstract class FrameworkExtensionTest extends TestCase
 
         $calls = $container->getDefinition('translator.default')->getMethodCalls();
         $this->assertEquals(['en', 'fr'], $calls[1][1][0]);
+    }
+
+    public function testTranslatorCacheDirDisabled()
+    {
+        $container = $this->createContainerFromFile('translator_cache_dir_disabled');
+        $options = $container->getDefinition('translator.default')->getArgument(4);
+        $this->assertNull($options['cache_dir']);
     }
 
     public function testValidation()
@@ -927,9 +934,9 @@ abstract class FrameworkExtensionTest extends TestCase
 
         $this->assertSame('addYamlMappings', $calls[4][0]);
         $this->assertCount(3, $calls[4][1][0]);
-        $this->assertContains('foo.yml', $calls[4][1][0][0]);
-        $this->assertContains('validation.yml', $calls[4][1][0][1]);
-        $this->assertContains('validation.yaml', $calls[4][1][0][2]);
+        $this->assertStringContainsString('foo.yml', $calls[4][1][0][0]);
+        $this->assertStringContainsString('validation.yml', $calls[4][1][0][1]);
+        $this->assertStringContainsString('validation.yaml', $calls[4][1][0][2]);
     }
 
     public function testValidationAutoMapping()
@@ -1339,6 +1346,7 @@ abstract class FrameworkExtensionTest extends TestCase
         $this->assertSame(['localhost' => '127.0.0.1'], $defaultOptions['resolve']);
         $this->assertSame('proxy.org', $defaultOptions['proxy']);
         $this->assertSame(3.5, $defaultOptions['timeout']);
+        $this->assertSame(10.1, $defaultOptions['max_duration']);
         $this->assertSame('127.0.0.1', $defaultOptions['bindto']);
         $this->assertTrue($defaultOptions['verify_peer']);
         $this->assertTrue($defaultOptions['verify_host']);

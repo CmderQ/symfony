@@ -55,7 +55,7 @@ class FormFieldRegistry
         $target = &$this->fields;
         while (\count($segments) > 1) {
             $path = array_shift($segments);
-            if (!\array_key_exists($path, $target)) {
+            if (!\is_array($target) || !\array_key_exists($path, $target)) {
                 return;
             }
             $target = &$target[$path];
@@ -76,7 +76,7 @@ class FormFieldRegistry
         $target = &$this->fields;
         while ($segments) {
             $path = array_shift($segments);
-            if (!\array_key_exists($path, $target)) {
+            if (!\is_array($target) || !\array_key_exists($path, $target)) {
                 throw new \InvalidArgumentException(sprintf('Unreachable field "%s"', $path));
             }
             $target = &$target[$path];
@@ -154,10 +154,8 @@ class FormFieldRegistry
 
     /**
      * Transforms a PHP array in a list of fully qualified name / value.
-     *
-     * @return array The list of fields as [string] Fully qualified name => (mixed) value)
      */
-    private function walk(array $array, ?string $base = '', array &$output = [])
+    private function walk(array $array, ?string $base = '', array &$output = []): array
     {
         foreach ($array as $k => $v) {
             $path = empty($base) ? $k : sprintf('%s[%s]', $base, $k);
@@ -178,7 +176,7 @@ class FormFieldRegistry
      *
      * @return string[] The list of segments
      */
-    private function getSegments(string $name)
+    private function getSegments(string $name): array
     {
         if (preg_match('/^(?P<base>[^[]+)(?P<extra>(\[.*)|$)/', $name, $m)) {
             $segments = [$m['base']];

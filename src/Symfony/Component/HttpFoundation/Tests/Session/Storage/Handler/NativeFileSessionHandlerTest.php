@@ -12,7 +12,6 @@
 namespace Symfony\Component\HttpFoundation\Tests\Session\Storage\Handler;
 
 use PHPUnit\Framework\TestCase;
-use Symfony\Bridge\PhpUnit\ForwardCompatTestTrait;
 use Symfony\Component\HttpFoundation\Session\Storage\Handler\NativeFileSessionHandler;
 use Symfony\Component\HttpFoundation\Session\Storage\NativeSessionStorage;
 
@@ -26,8 +25,6 @@ use Symfony\Component\HttpFoundation\Session\Storage\NativeSessionStorage;
  */
 class NativeFileSessionHandlerTest extends TestCase
 {
-    use ForwardCompatTestTrait;
-
     public function testConstruct()
     {
         $storage = new NativeSessionStorage(['name' => 'TESTING'], new NativeFileSessionHandler(sys_get_temp_dir()));
@@ -45,7 +42,7 @@ class NativeFileSessionHandlerTest extends TestCase
     {
         $handler = new NativeFileSessionHandler($savePath);
         $this->assertEquals($expectedSavePath, ini_get('session.save_path'));
-        $this->assertTrue(is_dir(realpath($path)));
+        $this->assertDirectoryExists(realpath($path));
 
         rmdir($path);
     }

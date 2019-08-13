@@ -223,7 +223,7 @@ class Configuration implements ConfigurationInterface
                     ->canBeEnabled()
                     ->beforeNormalization()
                         ->always(function ($v) {
-                            if (true === $v['enabled']) {
+                            if (\is_array($v) && true === $v['enabled']) {
                                 $workflows = $v;
                                 unset($workflows['enabled']);
 
@@ -652,6 +652,7 @@ class Configuration implements ConfigurationInterface
                         ->end()
                         ->booleanNode('logging')->defaultValue(false)->end()
                         ->scalarNode('formatter')->defaultValue('translator.formatter.default')->end()
+                        ->scalarNode('cache_dir')->defaultValue('%kernel.cache_dir%/translations')->end()
                         ->scalarNode('default_path')
                             ->info('The default path used to load translations')
                             ->defaultValue('%kernel.project_dir%/translations')
@@ -1232,7 +1233,10 @@ class Configuration implements ConfigurationInterface
                                     ->info('A comma separated list of hosts that do not require a proxy to be reached.')
                                 ->end()
                                 ->floatNode('timeout')
-                                    ->info('Defaults to "default_socket_timeout" ini parameter.')
+                                    ->info('The idle timeout, defaults to the "default_socket_timeout" ini parameter.')
+                                ->end()
+                                ->floatNode('max_duration')
+                                    ->info('The maximum execution time for the request+response as a whole.')
                                 ->end()
                                 ->scalarNode('bindto')
                                     ->info('A network interface name, IP address, a host name or a UNIX socket to bind to.')
@@ -1368,7 +1372,10 @@ class Configuration implements ConfigurationInterface
                                         ->info('A comma separated list of hosts that do not require a proxy to be reached.')
                                     ->end()
                                     ->floatNode('timeout')
-                                        ->info('Defaults to "default_socket_timeout" ini parameter.')
+                                        ->info('The idle timeout, defaults to the "default_socket_timeout" ini parameter.')
+                                    ->end()
+                                    ->floatNode('max_duration')
+                                        ->info('The maximum execution time for the request+response as a whole.')
                                     ->end()
                                     ->scalarNode('bindto')
                                         ->info('A network interface name, IP address, a host name or a UNIX socket to bind to.')

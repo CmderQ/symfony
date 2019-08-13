@@ -12,7 +12,6 @@
 namespace Symfony\Bundle\FrameworkBundle\Tests\Command;
 
 use PHPUnit\Framework\TestCase;
-use Symfony\Bridge\PhpUnit\ForwardCompatTestTrait;
 use Symfony\Bundle\FrameworkBundle\Command\YamlLintCommand;
 use Symfony\Bundle\FrameworkBundle\Console\Application;
 use Symfony\Component\Console\Application as BaseApplication;
@@ -29,8 +28,6 @@ use Symfony\Component\HttpKernel\KernelInterface;
  */
 class YamlLintCommandTest extends TestCase
 {
-    use ForwardCompatTestTrait;
-
     private $files;
 
     public function testLintCorrectFile()
@@ -44,7 +41,7 @@ class YamlLintCommandTest extends TestCase
         );
 
         $this->assertEquals(0, $tester->getStatusCode(), 'Returns 0 in case of success');
-        $this->assertContains('OK', trim($tester->getDisplay()));
+        $this->assertStringContainsString('OK', trim($tester->getDisplay()));
     }
 
     public function testLintIncorrectFile()
@@ -58,7 +55,7 @@ bar';
         $tester->execute(['filename' => $filename], ['decorated' => false]);
 
         $this->assertEquals(1, $tester->getStatusCode(), 'Returns 1 in case of error');
-        $this->assertContains('Unable to parse at line 3 (near "bar").', trim($tester->getDisplay()));
+        $this->assertStringContainsString('Unable to parse at line 3 (near "bar").', trim($tester->getDisplay()));
     }
 
     public function testLintFileNotReadable()
@@ -109,13 +106,10 @@ EOF;
         );
 
         $this->assertEquals(0, $tester->getStatusCode(), 'Returns 0 in case of success');
-        $this->assertContains('[OK] All 0 YAML files contain valid syntax', trim($tester->getDisplay()));
+        $this->assertStringContainsString('[OK] All 0 YAML files contain valid syntax', trim($tester->getDisplay()));
     }
 
-    /**
-     * @return string Path to the new file
-     */
-    private function createFile($content)
+    private function createFile($content): string
     {
         $filename = tempnam(sys_get_temp_dir().'/yml-lint-test', 'sf-');
         file_put_contents($filename, $content);
@@ -125,10 +119,7 @@ EOF;
         return $filename;
     }
 
-    /**
-     * @return CommandTester
-     */
-    private function createCommandTester($application = null)
+    private function createCommandTester($application = null): CommandTester
     {
         if (!$application) {
             $application = new BaseApplication();
@@ -184,13 +175,13 @@ EOF;
         return $application;
     }
 
-    private function doSetUp()
+    protected function setUp(): void
     {
         @mkdir(sys_get_temp_dir().'/yml-lint-test');
         $this->files = [];
     }
 
-    private function doTearDown()
+    protected function tearDown(): void
     {
         foreach ($this->files as $file) {
             if (file_exists($file)) {

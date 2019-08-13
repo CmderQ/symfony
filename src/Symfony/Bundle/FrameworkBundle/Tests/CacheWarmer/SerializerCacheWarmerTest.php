@@ -11,7 +11,6 @@
 
 namespace Symfony\Bundle\FrameworkBundle\Tests\CacheWarmer;
 
-use Symfony\Bridge\PhpUnit\ForwardCompatTestTrait;
 use Symfony\Bundle\FrameworkBundle\CacheWarmer\SerializerCacheWarmer;
 use Symfony\Bundle\FrameworkBundle\Tests\TestCase;
 use Symfony\Component\Cache\Adapter\NullAdapter;
@@ -21,8 +20,6 @@ use Symfony\Component\Serializer\Mapping\Loader\YamlFileLoader;
 
 class SerializerCacheWarmerTest extends TestCase
 {
-    use ForwardCompatTestTrait;
-
     public function testWarmUp()
     {
         $loaders = [
@@ -53,5 +50,59 @@ class SerializerCacheWarmerTest extends TestCase
         $warmer->warmUp(\dirname($file));
 
         $this->assertFileExists($file);
+    }
+
+    /**
+     * Test that the cache warming process is not broken if a class loader
+     * throws an exception (on class / file not found for example).
+     */
+    public function testClassAutoloadException()
+    {
+        if (!class_exists(CacheClassMetadataFactory::class) || !method_exists(XmlFileLoader::class, 'getMappedClasses') || !method_exists(YamlFileLoader::class, 'getMappedClasses')) {
+            $this->markTestSkipped('The Serializer default cache warmer has been introduced in the Serializer Component version 3.2.');
+        }
+
+        $this->assertFalse(class_exists($mappedClass = 'AClassThatDoesNotExist_FWB_CacheWarmer_SerializerCacheWarmerTest', false));
+
+        $warmer = new SerializerCacheWarmer([new YamlFileLoader(__DIR__.'/../Fixtures/Serialization/Resources/does_not_exist.yaml')], tempnam(sys_get_temp_dir(), __FUNCTION__));
+
+        spl_autoload_register($classLoader = function ($class) use ($mappedClass) {
+            if ($class === $mappedClass) {
+                throw new \DomainException('This exception should be caught by the warmer.');
+            }
+        }, true, true);
+
+        $warmer->warmUp('foo');
+
+        spl_autoload_unregister($classLoader);
+    }
+
+    /**
+     * Test that the cache warming process is broken if a class loader throws an
+     * exception but that is unrelated to the class load.
+     */
+    public function testClassAutoloadExceptionWithUnrelatedException()
+    {
+        $this->expectException(\DomainException::class);
+        $this->expectExceptionMessage('This exception should not be caught by the warmer.');
+
+        if (!class_exists(CacheClassMetadataFactory::class) || !method_exists(XmlFileLoader::class, 'getMappedClasses') || !method_exists(YamlFileLoader::class, 'getMappedClasses')) {
+            $this->markTestSkipped('The Serializer default cache warmer has been introduced in the Serializer Component version 3.2.');
+        }
+
+        $this->assertFalse(class_exists($mappedClass = 'AClassThatDoesNotExist_FWB_CacheWarmer_SerializerCacheWarmerTest', false));
+
+        $warmer = new SerializerCacheWarmer([new YamlFileLoader(__DIR__.'/../Fixtures/Serialization/Resources/does_not_exist.yaml')], tempnam(sys_get_temp_dir(), __FUNCTION__));
+
+        spl_autoload_register($classLoader = function ($class) use ($mappedClass) {
+            if ($class === $mappedClass) {
+                eval('class '.$mappedClass.'{}');
+                throw new \DomainException('This exception should not be caught by the warmer.');
+            }
+        }, true, true);
+
+        $warmer->warmUp('foo');
+
+        spl_autoload_unregister($classLoader);
     }
 }

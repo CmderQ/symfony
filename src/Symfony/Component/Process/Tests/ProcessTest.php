@@ -12,7 +12,6 @@
 namespace Symfony\Component\Process\Tests;
 
 use PHPUnit\Framework\TestCase;
-use Symfony\Bridge\PhpUnit\ForwardCompatTestTrait;
 use Symfony\Component\Process\Exception\LogicException;
 use Symfony\Component\Process\Exception\ProcessTimedOutException;
 use Symfony\Component\Process\Exception\RuntimeException;
@@ -26,13 +25,11 @@ use Symfony\Component\Process\Process;
  */
 class ProcessTest extends TestCase
 {
-    use ForwardCompatTestTrait;
-
     private static $phpBin;
     private static $process;
     private static $sigchild;
 
-    private static function doSetUpBeforeClass()
+    public static function setUpBeforeClass(): void
     {
         $phpBin = new PhpExecutableFinder();
         self::$phpBin = getenv('SYMFONY_PROCESS_PHP_TEST_BINARY') ?: ('phpdbg' === \PHP_SAPI ? 'php' : $phpBin->find());
@@ -42,7 +39,7 @@ class ProcessTest extends TestCase
         self::$sigchild = false !== strpos(ob_get_clean(), '--enable-sigchild');
     }
 
-    private function doTearDown()
+    protected function tearDown(): void
     {
         if (self::$process) {
             self::$process->stop(0);
@@ -1140,7 +1137,7 @@ class ProcessTest extends TestCase
         ];
 
         if ('\\' === \DIRECTORY_SEPARATOR) {
-            // Avoid XL buffers on Windows because of https://bugs.php.net/bug.php?id=65650
+            // Avoid XL buffers on Windows because of https://bugs.php.net/65650
             $sizes = [1, 2, 4, 8];
         } else {
             $sizes = [1, 16, 64, 1024, 4096];
@@ -1523,14 +1520,8 @@ EOTXT;
     }
 
     /**
-     * @param string      $commandline
-     * @param string|null $cwd
-     * @param array|null  $env
-     * @param string|null $input
-     * @param int         $timeout
-     * @param array       $options
-     *
-     * @return Process
+     * @param string|array $commandline
+     * @param mixed        $input
      */
     private function getProcess($commandline, string $cwd = null, array $env = null, $input = null, ?int $timeout = 60): Process
     {

@@ -11,8 +11,8 @@
 
 namespace Symfony\Component\Form\Tests\ChoiceList\Factory;
 
+use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
-use Symfony\Bridge\PhpUnit\ForwardCompatTestTrait;
 use Symfony\Component\Form\ChoiceList\Factory\PropertyAccessDecorator;
 use Symfony\Component\PropertyAccess\PropertyPath;
 
@@ -21,10 +21,8 @@ use Symfony\Component\PropertyAccess\PropertyPath;
  */
 class PropertyAccessDecoratorTest extends TestCase
 {
-    use ForwardCompatTestTrait;
-
     /**
-     * @var \PHPUnit_Framework_MockObject_MockObject
+     * @var MockObject
      */
     private $decoratedFactory;
 
@@ -33,7 +31,7 @@ class PropertyAccessDecoratorTest extends TestCase
      */
     private $factory;
 
-    private function doSetUp()
+    protected function setUp(): void
     {
         $this->decoratedFactory = $this->getMockBuilder('Symfony\Component\Form\ChoiceList\Factory\ChoiceListFactoryInterface')->getMock();
         $this->factory = new PropertyAccessDecorator($this->decoratedFactory);

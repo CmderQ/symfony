@@ -12,16 +12,13 @@
 namespace Symfony\Component\Cache\Tests\Adapter;
 
 use Predis\Connection\StreamConnection;
-use Symfony\Bridge\PhpUnit\ForwardCompatTestTrait;
 use Symfony\Component\Cache\Adapter\RedisAdapter;
 
 class PredisAdapterTest extends AbstractRedisAdapterTest
 {
-    use ForwardCompatTestTrait;
-
-    private static function doSetUpBeforeClass()
+    public static function setUpBeforeClass(): void
     {
-        parent::setupBeforeClass();
+        parent::setUpBeforeClass();
         self::$redis = new \Predis\Client(['host' => getenv('REDIS_HOST')]);
     }
 

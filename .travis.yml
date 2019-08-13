@@ -21,6 +21,7 @@ env:
         - SYMFONY_PROCESS_PHP_TEST_BINARY=~/.phpenv/shims/php
         - MESSENGER_AMQP_DSN=amqp://localhost/%2f/messages
         - MESSENGER_REDIS_DSN=redis://127.0.0.1:7001/messages
+        - SYMFONY_PHPUNIT_DISABLE_RESULT_CACHE=1
 
 matrix:
     include:
@@ -184,7 +185,7 @@ install:
     - |
       # Install the phpunit-bridge from a PR if required
       #
-      # To run a PR with a patched phpunit-bridge, first submit the path for the
+      # To run a PR with a patched phpunit-bridge, first submit the patch for the
       # phpunit-bridge as a separate PR against the next feature-branch then
       # uncomment and update the following line with that PR number
       #SYMFONY_PHPUNIT_BRIDGE_PR=32886
@@ -195,6 +196,7 @@ install:
           git checkout -q FETCH_HEAD -- src/Symfony/Bridge/PhpUnit
           SYMFONY_VERSION=$(cat src/Symfony/Bridge/PhpUnit/composer.json | grep '^ *"dev-master". *"[1-9]' | grep -o '[0-9.]*')
           sed -i 's/"symfony\/phpunit-bridge": ".*"/"symfony\/phpunit-bridge": "'$SYMFONY_VERSION'.x@dev"/' composer.json
+          rm -rf .phpunit
       fi
 
     - |

@@ -12,7 +12,6 @@
 namespace Symfony\Component\Yaml\Tests\Command;
 
 use PHPUnit\Framework\TestCase;
-use Symfony\Bridge\PhpUnit\ForwardCompatTestTrait;
 use Symfony\Component\Console\Application;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Tester\CommandTester;
@@ -25,8 +24,6 @@ use Symfony\Component\Yaml\Command\LintCommand;
  */
 class LintCommandTest extends TestCase
 {
-    use ForwardCompatTestTrait;
-
     private $files;
 
     public function testLintCorrectFile()
@@ -63,7 +60,7 @@ bar';
         $ret = $tester->execute(['filename' => $filename], ['decorated' => false]);
 
         $this->assertEquals(1, $ret, 'Returns 1 in case of error');
-        $this->assertContains('Unable to parse at line 3 (near "bar").', trim($tester->getDisplay()));
+        $this->assertStringContainsString('Unable to parse at line 3 (near "bar").', trim($tester->getDisplay()));
     }
 
     public function testConstantAsKey()
@@ -103,10 +100,7 @@ YAML;
         $ret = $tester->execute(['filename' => $filename], ['decorated' => false]);
     }
 
-    /**
-     * @return string Path to the new file
-     */
-    private function createFile($content)
+    private function createFile($content): string
     {
         $filename = tempnam(sys_get_temp_dir().'/framework-yml-lint-test', 'sf-');
         file_put_contents($filename, $content);
@@ -128,13 +122,13 @@ YAML;
         return new CommandTester($command);
     }
 
-    private function doSetUp()
+    protected function setUp(): void
     {
         $this->files = [];
         @mkdir(sys_get_temp_dir().'/framework-yml-lint-test');
     }
 
-    private function doTearDown()
+    protected function tearDown(): void
     {
         foreach ($this->files as $file) {
             if (file_exists($file)) {

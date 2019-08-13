@@ -23,6 +23,7 @@ use Symfony\Bridge\Monolog\Processor\DebugProcessor;
 use Symfony\Bridge\Twig\Extension\CsrfExtension;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Bundle\FrameworkBundle\Routing\AnnotatedRouteControllerLoader;
+use Symfony\Bundle\FrameworkBundle\Routing\RouteLoaderInterface;
 use Symfony\Bundle\FullStack;
 use Symfony\Component\Asset\PackageInterface;
 use Symfony\Component\BrowserKit\AbstractBrowser;
@@ -68,14 +69,12 @@ use Symfony\Component\HttpKernel\CacheWarmer\CacheWarmerInterface;
 use Symfony\Component\HttpKernel\Controller\ArgumentValueResolverInterface;
 use Symfony\Component\HttpKernel\DataCollector\DataCollectorInterface;
 use Symfony\Component\HttpKernel\DependencyInjection\Extension;
-use Symfony\Component\Lock\Factory;
 use Symfony\Component\Lock\Lock;
 use Symfony\Component\Lock\LockFactory;
 use Symfony\Component\Lock\LockInterface;
 use Symfony\Component\Lock\PersistingStoreInterface;
 use Symfony\Component\Lock\Store\FlockStore;
 use Symfony\Component\Lock\Store\StoreFactory;
-use Symfony\Component\Lock\StoreInterface;
 use Symfony\Component\Mailer\Bridge\Amazon\Transport\SesTransportFactory;
 use Symfony\Component\Mailer\Bridge\Google\Transport\GmailTransportFactory;
 use Symfony\Component\Mailer\Bridge\Mailchimp\Transport\MandrillTransportFactory;
@@ -139,6 +138,7 @@ class FrameworkExtension extends Extension
     private $annotationsConfigEnabled = false;
     private $validatorConfigEnabled = false;
     private $messengerConfigEnabled = false;
+    private $mailerConfigEnabled = false;
 
     /**
      * Responds to the app.config configuration parameter.
@@ -228,7 +228,7 @@ class FrameworkExtension extends Extension
 
         if ($this->isConfigEnabled($container, $config['session'])) {
             if (!\extension_loaded('session')) {
-                throw new LogicException('Session support cannot be enabled as the session extension is not installed. See https://www.php.net/session.installation for instructions.');
+                throw new LogicException('Session support cannot be enabled as the session extension is not installed. See https://php.net/session.installation for instructions.');
             }
 
             $this->sessionConfigEnabled = true;
@@ -321,7 +321,7 @@ class FrameworkExtension extends Extension
             $this->registerHttpClientConfiguration($config['http_client'], $container, $loader);
         }
 
-        if ($this->isConfigEnabled($container, $config['mailer'])) {
+        if ($this->mailerConfigEnabled = $this->isConfigEnabled($container, $config['mailer'])) {
             $this->registerMailerConfiguration($config['mailer'], $container, $loader);
         }
 
@@ -424,6 +424,9 @@ class FrameworkExtension extends Extension
         if (!$config['disallow_search_engine_index'] ?? false) {
             $container->removeDefinition('disallow_search_engine_index_response_listener');
         }
+
+        $container->registerForAutoconfiguration(RouteLoaderInterface::class)
+            ->addTag('routing.route_loader');
     }
 
     /**
@@ -526,6 +529,10 @@ class FrameworkExtension extends Extension
 
         if ($this->messengerConfigEnabled) {
             $loader->load('messenger_debug.xml');
+        }
+
+        if ($this->mailerConfigEnabled) {
+            $loader->load('mailer_debug.xml');
         }
 
         $container->setParameter('profiler_listener.only_exceptions', $config['only_exceptions']);
@@ -991,6 +998,10 @@ class FrameworkExtension extends Extension
         $container->setAlias('translator.formatter', new Alias($config['formatter'], false));
         $translator = $container->findDefinition('translator.default');
         $translator->addMethodCall('setFallbackLocales', [$config['fallbacks'] ?: [$defaultLocale]]);
+
+        $defaultOptions = $translator->getArgument(4);
+        $defaultOptions['cache_dir'] = $config['cache_dir'];
+        $translator->setArgument(4, $defaultOptions);
 
         $container->setParameter('translator.logging', $config['logging']);
         $container->setParameter('translator.default_path', $config['default_path']);
@@ -1490,15 +1501,11 @@ class FrameworkExtension extends Extension
                 $container->setAlias('lock.store', new Alias('lock.'.$resourceName.'.store', false));
                 $container->setAlias('lock.factory', new Alias('lock.'.$resourceName.'.factory', false));
                 $container->setAlias('lock', new Alias('lock.'.$resourceName, false));
-                $container->setAlias(StoreInterface::class, new Alias('lock.store', false));
                 $container->setAlias(PersistingStoreInterface::class, new Alias('lock.store', false));
-                $container->setAlias(Factory::class, new Alias('lock.factory', false));
                 $container->setAlias(LockFactory::class, new Alias('lock.factory', false));
                 $container->setAlias(LockInterface::class, new Alias('lock', false));
             } else {
-                $container->registerAliasForArgument('lock.'.$resourceName.'.store', StoreInterface::class, $resourceName.'.lock.store');
                 $container->registerAliasForArgument('lock.'.$resourceName.'.store', PersistingStoreInterface::class, $resourceName.'.lock.store');
-                $container->registerAliasForArgument('lock.'.$resourceName.'.factory', Factory::class, $resourceName.'.lock.factory');
                 $container->registerAliasForArgument('lock.'.$resourceName.'.factory', LockFactory::class, $resourceName.'.lock.factory');
                 $container->registerAliasForArgument('lock.'.$resourceName, LockInterface::class, $resourceName.'.lock');
             }

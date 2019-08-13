@@ -12,7 +12,6 @@
 namespace Symfony\Component\Yaml\Tests;
 
 use PHPUnit\Framework\TestCase;
-use Symfony\Bridge\PhpUnit\ForwardCompatTestTrait;
 use Symfony\Component\Yaml\Dumper;
 use Symfony\Component\Yaml\Parser;
 use Symfony\Component\Yaml\Tag\TaggedValue;
@@ -20,8 +19,6 @@ use Symfony\Component\Yaml\Yaml;
 
 class DumperTest extends TestCase
 {
-    use ForwardCompatTestTrait;
-
     protected $parser;
     protected $dumper;
     protected $path;
@@ -41,14 +38,14 @@ class DumperTest extends TestCase
         ],
     ];
 
-    private function doSetUp()
+    protected function setUp(): void
     {
         $this->parser = new Parser();
         $this->dumper = new Dumper();
         $this->path = __DIR__.'/Fixtures';
     }
 
-    private function doTearDown()
+    protected function tearDown(): void
     {
         $this->parser = null;
         $this->dumper = null;
@@ -506,6 +503,11 @@ YAML;
         $this->expectException('InvalidArgumentException');
         $this->expectExceptionMessage('The indentation must be greater than zero');
         new Dumper(-4);
+    }
+
+    public function testDumpNullAsTilde()
+    {
+        $this->assertSame('{ foo: ~ }', $this->dumper->dump(['foo' => null], 0, 0, Yaml::DUMP_NULL_AS_TILDE));
     }
 }
 

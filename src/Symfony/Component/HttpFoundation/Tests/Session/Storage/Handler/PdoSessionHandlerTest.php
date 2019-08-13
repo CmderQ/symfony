@@ -12,7 +12,6 @@
 namespace Symfony\Component\HttpFoundation\Tests\Session\Storage\Handler;
 
 use PHPUnit\Framework\TestCase;
-use Symfony\Bridge\PhpUnit\ForwardCompatTestTrait;
 use Symfony\Component\HttpFoundation\Session\Storage\Handler\PdoSessionHandler;
 
 /**
@@ -21,11 +20,9 @@ use Symfony\Component\HttpFoundation\Session\Storage\Handler\PdoSessionHandler;
  */
 class PdoSessionHandlerTest extends TestCase
 {
-    use ForwardCompatTestTrait;
-
     private $dbFile;
 
-    private function doTearDown()
+    protected function tearDown(): void
     {
         // make sure the temporary database file is deleted when it has been created (even when a test fails)
         if ($this->dbFile) {
@@ -320,15 +317,15 @@ class PdoSessionHandlerTest extends TestCase
     public function testUrlDsn($url, $expectedDsn, $expectedUser = null, $expectedPassword = null)
     {
         $storage = new PdoSessionHandler($url);
+        $reflection = new \ReflectionClass(PdoSessionHandler::class);
 
-        $this->assertAttributeEquals($expectedDsn, 'dsn', $storage);
-
-        if (null !== $expectedUser) {
-            $this->assertAttributeEquals($expectedUser, 'username', $storage);
-        }
-
-        if (null !== $expectedPassword) {
-            $this->assertAttributeEquals($expectedPassword, 'password', $storage);
+        foreach (['dsn' => $expectedDsn, 'username' => $expectedUser, 'password' => $expectedPassword] as $property => $expectedValue) {
+            if (!isset($expectedValue)) {
+                continue;
+            }
+            $property = $reflection->getProperty($property);
+            $property->setAccessible(true);
+            $this->assertSame($expectedValue, $property->getValue($storage));
         }
     }
 

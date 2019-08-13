@@ -12,7 +12,6 @@
 namespace Symfony\Component\HttpFoundation\Tests\Session\Storage;
 
 use PHPUnit\Framework\TestCase;
-use Symfony\Bridge\PhpUnit\ForwardCompatTestTrait;
 use Symfony\Component\HttpFoundation\Session\Attribute\AttributeBag;
 use Symfony\Component\HttpFoundation\Session\Flash\FlashBag;
 use Symfony\Component\HttpFoundation\Session\Storage\Handler\NativeFileSessionHandler;
@@ -32,11 +31,9 @@ use Symfony\Component\HttpFoundation\Session\Storage\Proxy\SessionHandlerProxy;
  */
 class NativeSessionStorageTest extends TestCase
 {
-    use ForwardCompatTestTrait;
-
     private $savePath;
 
-    private function doSetUp()
+    protected function setUp(): void
     {
         $this->iniSet('session.save_handler', 'files');
         $this->iniSet('session.save_path', $this->savePath = sys_get_temp_dir().'/sftest');
@@ -45,7 +42,7 @@ class NativeSessionStorageTest extends TestCase
         }
     }
 
-    private function doTearDown()
+    protected function tearDown(): void
     {
         session_write_close();
         array_map('unlink', glob($this->savePath.'/*'));
@@ -200,13 +197,6 @@ class NativeSessionStorageTest extends TestCase
 
         $this->assertSame('a=href', ini_get('url_rewriter.tags'));
         $this->assertSame('200', ini_get('session.cache_expire'));
-    }
-
-    public function testSetSaveHandlerException()
-    {
-        $this->expectException('InvalidArgumentException');
-        $storage = $this->getStorage();
-        $storage->setSaveHandler(new \stdClass());
     }
 
     public function testSetSaveHandler()
