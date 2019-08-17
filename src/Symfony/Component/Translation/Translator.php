@@ -244,9 +244,6 @@ class Translator implements TranslatorInterface, TranslatorBagInterface, LocaleA
         return $this->loaders;
     }
 
-    /**
-     * @param string $locale
-     */
     protected function loadCatalogue(string $locale)
     {
         if (null === $this->cacheDir) {
@@ -256,9 +253,6 @@ class Translator implements TranslatorInterface, TranslatorBagInterface, LocaleA
         }
     }
 
-    /**
-     * @param string $locale
-     */
     protected function initializeCatalogue(string $locale)
     {
         $this->assertValidLocale($locale);
@@ -359,7 +353,7 @@ EOF
     /**
      * @internal
      */
-    protected function doLoadCatalogue($locale): void
+    protected function doLoadCatalogue(string $locale): void
     {
         $this->catalogues[$locale] = new MessageCatalogue($locale);
 

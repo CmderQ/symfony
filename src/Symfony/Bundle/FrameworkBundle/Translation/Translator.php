@@ -88,7 +88,7 @@ class Translator extends BaseTranslator implements WarmableInterface
     /**
      * {@inheritdoc}
      */
-    public function warmUp($cacheDir)
+    public function warmUp(string $cacheDir)
     {
         // skip warmUp when translator doesn't use cache
         if (null === $this->options['cache_dir']) {
@@ -106,7 +106,7 @@ class Translator extends BaseTranslator implements WarmableInterface
         }
     }
 
-    public function addResource($format, $resource, $locale, $domain = null)
+    public function addResource(string $format, $resource, string $locale, string $domain = null)
     {
         if ($this->resourceFiles) {
             $this->addResourceFiles();
@@ -117,13 +117,16 @@ class Translator extends BaseTranslator implements WarmableInterface
     /**
      * {@inheritdoc}
      */
-    protected function initializeCatalogue($locale)
+    protected function initializeCatalogue(string $locale)
     {
         $this->initialize();
         parent::initializeCatalogue($locale);
     }
 
-    protected function doLoadCatalogue($locale): void
+    /**
+     * @internal
+     */
+    protected function doLoadCatalogue(string $locale): void
     {
         parent::doLoadCatalogue($locale);
 

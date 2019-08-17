@@ -584,7 +584,7 @@ EOF;
     {
         $bundle = $this
             ->getMockBuilder('Symfony\Component\HttpKernel\Bundle\BundleInterface')
-            ->setMethods(['getPath', 'getPublicDir', 'getParent', 'getName'])
+            ->setMethods(['getPath', 'getParent', 'getName'])
             ->disableOriginalConstructor()
         ;
 
@@ -604,12 +604,6 @@ EOF;
             ->expects($this->any())
             ->method('getPath')
             ->willReturn($dir)
-        ;
-
-        $bundle
-            ->expects($this->any())
-            ->method('getPublicDir')
-            ->willReturn('Resources/public')
         ;
 
         $bundle
@@ -647,7 +641,7 @@ EOF;
         return $kernel;
     }
 
-    protected function getKernelForTest(array $methods = [], $debug = false)
+    protected function getKernelForTest(array $methods = [], bool $debug = false)
     {
         $kernel = $this->getMockBuilder('Symfony\Component\HttpKernel\Tests\Fixtures\KernelForTest')
             ->setConstructorArgs(['test', $debug])
@@ -667,7 +661,7 @@ class TestKernel implements HttpKernelInterface
         $this->terminateCalled = true;
     }
 
-    public function handle(Request $request, $type = self::MASTER_REQUEST, $catch = true)
+    public function handle(Request $request, int $type = self::MASTER_REQUEST, bool $catch = true)
     {
     }
 }

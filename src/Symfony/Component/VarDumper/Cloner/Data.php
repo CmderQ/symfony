@@ -61,7 +61,7 @@ class Data implements \ArrayAccess, \Countable, \IteratorAggregate
     }
 
     /**
-     * @param bool $recursive Whether values should be resolved recursively or not
+     * @param array|bool $recursive Whether values should be resolved recursively or not
      *
      * @return string|int|float|bool|array|Data[]|null A native representation of the original value
      */
@@ -166,11 +166,9 @@ class Data implements \ArrayAccess, \Countable, \IteratorAggregate
     /**
      * Returns a depth limited clone of $this.
      *
-     * @param int $maxDepth The max dumped depth level
-     *
-     * @return self A clone of $this
+     * @return static
      */
-    public function withMaxDepth($maxDepth)
+    public function withMaxDepth(int $maxDepth)
     {
         $data = clone $this;
         $data->maxDepth = (int) $maxDepth;
@@ -181,11 +179,9 @@ class Data implements \ArrayAccess, \Countable, \IteratorAggregate
     /**
      * Limits the number of elements per depth level.
      *
-     * @param int $maxItemsPerDepth The max number of items dumped per depth level
-     *
-     * @return self A clone of $this
+     * @return static
      */
-    public function withMaxItemsPerDepth($maxItemsPerDepth)
+    public function withMaxItemsPerDepth(int $maxItemsPerDepth)
     {
         $data = clone $this;
         $data->maxItemsPerDepth = (int) $maxItemsPerDepth;
@@ -198,9 +194,9 @@ class Data implements \ArrayAccess, \Countable, \IteratorAggregate
      *
      * @param bool $useRefHandles False to hide global ref. handles
      *
-     * @return self A clone of $this
+     * @return static
      */
-    public function withRefHandles($useRefHandles)
+    public function withRefHandles(bool $useRefHandles)
     {
         $data = clone $this;
         $data->useRefHandles = $useRefHandles ? -1 : 0;
@@ -213,7 +209,7 @@ class Data implements \ArrayAccess, \Countable, \IteratorAggregate
      *
      * @param string|int $key The key to seek to
      *
-     * @return self|null A clone of $this or null if the key is not set
+     * @return static|null Null if the key is not set
      */
     public function seek($key)
     {
@@ -223,7 +219,7 @@ class Data implements \ArrayAccess, \Countable, \IteratorAggregate
             $item = $item->value;
         }
         if (!($item = $this->getStub($item)) instanceof Stub || !$item->position) {
-            return;
+            return null;
         }
         $keys = [$key];
 
@@ -238,7 +234,7 @@ class Data implements \ArrayAccess, \Countable, \IteratorAggregate
             case Stub::TYPE_RESOURCE:
                 break;
             default:
-                return;
+                return null;
         }
 
         $data = null;

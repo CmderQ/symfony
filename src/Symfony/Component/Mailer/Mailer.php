@@ -32,6 +32,7 @@ class Mailer implements MailerInterface
     {
         $this->transport = $transport;
         $this->bus = $bus;
+        $this->dispatcher = $dispatcher;
     }
 
     public function send(RawMessage $message, SmtpEnvelope $envelope = null): void
@@ -53,7 +54,7 @@ class Mailer implements MailerInterface
                     throw new TransportException('Cannot send message without a valid envelope.', 0, $e);
                 }
             }
-            $event = new MessageEvent($message, $envelope, $this->transport->getName());
+            $event = new MessageEvent($message, $envelope, $this->transport->getName(), true);
             $this->dispatcher->dispatch($event);
         }
 

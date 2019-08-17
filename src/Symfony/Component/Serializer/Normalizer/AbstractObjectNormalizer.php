@@ -88,6 +88,8 @@ abstract class AbstractObjectNormalizer extends AbstractNormalizer
      */
     public const DEEP_OBJECT_TO_POPULATE = 'deep_object_to_populate';
 
+    public const PRESERVE_EMPTY_OBJECTS = 'preserve_empty_objects';
+
     private $propertyTypeExtractor;
     private $typesCache = [];
     private $attributesCache = [];
@@ -199,13 +201,17 @@ abstract class AbstractObjectNormalizer extends AbstractNormalizer
             $data = $this->updateData($data, $attribute, $this->serializer->normalize($attributeValue, $format, $this->createChildContext($context, $attribute, $format)), $class, $format, $context);
         }
 
+        if (isset($context[self::PRESERVE_EMPTY_OBJECTS]) && !\count($data)) {
+            return new \ArrayObject();
+        }
+
         return $data;
     }
 
     /**
      * {@inheritdoc}
      */
-    protected function instantiateObject(array &$data, $class, array &$context, \ReflectionClass $reflectionClass, $allowedAttributes, string $format = null)
+    protected function instantiateObject(array &$data, string $class, array &$context, \ReflectionClass $reflectionClass, $allowedAttributes, string $format = null)
     {
         if ($this->classDiscriminatorResolver && $mapping = $this->classDiscriminatorResolver->getMappingForClass($class)) {
             if (!isset($data[$mapping->getTypeProperty()])) {
@@ -227,9 +233,7 @@ abstract class AbstractObjectNormalizer extends AbstractNormalizer
     /**
      * Gets and caches attributes for the given object, format and context.
      *
-     * @param object      $object
-     * @param string|null $format
-     * @param array       $context
+     * @param object $object
      *
      * @return string[]
      */
@@ -268,30 +272,21 @@ abstract class AbstractObjectNormalizer extends AbstractNormalizer
     /**
      * Extracts attributes to normalize from the class of the given object, format and context.
      *
-     * @param object      $object
-     * @param string|null $format
-     * @param array       $context
-     *
      * @return string[]
      */
-    abstract protected function extractAttributes($object, string $format = null, array $context = []);
+    abstract protected function extractAttributes(object $object, string $format = null, array $context = []);
 
     /**
      * Gets the attribute value.
      *
-     * @param object      $object
-     * @param string      $attribute
-     * @param string|null $format
-     * @param array       $context
-     *
      * @return mixed
      */
-    abstract protected function getAttributeValue($object, string $attribute, string $format = null, array $context = []);
+    abstract protected function getAttributeValue(object $object, string $attribute, string $format = null, array $context = []);
 
     /**
      * {@inheritdoc}
      */
-    public function supportsDenormalization($data, $type, string $format = null)
+    public function supportsDenormalization($data, string $type, string $format = null)
     {
         return class_exists($type) || (interface_exists($type, false) && $this->classDiscriminatorResolver && null !== $this->classDiscriminatorResolver->getMappingForClass($type));
     }
@@ -299,18 +294,18 @@ abstract class AbstractObjectNormalizer extends AbstractNormalizer
     /**
      * {@inheritdoc}
      */
-    public function denormalize($data, $class, string $format = null, array $context = [])
+    public function denormalize($data, string $type, string $format = null, array $context = [])
     {
         if (!isset($context['cache_key'])) {
             $context['cache_key'] = $this->getCacheKey($format, $context);
         }
 
-        $allowedAttributes = $this->getAllowedAttributes($class, $context, true);
+        $allowedAttributes = $this->getAllowedAttributes($type, $context, true);
         $normalizedData = $this->prepareForDenormalization($data);
         $extraAttributes = [];
 
-        $reflectionClass = new \ReflectionClass($class);
-        $object = $this->instantiateObject($normalizedData, $class, $context, $reflectionClass, $allowedAttributes, $format);
+        $reflectionClass = new \ReflectionClass($type);
+        $object = $this->instantiateObject($normalizedData, $type, $context, $reflectionClass, $allowedAttributes, $format);
         $resolvedClass = $this->objectClassResolver ? ($this->objectClassResolver)($object) : \get_class($object);
 
         foreach ($normalizedData as $attribute => $value) {
@@ -337,7 +332,7 @@ abstract class AbstractObjectNormalizer extends AbstractNormalizer
             try {
                 $this->setAttributeValue($object, $attribute, $value, $format, $context);
             } catch (InvalidArgumentException $e) {
-                throw new NotNormalizableValueException(sprintf('Failed to denormalize attribute "%s" value for class "%s": %s.', $attribute, $class, $e->getMessage()), $e->getCode(), $e);
+                throw new NotNormalizableValueException(sprintf('Failed to denormalize attribute "%s" value for class "%s": %s.', $attribute, $type, $e->getMessage()), $e->getCode(), $e);
             }
         }
 
@@ -350,14 +345,8 @@ abstract class AbstractObjectNormalizer extends AbstractNormalizer
 
     /**
      * Sets attribute value.
-     *
-     * @param object      $object
-     * @param string      $attribute
-     * @param mixed       $value
-     * @param string|null $format
-     * @param array       $context
      */
-    abstract protected function setAttributeValue($object, $attribute, $value, $format = null, array $context = []);
+    abstract protected function setAttributeValue(object $object, string $attribute, $value, string $format = null, array $context = []);
 
     /**
      * Validates the submitted data and denormalizes it.
@@ -437,7 +426,7 @@ abstract class AbstractObjectNormalizer extends AbstractNormalizer
     /**
      * @internal
      */
-    protected function denormalizeParameter(\ReflectionClass $class, \ReflectionParameter $parameter, $parameterName, $parameterData, array $context, $format = null)
+    protected function denormalizeParameter(\ReflectionClass $class, \ReflectionParameter $parameter, string $parameterName, $parameterData, array $context, string $format = null)
     {
         if (null === $this->propertyTypeExtractor || null === $types = $this->propertyTypeExtractor->getTypes($class->getName(), $parameterName)) {
             return parent::denormalizeParameter($class, $parameter, $parameterName, $parameterData, $context, $format);

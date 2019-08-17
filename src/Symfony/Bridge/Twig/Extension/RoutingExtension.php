@@ -33,9 +33,9 @@ class RoutingExtension extends AbstractExtension
     }
 
     /**
-     * Returns a list of functions to add to the existing list.
+     * {@inheritdoc}
      *
-     * @return array An array of functions
+     * @return TwigFunction[]
      */
     public function getFunctions()
     {
