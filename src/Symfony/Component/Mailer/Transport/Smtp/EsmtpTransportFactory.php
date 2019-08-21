@@ -22,12 +22,11 @@ final class EsmtpTransportFactory extends AbstractTransportFactory
 {
     public function create(Dsn $dsn): TransportInterface
     {
-        $encryption = $dsn->getOption('encryption');
-        $authMode = $dsn->getOption('auth_mode');
-        $port = $dsn->getPort(25);
+        $tls = 'smtps' === $dsn->getScheme() ? true : null;
+        $port = $dsn->getPort(0);
         $host = $dsn->getHost();
 
-        $transport = new EsmtpTransport($host, $port, $encryption, $authMode, $this->dispatcher, $this->logger);
+        $transport = new EsmtpTransport($host, $port, $tls, $this->dispatcher, $this->logger);
 
         if ($user = $dsn->getUser()) {
             $transport->setUsername($user);
@@ -42,6 +41,6 @@ final class EsmtpTransportFactory extends AbstractTransportFactory
 
     public function supports(Dsn $dsn): bool
     {
-        return 'smtp' === $dsn->getScheme();
+        return 'smtp' === $dsn->getScheme() || 'smtps' === $dsn->getScheme();
     }
 }

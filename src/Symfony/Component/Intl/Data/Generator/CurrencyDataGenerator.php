@@ -51,7 +51,7 @@ class CurrencyDataGenerator extends AbstractDataGenerator
     /**
      * {@inheritdoc}
      */
-    protected function scanLocales(LocaleScanner $scanner, string $sourceDir)
+    protected function scanLocales(LocaleScanner $scanner, string $sourceDir): array
     {
         return $scanner->scanLocales($sourceDir.'/curr');
     }
@@ -76,7 +76,7 @@ class CurrencyDataGenerator extends AbstractDataGenerator
     /**
      * {@inheritdoc}
      */
-    protected function generateDataForLocale(BundleEntryReaderInterface $reader, string $tempDir, string $displayLocale)
+    protected function generateDataForLocale(BundleEntryReaderInterface $reader, string $tempDir, string $displayLocale): ?array
     {
         $localeBundle = $reader->read($tempDir, $displayLocale);
 
@@ -90,12 +90,14 @@ class CurrencyDataGenerator extends AbstractDataGenerator
 
             return $data;
         }
+
+        return null;
     }
 
     /**
      * {@inheritdoc}
      */
-    protected function generateDataForRoot(BundleEntryReaderInterface $reader, string $tempDir)
+    protected function generateDataForRoot(BundleEntryReaderInterface $reader, string $tempDir): ?array
     {
         $rootBundle = $reader->read($tempDir, 'root');
 
@@ -108,7 +110,7 @@ class CurrencyDataGenerator extends AbstractDataGenerator
     /**
      * {@inheritdoc}
      */
-    protected function generateDataForMeta(BundleEntryReaderInterface $reader, string $tempDir)
+    protected function generateDataForMeta(BundleEntryReaderInterface $reader, string $tempDir): ?array
     {
         $rootBundle = $reader->read($tempDir, 'root');
         $supplementalDataBundle = $reader->read($tempDir, 'supplementalData');

@@ -578,7 +578,7 @@ class ContainerBuilder extends Container implements TaggedContainerInterface
             $definition = $this->getDefinition($id);
         } catch (ServiceNotFoundException $e) {
             if (ContainerInterface::EXCEPTION_ON_INVALID_REFERENCE < $invalidBehavior) {
-                return;
+                return null;
             }
 
             throw $e;
@@ -1435,11 +1435,9 @@ class ContainerBuilder extends Container implements TaggedContainerInterface
     /**
      * Gets removed binding ids.
      *
-     * @return array
-     *
      * @internal
      */
-    public function getRemovedBindingIds()
+    public function getRemovedBindingIds(): array
     {
         return $this->removedBindingIds;
     }
@@ -1464,11 +1462,9 @@ class ContainerBuilder extends Container implements TaggedContainerInterface
      *
      * @param mixed $value An array of conditionals to return
      *
-     * @return array An array of Service conditionals
-     *
      * @internal
      */
-    public static function getServiceConditionals($value)
+    public static function getServiceConditionals($value): array
     {
         $services = [];
 
@@ -1488,11 +1484,9 @@ class ContainerBuilder extends Container implements TaggedContainerInterface
      *
      * @param mixed $value An array of conditionals to return
      *
-     * @return array An array of uninitialized conditionals
-     *
      * @internal
      */
-    public static function getInitializedConditionals($value)
+    public static function getInitializedConditionals($value): array
     {
         $services = [];
 

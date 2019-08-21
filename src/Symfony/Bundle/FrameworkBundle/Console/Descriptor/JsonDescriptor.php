@@ -143,7 +143,9 @@ class JsonDescriptor extends Descriptor
     protected function describeContainerAlias(Alias $alias, array $options = [], ContainerBuilder $builder = null)
     {
         if (!$builder) {
-            return $this->writeData($this->getContainerAliasData($alias), $options);
+            $this->writeData($this->getContainerAliasData($alias), $options);
+
+            return;
         }
 
         $this->writeData(
@@ -196,10 +198,7 @@ class JsonDescriptor extends Descriptor
         $this->write(json_encode($data, $flags | JSON_PRETTY_PRINT)."\n");
     }
 
-    /**
-     * @return array
-     */
-    protected function getRouteData(Route $route)
+    protected function getRouteData(Route $route): array
     {
         $data = [
             'path' => $route->getPath(),

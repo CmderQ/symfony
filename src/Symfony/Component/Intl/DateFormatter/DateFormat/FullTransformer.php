@@ -74,7 +74,7 @@ class FullTransformer
      *
      * @return string The formatted value
      */
-    public function format(\DateTime $dateTime)
+    public function format(\DateTime $dateTime): string
     {
         $formatted = preg_replace_callback($this->regExp, function ($matches) use ($dateTime) {
             return $this->formatReplace($matches[0], $dateTime);
@@ -106,6 +106,8 @@ class FullTransformer
         if (false !== strpos($this->notImplementedChars, $dateChars[0])) {
             throw new NotImplementedException(sprintf('Unimplemented date character "%s" in format "%s"', $dateChars[0], $this->pattern));
         }
+
+        return '';
     }
 
     /**
@@ -176,6 +178,8 @@ class FullTransformer
 
                 return "(?P<$captureName>".$transformer->getReverseMatchingRegExp($length).')';
             }
+
+            return null;
         }, $escapedPattern);
 
         return $reverseMatchingRegExp;

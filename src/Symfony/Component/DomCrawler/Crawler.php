@@ -898,7 +898,7 @@ class Crawler implements \Countable, \IteratorAggregate
      *
      * @return static
      */
-    private function filterRelativeXPath(string $xpath)
+    private function filterRelativeXPath(string $xpath): object
     {
         $prefixes = $this->findNamespacePrefixes($xpath);
 
@@ -1007,9 +1007,7 @@ class Crawler implements \Countable, \IteratorAggregate
      */
     public function getNode(int $position)
     {
-        if (isset($this->nodes[$position])) {
-            return $this->nodes[$position];
-        }
+        return isset($this->nodes[$position]) ? $this->nodes[$position] : null;
     }
 
     /**
@@ -1123,11 +1121,7 @@ class Crawler implements \Countable, \IteratorAggregate
         // ask for one namespace, otherwise we'd get a collection with an item for each node
         $namespaces = $domxpath->query(sprintf('(//namespace::*[name()="%s"])[last()]', $this->defaultNamespacePrefix === $prefix ? '' : $prefix));
 
-        if ($node = $namespaces->item(0)) {
-            return $node->nodeValue;
-        }
-
-        return null;
+        return ($node = $namespaces->item(0)) ? $node->nodeValue : null;
     }
 
     private function findNamespacePrefixes(string $xpath): array
@@ -1146,7 +1140,7 @@ class Crawler implements \Countable, \IteratorAggregate
      *
      * @return static
      */
-    private function createSubCrawler($nodes)
+    private function createSubCrawler($nodes): object
     {
         $crawler = new static($nodes, $this->uri, $this->baseHref);
         $crawler->isHtml = $this->isHtml;

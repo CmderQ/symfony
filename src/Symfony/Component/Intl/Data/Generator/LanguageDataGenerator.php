@@ -101,7 +101,7 @@ class LanguageDataGenerator extends AbstractDataGenerator
     /**
      * {@inheritdoc}
      */
-    protected function scanLocales(LocaleScanner $scanner, string $sourceDir)
+    protected function scanLocales(LocaleScanner $scanner, string $sourceDir): array
     {
         return $scanner->scanLocales($sourceDir.'/lang');
     }
@@ -126,7 +126,7 @@ class LanguageDataGenerator extends AbstractDataGenerator
     /**
      * {@inheritdoc}
      */
-    protected function generateDataForLocale(BundleEntryReaderInterface $reader, string $tempDir, string $displayLocale)
+    protected function generateDataForLocale(BundleEntryReaderInterface $reader, string $tempDir, string $displayLocale): ?array
     {
         $localeBundle = $reader->read($tempDir, $displayLocale);
 
@@ -141,19 +141,21 @@ class LanguageDataGenerator extends AbstractDataGenerator
 
             return $data;
         }
+
+        return null;
     }
 
     /**
      * {@inheritdoc}
      */
-    protected function generateDataForRoot(BundleEntryReaderInterface $reader, string $tempDir)
+    protected function generateDataForRoot(BundleEntryReaderInterface $reader, string $tempDir): ?array
     {
     }
 
     /**
      * {@inheritdoc}
      */
-    protected function generateDataForMeta(BundleEntryReaderInterface $reader, string $tempDir)
+    protected function generateDataForMeta(BundleEntryReaderInterface $reader, string $tempDir): ?array
     {
         $rootBundle = $reader->read($tempDir, 'root');
         $metadataBundle = $reader->read($tempDir, 'metadata');
@@ -162,21 +164,35 @@ class LanguageDataGenerator extends AbstractDataGenerator
 
         sort($this->languageCodes);
 
-        $alpha2ToAlpha3 = $this->generateAlpha2ToAlpha3Mapping($metadataBundle);
-        $alpha3ToAlpha2 = array_flip($alpha2ToAlpha3);
-        asort($alpha3ToAlpha2);
-
         return [
             'Version' => $rootBundle['Version'],
             'Languages' => $this->languageCodes,
-            'Alpha2ToAlpha3' => $alpha2ToAlpha3,
-            'Alpha3ToAlpha2' => $alpha3ToAlpha2,
+            'Alpha3Languages' => $this->generateAlpha3Codes($this->languageCodes, $metadataBundle),
+            'Alpha2ToAlpha3' => $this->generateAlpha2ToAlpha3Mapping($metadataBundle),
+            'Alpha3ToAlpha2' => $this->generateAlpha3ToAlpha2Mapping($metadataBundle),
         ];
     }
 
     private static function generateLanguageNames(ArrayAccessibleResourceBundle $localeBundle): array
     {
         return array_diff_key(iterator_to_array($localeBundle['Languages']), self::$blacklist);
+    }
+
+    private function generateAlpha3Codes(array $languageCodes, ArrayAccessibleResourceBundle $metadataBundle): array
+    {
+        $alpha3Codes = array_flip(array_filter($languageCodes, static function (string $language): bool {
+            return 3 === \strlen($language);
+        }));
+
+        foreach ($metadataBundle['alias']['language'] as $alias => $data) {
+            if (3 === \strlen($alias) && 'overlong' === $data['reason']) {
+                $alpha3Codes[$alias] = true;
+            }
+        }
+
+        ksort($alpha3Codes);
+
+        return array_keys($alpha3Codes);
     }
 
     private function generateAlpha2ToAlpha3Mapping(ArrayAccessibleResourceBundle $metadataBundle)
@@ -212,5 +228,21 @@ class LanguageDataGenerator extends AbstractDataGenerator
         asort($alpha2ToAlpha3);
 
         return $alpha2ToAlpha3;
+    }
+
+    private function generateAlpha3ToAlpha2Mapping(ArrayAccessibleResourceBundle $metadataBundle): array
+    {
+        $alpha3ToAlpha2 = [];
+
+        foreach ($metadataBundle['alias']['language'] as $alias => $data) {
+            $language = $data['replacement'];
+            if (2 === \strlen($language) && 3 === \strlen($alias) && 'overlong' === $data['reason']) {
+                $alpha3ToAlpha2[$alias] = $language;
+            }
+        }
+
+        asort($alpha3ToAlpha2);
+
+        return $alpha3ToAlpha2;
     }
 }

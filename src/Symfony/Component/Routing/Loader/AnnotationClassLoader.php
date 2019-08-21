@@ -15,6 +15,7 @@ use Doctrine\Common\Annotations\Reader;
 use Symfony\Component\Config\Loader\LoaderInterface;
 use Symfony\Component\Config\Loader\LoaderResolverInterface;
 use Symfony\Component\Config\Resource\FileResource;
+use Symfony\Component\Routing\Annotation\Route as RouteAnnotation;
 use Symfony\Component\Routing\Route;
 use Symfony\Component\Routing\RouteCollection;
 
@@ -74,10 +75,8 @@ abstract class AnnotationClassLoader implements LoaderInterface
 
     /**
      * Sets the annotation class to read route properties from.
-     *
-     * @param string $class A fully-qualified class name
      */
-    public function setRouteAnnotationClass($class)
+    public function setRouteAnnotationClass(string $class)
     {
         $this->routeAnnotationClass = $class;
     }
@@ -85,8 +84,7 @@ abstract class AnnotationClassLoader implements LoaderInterface
     /**
      * Loads from annotations from a class.
      *
-     * @param string      $class A class name
-     * @param string|null $type  The resource type
+     * @param string $class A class name
      *
      * @return RouteCollection A RouteCollection instance
      *
@@ -129,7 +127,10 @@ abstract class AnnotationClassLoader implements LoaderInterface
         return $collection;
     }
 
-    protected function addRoute(RouteCollection $collection, $annot, $globals, \ReflectionClass $class, \ReflectionMethod $method)
+    /**
+     * @param RouteAnnotation $annot or an object that exposes a similar interface
+     */
+    protected function addRoute(RouteCollection $collection, $annot, array $globals, \ReflectionClass $class, \ReflectionMethod $method)
     {
         $name = $annot->getName();
         if (null === $name) {
@@ -217,7 +218,7 @@ abstract class AnnotationClassLoader implements LoaderInterface
     /**
      * {@inheritdoc}
      */
-    public function supports($resource, $type = null)
+    public function supports($resource, string $type = null)
     {
         return \is_string($resource) && preg_match('/^(?:\\\\?[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)+$/', $resource) && (!$type || 'annotation' === $type);
     }
@@ -306,7 +307,7 @@ abstract class AnnotationClassLoader implements LoaderInterface
         return $globals;
     }
 
-    private function resetGlobals()
+    private function resetGlobals(): array
     {
         return [
             'path' => null,
@@ -322,7 +323,7 @@ abstract class AnnotationClassLoader implements LoaderInterface
         ];
     }
 
-    protected function createRoute($path, $defaults, $requirements, $options, $host, $schemes, $methods, $condition)
+    protected function createRoute(string $path, array $defaults, array $requirements, array $options, ?string $host, array $schemes, array $methods, ?string $condition)
     {
         return new Route($path, $defaults, $requirements, $options, $host, $schemes, $methods, $condition);
     }

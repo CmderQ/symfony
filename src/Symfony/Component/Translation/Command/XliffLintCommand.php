@@ -106,7 +106,7 @@ EOF
         return $this->display($io, $filesInfo);
     }
 
-    private function validate(string $content, $file = null)
+    private function validate(string $content, string $file = null): array
     {
         $errors = [];
 
@@ -223,10 +223,10 @@ EOF
         }
     }
 
-    private function getStdin()
+    private function getStdin(): ?string
     {
         if (0 !== ftell(STDIN)) {
-            return;
+            return null;
         }
 
         $inputs = '';

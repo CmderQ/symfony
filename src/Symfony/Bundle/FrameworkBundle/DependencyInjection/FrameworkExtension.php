@@ -849,7 +849,7 @@ class FrameworkExtension extends Extension
         // session storage
         $container->setAlias('session.storage', $config['storage_id'])->setPrivate(true);
         $options = ['cache_limiter' => '0'];
-        foreach (['name', 'cookie_lifetime', 'cookie_path', 'cookie_domain', 'cookie_secure', 'cookie_httponly', 'cookie_samesite', 'use_cookies', 'gc_maxlifetime', 'gc_probability', 'gc_divisor'] as $key) {
+        foreach (['name', 'cookie_lifetime', 'cookie_path', 'cookie_domain', 'cookie_secure', 'cookie_httponly', 'cookie_samesite', 'use_cookies', 'gc_maxlifetime', 'gc_probability', 'gc_divisor', 'sid_length', 'sid_bits_per_character'] as $key) {
             if (isset($config[$key])) {
                 $options[$key] = $config[$key];
             }
@@ -941,7 +941,7 @@ class FrameworkExtension extends Extension
     /**
      * Returns a definition for an asset package.
      */
-    private function createPackageDefinition(?string $basePath, array $baseUrls, Reference $version)
+    private function createPackageDefinition(?string $basePath, array $baseUrls, Reference $version): Definition
     {
         if ($basePath && $baseUrls) {
             throw new \LogicException('An asset package cannot have base URLs and base paths.');
@@ -957,7 +957,7 @@ class FrameworkExtension extends Extension
         return $package;
     }
 
-    private function createVersion(ContainerBuilder $container, ?string $version, ?string $format, ?string $jsonManifestPath, string $name)
+    private function createVersion(ContainerBuilder $container, ?string $version, ?string $format, ?string $jsonManifestPath, string $name): Reference
     {
         // Configuration prevents $version and $jsonManifestPath from being set
         if (null !== $version) {

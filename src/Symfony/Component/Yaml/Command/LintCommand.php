@@ -199,10 +199,10 @@ EOF
         }
     }
 
-    private function getStdin()
+    private function getStdin(): ?string
     {
         if (0 !== ftell(STDIN)) {
-            return;
+            return null;
         }
 
         $inputs = '';
