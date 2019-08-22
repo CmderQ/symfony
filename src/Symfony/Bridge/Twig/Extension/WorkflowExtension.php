@@ -22,7 +22,7 @@ use Twig\TwigFunction;
  *
  * @author Grégoire Pineau <lyrixx@lyrixx.info>
  */
-class WorkflowExtension extends AbstractExtension
+final class WorkflowExtension extends AbstractExtension
 {
     private $workflowRegistry;
 
@@ -32,9 +32,9 @@ class WorkflowExtension extends AbstractExtension
     }
 
     /**
-     * @return TwigFunction[]
+     * {@inheritdoc}
      */
-    public function getFunctions()
+    public function getFunctions(): array
     {
         return [
             new TwigFunction('workflow_can', [$this, 'canTransition']),
@@ -48,10 +48,8 @@ class WorkflowExtension extends AbstractExtension
 
     /**
      * Returns true if the transition is enabled.
-     *
-     * @return bool true if the transition is enabled
      */
-    public function canTransition(object $subject, string $transitionName, string $name = null)
+    public function canTransition(object $subject, string $transitionName, string $name = null): bool
     {
         return $this->workflowRegistry->get($subject, $name)->can($subject, $transitionName);
     }
@@ -61,17 +59,15 @@ class WorkflowExtension extends AbstractExtension
      *
      * @return Transition[] All enabled transitions
      */
-    public function getEnabledTransitions(object $subject, string $name = null)
+    public function getEnabledTransitions(object $subject, string $name = null): array
     {
         return $this->workflowRegistry->get($subject, $name)->getEnabledTransitions($subject);
     }
 
     /**
      * Returns true if the place is marked.
-     *
-     * @return bool true if the transition is enabled
      */
-    public function hasMarkedPlace(object $subject, string $placeName, string $name = null)
+    public function hasMarkedPlace(object $subject, string $placeName, string $name = null): bool
     {
         return $this->workflowRegistry->get($subject, $name)->getMarking($subject)->has($placeName);
     }
@@ -81,7 +77,7 @@ class WorkflowExtension extends AbstractExtension
      *
      * @return string[]|int[]
      */
-    public function getMarkedPlaces(object $subject, bool $placesNameOnly = true, string $name = null)
+    public function getMarkedPlaces(object $subject, bool $placesNameOnly = true, string $name = null): array
     {
         $places = $this->workflowRegistry->get($subject, $name)->getMarking($subject)->getPlaces();
 
@@ -114,10 +110,5 @@ class WorkflowExtension extends AbstractExtension
         $workflow = $this->workflowRegistry->get($subject, $name);
 
         return $workflow->buildTransitionBlockerList($subject, $transitionName);
-    }
-
-    public function getName()
-    {
-        return 'workflow';
     }
 }

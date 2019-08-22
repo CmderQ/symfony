@@ -43,8 +43,6 @@ abstract class AbstractIntlDateFormatterTest extends TestCase
 
     /**
      * When a time zone is not specified, it uses the system default however it returns null in the getter method.
-     *
-     * @see StubIntlDateFormatterTest::testDefaultTimeZoneIntl()
      */
     public function testConstructorDefaultTimeZone()
     {
@@ -60,14 +58,14 @@ abstract class AbstractIntlDateFormatterTest extends TestCase
 
     public function testConstructorWithoutDateType()
     {
-        $formatter = new IntlDateFormatter('en', null, IntlDateFormatter::SHORT, 'UTC', IntlDateFormatter::GREGORIAN);
+        $formatter = $this->getDateFormatter('en', null, IntlDateFormatter::SHORT, 'UTC', IntlDateFormatter::GREGORIAN);
 
-        $this->assertSame('EEEE, LLLL d, y, h:mm a', $formatter->getPattern());
+        $this->assertSame('EEEE, MMMM d, y \'at\' h:mm a', $formatter->getPattern());
     }
 
     public function testConstructorWithoutTimeType()
     {
-        $formatter = new IntlDateFormatter('en', IntlDateFormatter::SHORT, null, 'UTC', IntlDateFormatter::GREGORIAN);
+        $formatter = $this->getDateFormatter('en', IntlDateFormatter::SHORT, null, 'UTC', IntlDateFormatter::GREGORIAN);
 
         $this->assertSame('M/d/yy, h:mm:ss a zzzz', $formatter->getPattern());
     }
@@ -963,21 +961,11 @@ abstract class AbstractIntlDateFormatterTest extends TestCase
     }
 
     /**
-     * @param $locale
-     * @param $datetype
-     * @param $timetype
-     * @param null $timezone
-     * @param int  $calendar
-     * @param null $pattern
-     *
-     * @return mixed
+     * @return IntlDateFormatter|\IntlDateFormatter
      */
     abstract protected function getDateFormatter($locale, $datetype, $timetype, $timezone = null, $calendar = IntlDateFormatter::GREGORIAN, $pattern = null);
 
-    /**
-     * @return string
-     */
-    abstract protected function getIntlErrorMessage();
+    abstract protected function getIntlErrorMessage(): string;
 
     /**
      * @return int
@@ -986,8 +974,6 @@ abstract class AbstractIntlDateFormatterTest extends TestCase
 
     /**
      * @param int $errorCode
-     *
-     * @return bool
      */
-    abstract protected function isIntlFailure($errorCode);
+    abstract protected function isIntlFailure($errorCode): bool;
 }

@@ -84,7 +84,7 @@ class Translator implements TranslatorInterface, TranslatorBagInterface, LocaleA
     /**
      * @throws InvalidArgumentException If a locale contains invalid characters
      */
-    public function __construct(?string $locale, MessageFormatterInterface $formatter = null, string $cacheDir = null, bool $debug = false)
+    public function __construct(string $locale, MessageFormatterInterface $formatter = null, string $cacheDir = null, bool $debug = false)
     {
         $this->setLocale($locale);
 
@@ -118,8 +118,6 @@ class Translator implements TranslatorInterface, TranslatorBagInterface, LocaleA
      *
      * @param string $format   The name of the loader (@see addLoader())
      * @param mixed  $resource The resource name
-     * @param string $locale   The locale
-     * @param string $domain   The domain
      *
      * @throws InvalidArgumentException If the locale contains invalid characters
      */
@@ -383,7 +381,7 @@ EOF
         }
     }
 
-    protected function computeFallbackLocales($locale)
+    protected function computeFallbackLocales(string $locale)
     {
         if (null === $this->parentLocales) {
             $parentLocales = json_decode(file_get_contents(__DIR__.'/Resources/data/parents.json'), true);
@@ -420,11 +418,9 @@ EOF
     /**
      * Asserts that the locale is valid, throws an Exception if not.
      *
-     * @param string $locale Locale to tests
-     *
      * @throws InvalidArgumentException If the locale contains invalid characters
      */
-    protected function assertValidLocale($locale)
+    protected function assertValidLocale(string $locale)
     {
         if (1 !== preg_match('/^[a-z0-9@_\\.\\-]*$/i', $locale)) {
             throw new InvalidArgumentException(sprintf('Invalid "%s" locale.', $locale));

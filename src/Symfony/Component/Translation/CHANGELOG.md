@@ -4,6 +4,7 @@ CHANGELOG
 5.0.0
 -----
 
+ * removed support for using `null` as the locale in `Translator`
  * removed `TranslatorInterface`
  * removed `MessageSelector`
  * removed `ChoiceMessageFormatterInterface`
@@ -13,6 +14,11 @@ CHANGELOG
  * removed `FileDumper::setBackup()` and `TranslationWriter::disableBackup()`
  * removed `MessageFormatter::choiceFormat()`
  * added argument `$filename` to `PhpExtractor::parseTokens()`
+
+4.4.0
+-----
+
+ * deprecated support for using `null` as the locale in `Translator`
 
 4.3.0
 -----

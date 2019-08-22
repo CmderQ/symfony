@@ -143,6 +143,12 @@ HttpKernel
 
    As many bundles must be compatible with a range of Symfony versions, the current 
    directory convention is not deprecated yet, but it will be in the future.
+ * Deprecated the second and third argument of `KernelInterface::locateResource`
+ * Deprecated the second and third argument of `FileLocator::__construct`
+ * Deprecated loading resources from `%kernel.root_dir%/Resources` and `%kernel.root_dir%` as
+   fallback directories. Resources like service definitions are usually loaded relative to the
+   current directory or with a glob pattern. The fallback directories have never been advocated
+   so you likely do not use those in any app based on the SF Standard or Flex edition.
 
 Lock
 ----
@@ -156,6 +162,11 @@ Messenger
 
  * Deprecated passing a `ContainerInterface` instance as first argument of the `ConsumeMessagesCommand` constructor,
    pass a `RoutableMessageBus`  instance instead.
+
+Mime
+----
+
+ * Removed `NamedAddress`, use `Address` instead (which supports a name now)
 
 MonologBridge
 --------------
@@ -188,6 +199,11 @@ Stopwatch
 ---------
 
  * Deprecated passing `null` as 1st (`$id`) argument of `Section::get()` method, pass a valid child section identifier instead.
+
+Translation
+-----------
+
+ * Deprecated support for using `null` as the locale in `Translator`.
 
 TwigBridge
 ----------

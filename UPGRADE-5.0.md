@@ -333,6 +333,10 @@ HttpKernel
 
    As many bundles must be compatible with a range of Symfony versions, the current 
    directory convention is not deprecated yet, but it will be in the future.
+ * Removed the second and third argument of `KernelInterface::locateResource`
+ * Removed the second and third argument of `FileLocator::__construct`
+ * Removed loading resources from `%kernel.root_dir%/Resources` and `%kernel.root_dir%` as
+   fallback directories.
 
 Intl
 ----
@@ -518,6 +522,7 @@ Stopwatch
 Translation
 -----------
 
+ * Support for using `null` as the locale in `Translator` has been removed.
  * The `FileDumper::setBackup()` method has been removed.
  * The `TranslationWriter::disableBackup()` method has been removed.
  * The `TranslatorInterface` has been removed in favor of `Symfony\Contracts\Translation\TranslatorInterface`

@@ -21,14 +21,12 @@ use Twig\TokenParser\AbstractTokenParser;
  *
  * @author Fabien Potencier <fabien@symfony.com>
  */
-class TransDefaultDomainTokenParser extends AbstractTokenParser
+final class TransDefaultDomainTokenParser extends AbstractTokenParser
 {
     /**
      * {@inheritdoc}
-     *
-     * @return Node
      */
-    public function parse(Token $token)
+    public function parse(Token $token): Node
     {
         $expr = $this->parser->getExpressionParser()->parseExpression();
 
@@ -39,10 +37,8 @@ class TransDefaultDomainTokenParser extends AbstractTokenParser
 
     /**
      * {@inheritdoc}
-     *
-     * @return string
      */
-    public function getTag()
+    public function getTag(): string
     {
         return 'trans_default_domain';
     }

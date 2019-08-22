@@ -34,14 +34,7 @@ class TranslatorTest extends TestCase
     {
         $translator = new Translator($locale);
 
-        $this->assertEquals($locale, $translator->getLocale());
-    }
-
-    public function testConstructorWithoutLocale()
-    {
-        $translator = new Translator(null);
-
-        $this->assertNull($translator->getLocale());
+        $this->assertSame($locale, $translator->getLocale());
     }
 
     public function testSetGetLocale()
@@ -184,9 +177,6 @@ class TranslatorTest extends TestCase
      */
     public function testAddResourceValidLocales($locale)
     {
-        if (null === $locale) {
-            $this->markTestSkipped('null is not a valid locale');
-        }
         $translator = new Translator('fr');
         $translator->addResource('array', ['foo' => 'foofoo'], $locale);
         // no assertion. this method just asserts that no exception is thrown
@@ -372,9 +362,6 @@ class TranslatorTest extends TestCase
      */
     public function testTransValidLocale($locale)
     {
-        if (null === $locale) {
-            $this->markTestSkipped('null is not a valid locale');
-        }
         $translator = new Translator($locale);
         $translator->addLoader('array', new ArrayLoader());
         $translator->addResource('array', ['test' => 'OK'], $locale);
@@ -463,7 +450,6 @@ class TranslatorTest extends TestCase
     {
         return [
             [''],
-            [null],
             ['fr'],
             ['francais'],
             ['FR'],

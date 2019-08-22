@@ -596,7 +596,7 @@ class EventDispatcherMock implements \Symfony\Component\EventDispatcher\EventDis
     {
     }
 
-    public function getListeners($eventName = null)
+    public function getListeners($eventName = null): array
     {
     }
 
@@ -604,7 +604,7 @@ class EventDispatcherMock implements \Symfony\Component\EventDispatcher\EventDis
     {
     }
 
-    public function hasListeners($eventName = null)
+    public function hasListeners($eventName = null): bool
     {
     }
 }
