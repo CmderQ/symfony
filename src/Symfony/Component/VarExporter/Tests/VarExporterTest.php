@@ -12,7 +12,6 @@
 namespace Symfony\Component\VarExporter\Tests;
 
 use PHPUnit\Framework\TestCase;
-use PHPUnit\Framework\Warning;
 use Symfony\Component\VarDumper\Test\VarDumperTestTrait;
 use Symfony\Component\VarExporter\Internal\Registry;
 use Symfony\Component\VarExporter\VarExporter;
@@ -76,10 +75,6 @@ class VarExporterTest extends TestCase
      */
     public function testExport(string $testName, $value, bool $staticValueExpected = false)
     {
-        if (\PHP_VERSION_ID >= 70400 && \in_array($testName, ['spl-object-storage', 'array-object-custom', 'array-iterator', 'array-object', 'final-array-iterator'])) {
-            throw new Warning('PHP 7.4 breaks this test.');
-        }
-
         $dumpedValue = $this->getDump($value);
         $isStaticValue = true;
         $marshalledValue = VarExporter::export($value, $isStaticValue);
@@ -91,7 +86,12 @@ class VarExporterTest extends TestCase
 
         $dump = "<?php\n\nreturn ".$marshalledValue.";\n";
         $dump = str_replace(var_export(__FILE__, true), "\\dirname(__DIR__).\\DIRECTORY_SEPARATOR.'VarExporterTest.php'", $dump);
-        $fixtureFile = __DIR__.'/Fixtures/'.$testName.'.php';
+
+        if (\PHP_VERSION_ID < 70400 && \in_array($testName, ['array-object', 'array-iterator', 'array-object-custom', 'spl-object-storage', 'final-array-iterator', 'final-error'], true)) {
+            $fixtureFile = __DIR__.'/Fixtures/'.$testName.'-legacy.php';
+        } else {
+            $fixtureFile = __DIR__.'/Fixtures/'.$testName.'.php';
+        }
         $this->assertStringEqualsFile($fixtureFile, $dump);
 
         if ('incomplete-class' === $testName || 'external-references' === $testName) {
@@ -209,7 +209,7 @@ class VarExporterTest extends TestCase
 
 class MySerializable implements \Serializable
 {
-    public function serialize()
+    public function serialize(): string
     {
         return '123';
     }
@@ -227,7 +227,7 @@ class MyWakeup
     public $baz;
     public $def = 234;
 
-    public function __sleep()
+    public function __sleep(): array
     {
         return ['sub', 'baz'];
     }
@@ -305,7 +305,7 @@ class MyArrayObject extends \ArrayObject
 
 class GoodNight
 {
-    public function __sleep()
+    public function __sleep(): array
     {
         $this->good = 'night';
 
@@ -395,7 +395,7 @@ class FooSerializable implements \Serializable
 
 class Php74Serializable implements \Serializable
 {
-    public function __serialize()
+    public function __serialize(): array
     {
         return [$this->foo = new \stdClass()];
     }
@@ -405,7 +405,7 @@ class Php74Serializable implements \Serializable
         list($this->foo) = $data;
     }
 
-    public function __sleep()
+    public function __sleep(): array
     {
         throw new \BadMethodCallException();
     }
@@ -415,7 +415,7 @@ class Php74Serializable implements \Serializable
         throw new \BadMethodCallException();
     }
 
-    public function serialize()
+    public function serialize(): string
     {
         throw new \BadMethodCallException();
     }

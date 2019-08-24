@@ -106,11 +106,17 @@ class Data implements \ArrayAccess, \Countable, \IteratorAggregate
         return $children;
     }
 
+    /**
+     * @return int
+     */
     public function count()
     {
         return \count($this->getValue());
     }
 
+    /**
+     * @return \Traversable
+     */
     public function getIterator()
     {
         if (!\is_array($value = $this->getValue())) {
@@ -131,11 +137,17 @@ class Data implements \ArrayAccess, \Countable, \IteratorAggregate
         return null;
     }
 
+    /**
+     * @return bool
+     */
     public function __isset($key)
     {
         return null !== $this->seek($key);
     }
 
+    /**
+     * @return bool
+     */
     public function offsetExists($key)
     {
         return $this->__isset($key);
@@ -156,6 +168,9 @@ class Data implements \ArrayAccess, \Countable, \IteratorAggregate
         throw new \BadMethodCallException(self::class.' objects are immutable.');
     }
 
+    /**
+     * @return string
+     */
     public function __toString()
     {
         $value = $this->getValue();

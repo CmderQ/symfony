@@ -139,6 +139,7 @@ class FrameworkExtension extends Extension
     private $validatorConfigEnabled = false;
     private $messengerConfigEnabled = false;
     private $mailerConfigEnabled = false;
+    private $httpClientConfigEnabled = false;
 
     /**
      * Responds to the app.config configuration parameter.
@@ -287,6 +288,10 @@ class FrameworkExtension extends Extension
             $container->removeDefinition('console.command.messenger_failed_messages_remove');
         }
 
+        if ($this->httpClientConfigEnabled = $this->isConfigEnabled($container, $config['http_client'])) {
+            $this->registerHttpClientConfiguration($config['http_client'], $container, $loader, $config['profiler']);
+        }
+
         $propertyInfoEnabled = $this->isConfigEnabled($container, $config['property_info']);
         $this->registerValidationConfiguration($config['validation'], $container, $loader, $propertyInfoEnabled);
         $this->registerEsiConfiguration($config['esi'], $container, $loader);
@@ -315,10 +320,6 @@ class FrameworkExtension extends Extension
 
         if ($this->isConfigEnabled($container, $config['lock'])) {
             $this->registerLockConfiguration($config['lock'], $container, $loader);
-        }
-
-        if ($this->isConfigEnabled($container, $config['http_client'])) {
-            $this->registerHttpClientConfiguration($config['http_client'], $container, $loader);
         }
 
         if ($this->mailerConfigEnabled = $this->isConfigEnabled($container, $config['mailer'])) {
@@ -533,6 +534,10 @@ class FrameworkExtension extends Extension
 
         if ($this->mailerConfigEnabled) {
             $loader->load('mailer_debug.xml');
+        }
+
+        if ($this->httpClientConfigEnabled) {
+            $loader->load('http_client_debug.xml');
         }
 
         $container->setParameter('profiler_listener.only_exceptions', $config['only_exceptions']);
@@ -867,20 +872,11 @@ class FrameworkExtension extends Extension
 
         // session handler (the internal callback registered with PHP session management)
         if (null === $config['handler_id']) {
-            // If the user set a save_path without using a non-default \SessionHandler, it will silently be ignored
-            if (isset($config['save_path'])) {
-                throw new LogicException('Session save path is ignored without a handler service');
-            }
-
             // Set the handler class to be null
             $container->getDefinition('session.storage.native')->replaceArgument(1, null);
             $container->getDefinition('session.storage.php_bridge')->replaceArgument(0, null);
         } else {
             $container->setAlias('session.handler', $config['handler_id'])->setPrivate(true);
-        }
-
-        if (!isset($config['save_path'])) {
-            $config['save_path'] = ini_get('session.save_path');
         }
 
         $container->setParameter('session.save_path', $config['save_path']);
@@ -1759,7 +1755,7 @@ class FrameworkExtension extends Extension
         }
     }
 
-    private function registerHttpClientConfiguration(array $config, ContainerBuilder $container, XmlFileLoader $loader)
+    private function registerHttpClientConfiguration(array $config, ContainerBuilder $container, XmlFileLoader $loader, array $profilerConfig)
     {
         $loader->load('http_client.xml');
 
@@ -1774,6 +1770,8 @@ class FrameworkExtension extends Extension
             $container->removeDefinition(HttpClient::class);
         }
 
+        $httpClientId = $this->isConfigEnabled($container, $profilerConfig) ? '.debug.http_client.inner' : 'http_client';
+
         foreach ($config['scoped_clients'] as $name => $scopeConfig) {
             if ('http_client' === $name) {
                 throw new InvalidArgumentException(sprintf('Invalid scope name: "%s" is reserved.', $name));
@@ -1785,10 +1783,14 @@ class FrameworkExtension extends Extension
             if (null === $scope) {
                 $container->register($name, ScopingHttpClient::class)
                     ->setFactory([ScopingHttpClient::class, 'forBaseUri'])
-                    ->setArguments([new Reference('http_client'), $scopeConfig['base_uri'], $scopeConfig]);
+                    ->setArguments([new Reference($httpClientId), $scopeConfig['base_uri'], $scopeConfig])
+                    ->addTag('http_client.client')
+                ;
             } else {
                 $container->register($name, ScopingHttpClient::class)
-                    ->setArguments([new Reference('http_client'), [$scope => $scopeConfig], $scope]);
+                    ->setArguments([new Reference($httpClientId), [$scope => $scopeConfig], $scope])
+                    ->addTag('http_client.client')
+                ;
             }
 
             $container->registerAliasForArgument($name, HttpClientInterface::class);
