@@ -16,10 +16,13 @@ CHANGELOG
 4.4.0
 -----
 
+ * added support for opcache.preload by generating a preloading script in the cache folder
  * added support for dumping the container in one file instead of many files
  * deprecated support for short factories and short configurators in Yaml
  * deprecated `tagged` in favor of `tagged_iterator`
  * deprecated passing an instance of `Symfony\Component\DependencyInjection\Parameter` as class name to `Symfony\Component\DependencyInjection\Definition`
+ * added support for binding iterable and tagged services
+ * made singly-implemented interfaces detection be scoped by file
 
 4.3.0
 -----

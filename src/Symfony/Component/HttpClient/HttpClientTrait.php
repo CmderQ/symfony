@@ -54,6 +54,10 @@ trait HttpClientTrait
             }
         }
 
+        if (!isset($options['normalized_headers']['accept'])) {
+            $options['normalized_headers']['accept'] = [$options['headers'][] = 'Accept: *'];
+        }
+
         if (isset($options['body'])) {
             $options['body'] = self::normalizeBody($options['body']);
         }
@@ -502,5 +506,18 @@ trait HttpClientTrait
         }
 
         return implode('&', $replace ? array_replace($query, $queryArray) : ($query + $queryArray));
+    }
+
+    private static function shouldBuffer(array $headers): bool
+    {
+        if (null === $contentType = $headers['content-type'][0] ?? null) {
+            return false;
+        }
+
+        if (false !== $i = strpos($contentType, ';')) {
+            $contentType = substr($contentType, 0, $i);
+        }
+
+        return $contentType && preg_match('#^(?:text/|application/(?:.+\+)?(?:json|xml)$)#i', $contentType);
     }
 }

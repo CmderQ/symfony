@@ -12,6 +12,8 @@
 namespace Symfony\Component\Messenger;
 
 use Psr\Log\LoggerInterface;
+use Symfony\Component\ErrorRenderer\Exception\FlattenException;
+use Symfony\Component\EventDispatcher\LegacyEventDispatcherProxy;
 use Symfony\Component\Messenger\Event\WorkerMessageFailedEvent;
 use Symfony\Component\Messenger\Event\WorkerMessageHandledEvent;
 use Symfony\Component\Messenger\Event\WorkerMessageReceivedEvent;
@@ -48,7 +50,7 @@ class Worker implements WorkerInterface
         $this->receivers = $receivers;
         $this->bus = $bus;
         $this->retryStrategies = $retryStrategies;
-        $this->eventDispatcher = $eventDispatcher;
+        $this->eventDispatcher = LegacyEventDispatcherProxy::decorate($eventDispatcher);
         $this->logger = $logger;
     }
 
@@ -90,6 +92,10 @@ class Worker implements WorkerInterface
 
                     $this->handleMessage($envelope, $receiver, $transportName, $this->retryStrategies[$transportName] ?? null);
                     $onHandled($envelope);
+
+                    if ($this->shouldStop) {
+                        break 2;
+                    }
                 }
 
                 // after handling a single receiver, quit and start the loop again
@@ -146,7 +152,7 @@ class Worker implements WorkerInterface
 
                 // add the delay and retry stamp info + remove ReceivedStamp
                 $retryEnvelope = $envelope->with(new DelayStamp($delay))
-                    ->with(new RedeliveryStamp($retryCount, $transportName))
+                    ->with(new RedeliveryStamp($retryCount, $transportName, $throwable->getMessage(), $this->flattenedException($throwable)))
                     ->withoutAll(ReceivedStamp::class);
 
                 // re-send the message
@@ -208,5 +214,18 @@ class Worker implements WorkerInterface
         }
 
         return $retryStrategy->isRetryable($envelope);
+    }
+
+    private function flattenedException(\Throwable $throwable): ?FlattenException
+    {
+        if (!class_exists(FlattenException::class)) {
+            return null;
+        }
+
+        if ($throwable instanceof HandlerFailedException) {
+            $throwable = $throwable->getNestedExceptions()[0];
+        }
+
+        return FlattenException::createFromThrowable($throwable);
     }
 }

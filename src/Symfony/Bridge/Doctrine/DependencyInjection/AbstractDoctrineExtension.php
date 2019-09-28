@@ -171,7 +171,7 @@ abstract class AbstractDoctrineExtension extends Extension
         if ($container->hasDefinition($this->getObjectManagerElementName($objectManager['name'].'_metadata_driver'))) {
             $chainDriverDef = $container->getDefinition($this->getObjectManagerElementName($objectManager['name'].'_metadata_driver'));
         } else {
-            $chainDriverDef = new Definition('%'.$this->getObjectManagerElementName('metadata.driver_chain.class%'));
+            $chainDriverDef = new Definition($this->getMetadataDriverClass('driver_chain'));
             $chainDriverDef->setPublic(false);
         }
 
@@ -187,12 +187,12 @@ abstract class AbstractDoctrineExtension extends Extension
                 }
                 $mappingDriverDef->setArguments($args);
             } elseif ('annotation' == $driverType) {
-                $mappingDriverDef = new Definition('%'.$this->getObjectManagerElementName('metadata.'.$driverType.'.class%'), [
+                $mappingDriverDef = new Definition($this->getMetadataDriverClass($driverType), [
                     new Reference($this->getObjectManagerElementName('metadata.annotation_reader')),
                     array_values($driverPaths),
                 ]);
             } else {
-                $mappingDriverDef = new Definition('%'.$this->getObjectManagerElementName('metadata.'.$driverType.'.class%'), [
+                $mappingDriverDef = new Definition($this->getMetadataDriverClass($driverType), [
                     array_values($driverPaths),
                 ]);
             }
@@ -246,11 +246,11 @@ abstract class AbstractDoctrineExtension extends Extension
         $configPath = $this->getMappingResourceConfigDirectory();
         $extension = $this->getMappingResourceExtension();
 
-        if (glob($dir.'/'.$configPath.'/*.'.$extension.'.xml')) {
+        if (glob($dir.'/'.$configPath.'/*.'.$extension.'.xml', GLOB_NOSORT)) {
             $driver = 'xml';
-        } elseif (glob($dir.'/'.$configPath.'/*.'.$extension.'.yml')) {
+        } elseif (glob($dir.'/'.$configPath.'/*.'.$extension.'.yml', GLOB_NOSORT)) {
             $driver = 'yml';
-        } elseif (glob($dir.'/'.$configPath.'/*.'.$extension.'.php')) {
+        } elseif (glob($dir.'/'.$configPath.'/*.'.$extension.'.php', GLOB_NOSORT)) {
             $driver = 'php';
         } else {
             // add the closest existing directory as a resource
@@ -413,6 +413,11 @@ abstract class AbstractDoctrineExtension extends Extension
      * @return string
      */
     abstract protected function getMappingResourceExtension();
+
+    /**
+     * The class name used by the various mapping drivers.
+     */
+    abstract protected function getMetadataDriverClass(string $driverType): string;
 
     /**
      * Search for a manager that is declared as 'auto_mapping' = true.

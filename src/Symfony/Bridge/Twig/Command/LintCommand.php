@@ -23,6 +23,7 @@ use Symfony\Component\Finder\Finder;
 use Twig\Environment;
 use Twig\Error\Error;
 use Twig\Loader\ArrayLoader;
+use Twig\Loader\FilesystemLoader;
 use Twig\Source;
 
 /**
@@ -49,14 +50,14 @@ class LintCommand extends Command
         $this
             ->setDescription('Lints a template and outputs encountered errors')
             ->addOption('format', null, InputOption::VALUE_REQUIRED, 'The output format', 'txt')
-            ->addArgument('filename', InputArgument::IS_ARRAY)
+            ->addArgument('filename', InputArgument::IS_ARRAY, 'A file, a directory or "-" for reading from STDIN')
             ->setHelp(<<<'EOF'
 The <info>%command.name%</info> command lints a template and outputs to STDOUT
 the first encountered syntax error.
 
 You can validate the syntax of contents passed from STDIN:
 
-  <info>cat filename | php %command.full_name%</info>
+  <info>cat filename | php %command.full_name% -</info>
 
 Or the syntax of a file:
 
@@ -77,22 +78,38 @@ EOF
         $io = new SymfonyStyle($input, $output);
         $filenames = $input->getArgument('filename');
 
-        if (0 === \count($filenames)) {
-            if (0 !== ftell(STDIN)) {
+        if (['-'] === $filenames) {
+            return $this->display($input, $output, $io, [$this->validate($this->getStdin(), uniqid('sf_', true))]);
+        }
+
+        if (!$filenames) {
+            $loader = $this->twig->getLoader();
+            if ($loader instanceof FilesystemLoader) {
+                $paths = [];
+                foreach ($loader->getNamespaces() as $namespace) {
+                    $paths[] = $loader->getPaths($namespace);
+                }
+                $filenames = array_merge(...$paths);
+            }
+
+            if (!$filenames) {
                 throw new RuntimeException('Please provide a filename or pipe template content to STDIN.');
             }
-
-            $template = '';
-            while (!feof(STDIN)) {
-                $template .= fread(STDIN, 1024);
-            }
-
-            return $this->display($input, $output, $io, [$this->validate($template, uniqid('sf_', true))]);
         }
 
         $filesInfo = $this->getFilesInfo($filenames);
 
         return $this->display($input, $output, $io, $filesInfo);
+    }
+
+    private function getStdin(): string
+    {
+        $template = '';
+        while (!feof(STDIN)) {
+            $template .= fread(STDIN, 1024);
+        }
+
+        return $template;
     }
 
     private function getFilesInfo(array $filenames)

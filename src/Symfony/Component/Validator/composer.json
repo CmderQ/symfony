@@ -19,7 +19,7 @@
         "php": "^7.2.9",
         "symfony/polyfill-ctype": "~1.8",
         "symfony/polyfill-mbstring": "~1.0",
-        "symfony/translation-contracts": "^1.1"
+        "symfony/translation-contracts": "^1.1|^2"
     },
     "require-dev": {
         "symfony/http-client": "^4.4|^5.0",
@@ -49,9 +49,9 @@
         "symfony/yaml": "<4.4"
     },
     "suggest": {
-        "psr/cache-implementation": "For using the metadata cache.",
+        "psr/cache-implementation": "For using the mapping cache.",
         "doctrine/annotations": "For using the annotation mapping. You will also need doctrine/cache.",
-        "doctrine/cache": "For using the default cached annotation reader and metadata cache.",
+        "doctrine/cache": "For using the default cached annotation reader.",
         "symfony/http-foundation": "",
         "symfony/intl": "",
         "symfony/translation": "For translating validation errors.",

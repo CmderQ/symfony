@@ -26,7 +26,8 @@ use Symfony\Contracts\HttpClient\ResponseInterface;
  */
 class MailgunHttpTransport extends AbstractHttpTransport
 {
-    private const ENDPOINT = 'https://api.%region_dot%mailgun.net/v3/%domain%/messages.mime';
+    private const HOST = 'api.%region_dot%mailgun.net';
+
     private $key;
     private $domain;
     private $region;
@@ -40,9 +41,9 @@ class MailgunHttpTransport extends AbstractHttpTransport
         parent::__construct($client, $dispatcher, $logger);
     }
 
-    public function getName(): string
+    public function __toString(): string
     {
-        return sprintf('http://%s@mailgun?region=%s', $this->domain, $this->region);
+        return sprintf('mailgun+https://%s?domain=%s', $this->getEndpoint(), $this->domain);
     }
 
     protected function doSendHttp(SentMessage $message): ResponseInterface
@@ -55,19 +56,29 @@ class MailgunHttpTransport extends AbstractHttpTransport
         foreach ($body->getPreparedHeaders()->all() as $header) {
             $headers[] = $header->toString();
         }
-        $endpoint = str_replace(['%domain%', '%region_dot%'], [urlencode($this->domain), 'us' !== ($this->region ?: 'us') ? $this->region.'.' : ''], self::ENDPOINT);
-        $response = $this->client->request('POST', $endpoint, [
+
+        $endpoint = sprintf('%s/v3/%s/messages.mime', $this->getEndpoint(), urlencode($this->domain));
+        $response = $this->client->request('POST', 'https://'.$endpoint, [
             'auth_basic' => 'api:'.$this->key,
             'headers' => $headers,
             'body' => $body->bodyToIterable(),
         ]);
 
         if (200 !== $response->getStatusCode()) {
-            $error = $response->toArray(false);
+            if ('application/json' === $response->getHeaders(false)['content-type'][0]) {
+                throw new HttpTransportException(sprintf('Unable to send an email: %s (code %s).', $response->toArray(false)['message'], $response->getStatusCode()), $response);
+            }
 
-            throw new HttpTransportException(sprintf('Unable to send an email: %s (code %s).', $error['message'], $response->getStatusCode()), $response);
+            throw new HttpTransportException(sprintf('Unable to send an email: %s (code %s).', $response->getContent(false), $response->getStatusCode()), $response);
         }
 
         return $response;
+    }
+
+    private function getEndpoint(): ?string
+    {
+        $host = $this->host ?: str_replace('%region_dot%', 'us' !== ($this->region ?: 'us') ? $this->region.'.' : '', self::HOST);
+
+        return $host.($this->port ? ':'.$this->port : '');
     }
 }

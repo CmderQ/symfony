@@ -4,6 +4,25 @@ CHANGELOG
 5.0.0
 -----
 
+ * Dropped support for passing more than one attribute to `AccessDecisionManager::decide()` and `AuthorizationChecker::isGranted()` (and indirectly the `is_granted()` Twig and ExpressionLanguage function):
+
+   **Before**
+   ```php
+   if ($this->authorizationChecker->isGranted(['ROLE_USER', 'ROLE_ADMIN'])) {
+       // ...
+   }
+   ```
+
+   **After**
+   ```php
+   if ($this->authorizationChecker->isGranted(new Expression("has_role('ROLE_USER') or has_role('ROLE_ADMIN')"))) {}
+   // or:
+   if ($this->authorizationChecker->isGranted('ROLE_USER')
+      || $this->authorizationChecker->isGranted('ROLE_ADMIN')
+   ) {}
+   ```
+ * Implementations of `Guard\AuthenticatorInterface::checkCredentials()` must return
+   a boolean value now. Please explicitly return `false` to indicate invalid credentials.
  * The `LdapUserProvider` class has been removed, use `Symfony\Component\Ldap\Security\LdapUserProvider` instead.
  * The `FirewallMapInterface::getListeners()` method must return an array of 3 elements.
  * Removed the `ContextListener::setLogoutOnUserChange()` method.
@@ -40,6 +59,8 @@ CHANGELOG
  * Added `Guard\PasswordAuthenticatedInterface`, an optional interface
    for "guard" authenticators that deal with user passwords
  * Marked all dispatched event classes as `@final`
+ * Deprecated returning a non-boolean value when implementing `Guard\AuthenticatorInterface::checkCredentials()`.
+ * Deprecated passing more than one attribute to `AccessDecisionManager::decide()` and `AuthorizationChecker::isGranted()`
 
 4.3.0
 -----

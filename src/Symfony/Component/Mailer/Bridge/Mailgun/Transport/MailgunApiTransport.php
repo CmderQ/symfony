@@ -12,8 +12,8 @@
 namespace Symfony\Component\Mailer\Bridge\Mailgun\Transport;
 
 use Psr\Log\LoggerInterface;
+use Symfony\Component\Mailer\Envelope;
 use Symfony\Component\Mailer\Exception\HttpTransportException;
-use Symfony\Component\Mailer\SmtpEnvelope;
 use Symfony\Component\Mailer\Transport\AbstractApiTransport;
 use Symfony\Component\Mime\Email;
 use Symfony\Component\Mime\Part\Multipart\FormDataPart;
@@ -26,7 +26,7 @@ use Symfony\Contracts\HttpClient\ResponseInterface;
  */
 class MailgunApiTransport extends AbstractApiTransport
 {
-    private const ENDPOINT = 'https://api.%region_dot%mailgun.net/v3/%domain%/messages';
+    private const HOST = 'api.%region_dot%mailgun.net';
 
     private $key;
     private $domain;
@@ -41,12 +41,12 @@ class MailgunApiTransport extends AbstractApiTransport
         parent::__construct($client, $dispatcher, $logger);
     }
 
-    public function getName(): string
+    public function __toString(): string
     {
-        return sprintf('api://%s@mailgun?region=%s', $this->domain, $this->region);
+        return sprintf('mailgun+api://%s?domain=%s', $this->getEndpoint(), $this->domain);
     }
 
-    protected function doSendApi(Email $email, SmtpEnvelope $envelope): ResponseInterface
+    protected function doSendApi(Email $email, Envelope $envelope): ResponseInterface
     {
         $body = new FormDataPart($this->getPayload($email, $envelope));
         $headers = [];
@@ -54,23 +54,25 @@ class MailgunApiTransport extends AbstractApiTransport
             $headers[] = $header->toString();
         }
 
-        $endpoint = str_replace(['%domain%', '%region_dot%'], [urlencode($this->domain), 'us' !== ($this->region ?: 'us') ? $this->region.'.' : ''], self::ENDPOINT);
-        $response = $this->client->request('POST', $endpoint, [
+        $endpoint = sprintf('%s/v3/%s/messages', $this->getEndpoint(), urlencode($this->domain));
+        $response = $this->client->request('POST', 'https://'.$endpoint, [
             'auth_basic' => 'api:'.$this->key,
             'headers' => $headers,
             'body' => $body->bodyToIterable(),
         ]);
 
         if (200 !== $response->getStatusCode()) {
-            $error = $response->toArray(false);
+            if ('application/json' === $response->getHeaders(false)['content-type'][0]) {
+                throw new HttpTransportException(sprintf('Unable to send an email: %s (code %s).', $response->toArray(false)['message'], $response->getStatusCode()), $response);
+            }
 
-            throw new HttpTransportException(sprintf('Unable to send an email: %s (code %s).', $error['message'], $response->getStatusCode()), $response);
+            throw new HttpTransportException(sprintf('Unable to send an email: %s (code %s).', $response->getContent(false), $response->getStatusCode()), $response);
         }
 
         return $response;
     }
 
-    private function getPayload(Email $email, SmtpEnvelope $envelope): array
+    private function getPayload(Email $email, Envelope $envelope): array
     {
         $headers = $email->getHeaders();
         $html = $email->getHtmlBody();
@@ -136,5 +138,12 @@ class MailgunApiTransport extends AbstractApiTransport
         }
 
         return [$attachments, $inlines, $html];
+    }
+
+    private function getEndpoint(): ?string
+    {
+        $host = $this->host ?: str_replace('%region_dot%', 'us' !== ($this->region ?: 'us') ? $this->region.'.' : '', self::HOST);
+
+        return $host.($this->port ? ':'.$this->port : '');
     }
 }

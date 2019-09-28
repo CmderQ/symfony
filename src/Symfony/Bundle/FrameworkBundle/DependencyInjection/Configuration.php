@@ -83,6 +83,9 @@ class Configuration implements ConfigurationInterface
                     ->beforeNormalization()->ifString()->then(function ($v) { return [$v]; })->end()
                     ->prototype('scalar')->end()
                 ->end()
+                ->scalarNode('error_controller')
+                    ->defaultValue('error_controller')
+                ->end()
             ->end()
         ;
 
@@ -940,7 +943,11 @@ class Configuration implements ConfigurationInterface
                         ->ifString()->then(function ($v) { return ['enabled' => true, 'resources' => $v]; })
                     ->end()
                     ->beforeNormalization()
-                        ->ifTrue(function ($v) { return \is_array($v) && !isset($v['resources']); })
+                        ->ifTrue(function ($v) { return \is_array($v) && !isset($v['enabled']); })
+                        ->then(function ($v) { return $v + ['enabled' => true]; })
+                    ->end()
+                    ->beforeNormalization()
+                        ->ifTrue(function ($v) { return \is_array($v) && !isset($v['resources']) && !isset($v['resource']); })
                         ->then(function ($v) {
                             $e = $v['enabled'];
                             unset($v['enabled']);
@@ -959,7 +966,19 @@ class Configuration implements ConfigurationInterface
                             ->end()
                             ->beforeNormalization()
                                 ->ifTrue(function ($v) { return \is_array($v) && array_keys($v) === range(0, \count($v) - 1); })
-                                ->then(function ($v) { return ['default' => $v]; })
+                                ->then(function ($v) {
+                                    $resources = [];
+                                    foreach ($v as $resource) {
+                                        $resources = array_merge_recursive(
+                                            $resources,
+                                            \is_array($resource) && isset($resource['name'])
+                                                ? [$resource['name'] => $resource['value']]
+                                                : ['default' => $resource]
+                                        );
+                                    }
+
+                                    return $resources;
+                                })
                             ->end()
                             ->prototype('array')
                                 ->beforeNormalization()->ifString()->then(function ($v) { return [$v]; })->end()
@@ -1028,6 +1047,7 @@ class Configuration implements ConfigurationInterface
                                 })
                             ->end()
                             ->prototype('array')
+                                ->performNoDeepMerging()
                                 ->children()
                                     ->arrayNode('senders')
                                         ->requiresAtLeastOneElement()
@@ -1423,8 +1443,17 @@ class Configuration implements ConfigurationInterface
                 ->arrayNode('mailer')
                     ->info('Mailer configuration')
                     ->{!class_exists(FullStack::class) && class_exists(Mailer::class) ? 'canBeDisabled' : 'canBeEnabled'}()
+                    ->validate()
+                        ->ifTrue(function ($v) { return isset($v['dsn']) && \count($v['transports']); })
+                        ->thenInvalid('"dsn" and "transports" cannot be used together.')
+                    ->end()
+                    ->fixXmlConfig('transport')
                     ->children()
-                        ->scalarNode('dsn')->defaultValue('smtp://null')->end()
+                        ->scalarNode('dsn')->defaultNull()->end()
+                        ->arrayNode('transports')
+                            ->useAttributeAsKey('name')
+                            ->prototype('scalar')->end()
+                        ->end()
                         ->arrayNode('envelope')
                             ->info('Mailer Envelope configuration')
                             ->children()

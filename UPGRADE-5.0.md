@@ -56,7 +56,7 @@ Debug
 
  * Removed the `Debug` class, use the one from the `ErrorRenderer` component instead
  * Removed the `FlattenException` class, use the one from the `ErrorRenderer` component instead
- * Removed the component component in favor of the `ErrorHandler` component
+ * Removed the component in favor of the `ErrorHandler` component
 
 DependencyInjection
 -------------------
@@ -122,6 +122,7 @@ DoctrineBridge
  * Passing an `IdReader` to the `DoctrineChoiceLoader` when the query cannot be optimized with single id field will throw an exception, pass `null` instead
  * Not passing an `IdReader` to the `DoctrineChoiceLoader` when the query can be optimized with single id field will not apply any optimization
  * The `RegistryInterface` has been removed.
+ * Added a new `getMetadataDriverClass` method in `AbstractDoctrineExtension` to replace class parameters.
 
 DomCrawler
 ----------
@@ -159,7 +160,7 @@ Form
    without configuring a reference date.
  * Removed support for using `int` or `float` as data for the `NumberType` when the `input` option is set to `string`.
  * Removed support for using the `format` option of `DateType` and `DateTimeType` when the `html5` option is enabled.
- * Using names for buttons that do not start with a letter, a digit, or an underscore leads to an exception.
+ * Using names for buttons that do not start with a lowercase letter, a digit, or an underscore leads to an exception.
  * Using names for buttons that do not contain only letters, digits, underscores, hyphens, and colons leads to an
    exception.
  * Using the `date_format`, `date_widget`, and `time_widget` options of the `DateTimeType` when the `widget` option is
@@ -287,6 +288,7 @@ HttpFoundation
    use `Symfony\Component\Mime\FileinfoMimeTypeGuesser` instead.
  * `ApacheRequest` has been removed, use the `Request` class instead.
  * The third argument of the `HeaderBag::get()` method has been removed, use method `all()` instead.
+ * Getting the container from a non-booted kernel is not possible anymore.
 
 HttpKernel
 ----------
@@ -331,7 +333,7 @@ HttpKernel
     }
     ```
 
-   As many bundles must be compatible with a range of Symfony versions, the current 
+   As many bundles must be compatible with a range of Symfony versions, the current
    directory convention is not deprecated yet, but it will be in the future.
  * Removed the second and third argument of `KernelInterface::locateResource`
  * Removed the second and third argument of `FileLocator::__construct`
@@ -412,6 +414,24 @@ Routing
 Security
 --------
 
+ * Dropped support for passing more than one attribute to `AccessDecisionManager::decide()` and `AuthorizationChecker::isGranted()` (and indirectly the `is_granted()` Twig and ExpressionLanguage function):
+
+   **Before**
+   ```php
+   if ($this->authorizationChecker->isGranted(['ROLE_USER', 'ROLE_ADMIN'])) {
+       // ...
+   }
+   ```
+
+   **After**
+   ```php
+   if ($this->authorizationChecker->isGranted(new Expression("has_role('ROLE_USER') or has_role('ROLE_ADMIN')"))) {}
+
+   // or:
+   if ($this->authorizationChecker->isGranted('ROLE_USER')
+      || $this->authorizationChecker->isGranted('ROLE_ADMIN')
+   ) {}
+   ```
  * The `LdapUserProvider` class has been removed, use `Symfony\Component\Ldap\Security\LdapUserProvider` instead.
  * Implementations of `PasswordEncoderInterface` and `UserPasswordEncoderInterface` must have a new `needsRehash()` method
  * The `Role` and `SwitchUserRole` classes have been removed.
@@ -467,6 +487,7 @@ Security
  * The `BCryptPasswordEncoder` class has been removed, use `NativePasswordEncoder` instead.
  * Classes implementing the `TokenInterface` must implement the two new methods
    `__serialize` and `__unserialize`
+ * Implementations of `Guard\AuthenticatorInterface::checkCredentials()` must return a boolean value now. Please explicitly return `false` to indicate invalid credentials.
 
 SecurityBundle
 --------------
@@ -529,6 +550,7 @@ Translation
  * The `MessageSelector`, `Interval` and `PluralizationRules` classes have been removed, use `IdentityTranslator` instead
  * The `Translator::getFallbackLocales()` and `TranslationDataCollector::getFallbackLocales()` method are now internal
  * The `Translator::transChoice()` method has been removed in favor of using `Translator::trans()` with "%count%" as the parameter driving plurals
+ * Removed support for implicit STDIN usage in the `lint:xliff` command, use `lint:xliff -` (append a dash) instead to make it explicit.
 
 TwigBundle
 ----------
@@ -536,8 +558,8 @@ TwigBundle
  * The default value (`false`) of the `twig.strict_variables` configuration option has been changed to `%kernel.debug%`.
  * The `transchoice` tag and filter have been removed, use the `trans` ones instead with a `%count%` parameter.
  * Removed support for legacy templates directories `src/Resources/views/` and `src/Resources/<BundleName>/views/`, use `templates/` and `templates/bundles/<BundleName>/` instead.
- * The default value (`twig.controller.exception::showAction`) of the `twig.exception_controller` configuration option has been changed to `null`.
- * Removed `ExceptionController` class and all built-in error templates
+ * The `twig.exception_controller` configuration option has been removed, use `framework.error_controller` instead.
+ * Removed `ExceptionController`, `PreviewErrorController` classes and all built-in error templates
 
 TwigBridge
 ----------
@@ -546,6 +568,7 @@ TwigBridge
  * removed the `$requestStack` and `$requestContext` arguments of the
    `HttpFoundationExtension`, pass a `Symfony\Component\HttpFoundation\UrlHelper`
    instance as the only argument instead
+ * Removed support for implicit STDIN usage in the `lint:twig` command, use `lint:twig -` (append a dash) instead to make it explicit.
 
 Validator
 --------
@@ -565,6 +588,8 @@ Validator
  * The `symfony/expression-language` component is now required for using the `Expression` constraint
  * Changed the default value of `Length::$allowEmptyString` to `false` and made it optional
  * Added support for PHPUnit 8. A `void` return-type was added to the `ConstraintValidatorTestCase::setUp()` and `ConstraintValidatorTestCase::tearDown()` methods.
+ * The `Symfony\Component\Validator\Mapping\Cache\CacheInterface` and all its implementations have been removed.
+ * The `ValidatorBuilder::setMetadataCache` has been removed, use `ValidatorBuilder::setMappingCache` instead.
 
 WebProfilerBundle
 -----------------
@@ -649,6 +674,7 @@ Yaml
 
  * The parser is now stricter and will throw a `ParseException` when a
    mapping is found inside a multi-line string.
+ * Removed support for implicit STDIN usage in the `lint:yaml` command, use `lint:yaml -` (append a dash) instead to make it explicit.
 
 WebProfilerBundle
 -----------------

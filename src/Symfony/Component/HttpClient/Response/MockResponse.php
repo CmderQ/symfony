@@ -45,7 +45,7 @@ class MockResponse implements ResponseInterface
     public function __construct($body = '', array $info = [])
     {
         $this->body = is_iterable($body) ? $body : (string) $body;
-        $this->info = $info + $this->info;
+        $this->info = $info + ['http_code' => 200] + $this->info;
 
         if (!isset($info['response_headers'])) {
             return;
@@ -59,7 +59,8 @@ class MockResponse implements ResponseInterface
             }
         }
 
-        $this->info['response_headers'] = $responseHeaders;
+        $this->info['response_headers'] = [];
+        self::addResponseHeaders($responseHeaders, $this->info, $this->headers);
     }
 
     /**
@@ -103,7 +104,12 @@ class MockResponse implements ResponseInterface
         $response = new self([]);
         $response->requestOptions = $options;
         $response->id = ++self::$idSequence;
-        $response->content = ($options['buffer'] ?? true) ? fopen('php://temp', 'w+') : null;
+
+        if (($options['buffer'] ?? null) instanceof \Closure) {
+            $response->content = $options['buffer']($mock->getHeaders(false)) ? fopen('php://temp', 'w+') : null;
+        } else {
+            $response->content = true === ($options['buffer'] ?? true) ? fopen('php://temp', 'w+') : null;
+        }
         $response->initializer = static function (self $response) {
             if (null !== $response->info['error']) {
                 throw new TransportException($response->info['error']);

@@ -16,6 +16,7 @@ use Symfony\Bridge\ProxyManager\LazyProxy\PhpDumper\ProxyDumper;
 use Symfony\Component\Config\ConfigCache;
 use Symfony\Component\Config\Loader\DelegatingLoader;
 use Symfony\Component\Config\Loader\LoaderResolver;
+use Symfony\Component\Debug\DebugClassLoader as LegacyDebugClassLoader;
 use Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface;
 use Symfony\Component\DependencyInjection\Compiler\PassConfig;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
@@ -194,7 +195,7 @@ abstract class Kernel implements KernelInterface, RebootableInterface, Terminabl
     /**
      * Gets a HTTP kernel from the container.
      *
-     * @return HttpKernel
+     * @return HttpKernelInterface
      */
     protected function getHttpKernel()
     {
@@ -227,20 +228,8 @@ abstract class Kernel implements KernelInterface, RebootableInterface, Terminabl
     /**
      * {@inheritdoc}
      */
-    public function locateResource(string $name/*, $dir = null, $first = true, $triggerDeprecation = true*/)
+    public function locateResource(string $name)
     {
-        if (2 <= \func_num_args()) {
-            $dir = func_get_arg(1);
-            $first = 3 <= \func_num_args() ? func_get_arg(2) : true;
-
-            if (4 !== \func_num_args() || func_get_arg(3)) {
-                @trigger_error(sprintf('Passing more than one argument to %s is deprecated since Symfony 4.4 and will be removed in 5.0.', __METHOD__), E_USER_DEPRECATED);
-            }
-        } else {
-            $dir = null;
-            $first = true;
-        }
-
         if ('@' !== $name[0]) {
             throw new \InvalidArgumentException(sprintf('A resource name must start with @ ("%s" given).', $name));
         }
@@ -255,27 +244,9 @@ abstract class Kernel implements KernelInterface, RebootableInterface, Terminabl
             list($bundleName, $path) = explode('/', $bundleName, 2);
         }
 
-        $isResource = 0 === strpos($path, 'Resources') && null !== $dir;
-        $overridePath = substr($path, 9);
         $bundle = $this->getBundle($bundleName);
-        $files = [];
-
-        if ($isResource && file_exists($file = $dir.'/'.$bundle->getName().$overridePath)) {
-            $files[] = $file;
-
-            // see https://symfony.com/doc/current/bundles/override.html on how to overwrite parts of a bundle
-            @trigger_error(sprintf('Overwriting the resource "%s" with "%s" is deprecated since Symfony 4.4 and will be removed in 5.0.', $name, $file), E_USER_DEPRECATED);
-        }
-
         if (file_exists($file = $bundle->getPath().'/'.$path)) {
-            if ($first && !$isResource) {
-                return $file;
-            }
-            $files[] = $file;
-        }
-
-        if (\count($files) > 0) {
-            return $first && $isResource ? $files[0] : $files;
+            return $file;
         }
 
         throw new \InvalidArgumentException(sprintf('Unable to find file "%s".', $name));
@@ -306,7 +277,12 @@ abstract class Kernel implements KernelInterface, RebootableInterface, Terminabl
     {
         if (null === $this->projectDir) {
             $r = new \ReflectionObject($this);
-            $dir = $rootDir = \dirname($r->getFileName());
+
+            if (!file_exists($dir = $r->getFileName())) {
+                throw new \LogicException(sprintf('Cannot auto-detect project dir for kernel of class "%s".', $r->name));
+            }
+
+            $dir = $rootDir = \dirname($dir);
             while (!file_exists($dir.'/composer.json')) {
                 if ($dir === \dirname($dir)) {
                     return $this->projectDir = $rootDir;
@@ -324,6 +300,10 @@ abstract class Kernel implements KernelInterface, RebootableInterface, Terminabl
      */
     public function getContainer()
     {
+        if (!$this->booted) {
+            @trigger_error('Getting the container from a non-booted kernel is deprecated since Symfony 4.4.', E_USER_DEPRECATED);
+        }
+
         return $this->container;
     }
 
@@ -340,7 +320,7 @@ abstract class Kernel implements KernelInterface, RebootableInterface, Terminabl
      */
     public function getStartTime()
     {
-        return $this->debug ? $this->startTime : -INF;
+        return $this->debug && null !== $this->startTime ? $this->startTime : -INF;
     }
 
     /**
@@ -488,7 +468,7 @@ abstract class Kernel implements KernelInterface, RebootableInterface, Terminabl
                 }
                 // Remove frames added by DebugClassLoader.
                 for ($i = \count($backtrace) - 2; 0 < $i; --$i) {
-                    if (DebugClassLoader::class === ($backtrace[$i]['class'] ?? null)) {
+                    if (\in_array($backtrace[$i]['class'] ?? null, [DebugClassLoader::class, LegacyDebugClassLoader::class], true)) {
                         $backtrace = [$backtrace[$i + 1]];
                         break;
                     }
@@ -542,7 +522,7 @@ abstract class Kernel implements KernelInterface, RebootableInterface, Terminabl
             static $legacyContainers = [];
             $oldContainerDir = \dirname($oldContainer->getFileName());
             $legacyContainers[$oldContainerDir.'.legacy'] = true;
-            foreach (glob(\dirname($oldContainerDir).\DIRECTORY_SEPARATOR.'*.legacy') as $legacyContainer) {
+            foreach (glob(\dirname($oldContainerDir).\DIRECTORY_SEPARATOR.'*.legacy', GLOB_NOSORT) as $legacyContainer) {
                 if (!isset($legacyContainers[$legacyContainer]) && @unlink($legacyContainer)) {
                     (new Filesystem())->remove(substr($legacyContainer, 0, -7));
                 }
@@ -574,14 +554,7 @@ abstract class Kernel implements KernelInterface, RebootableInterface, Terminabl
             ];
         }
 
-        $rootDir = new \ReflectionObject($this);
-        $rootDir = \dirname($rootDir->getFileName());
-
         return [
-            /*
-             * @deprecated since Symfony 4.2, use kernel.project_dir instead
-             */
-            'kernel.root_dir' => realpath($rootDir) ?: $rootDir,
             'kernel.project_dir' => realpath($this->getProjectDir()) ?: $this->getProjectDir(),
             'kernel.environment' => $this->environment,
             'kernel.debug' => $this->debug,

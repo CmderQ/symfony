@@ -14,7 +14,6 @@ namespace Symfony\Component\ErrorHandler;
 use Psr\Log\LoggerInterface;
 use Psr\Log\LogLevel;
 use Symfony\Component\ErrorHandler\Exception\FatalErrorException;
-use Symfony\Component\ErrorHandler\Exception\FatalThrowableError;
 use Symfony\Component\ErrorHandler\Exception\OutOfMemoryException;
 use Symfony\Component\ErrorHandler\Exception\SilencedErrorContext;
 use Symfony\Component\ErrorHandler\FatalErrorHandler\ClassNotFoundFatalErrorHandler;
@@ -266,7 +265,7 @@ class ErrorHandler
 
         if ($flush) {
             foreach ($this->bootstrappingLogger->cleanLogs() as $log) {
-                $type = $log[2]['exception'] instanceof \ErrorException ? $log[2]['exception']->getSeverity() : E_ERROR;
+                $type = ThrowableUtils::getSeverity($log[2]['exception']);
                 if (!isset($flush[$type])) {
                     $this->bootstrappingLogger->log($log[0], $log[1], $log[2]);
                 } elseif ($this->loggers[$type][0]) {
@@ -281,7 +280,7 @@ class ErrorHandler
     /**
      * Sets a user exception handler.
      *
-     * @param callable|null $handler A handler that will be called on Exception
+     * @param callable|null $handler A handler that must support \Throwable instances that will be called on Exception
      *
      * @return callable|null The previous exception handler
      */
@@ -401,8 +400,7 @@ class ErrorHandler
      */
     public function handleError(int $type, string $message, string $file, int $line): bool
     {
-        // @deprecated to be removed in Symfony 5.0
-        if (\PHP_VERSION_ID >= 70300 && $message && '"' === $message[0] && 0 === strpos($message, '"continue') && preg_match('/^"continue(?: \d++)?" targeting switch is equivalent to "break(?: \d++)?"\. Did you mean to use "continue(?: \d++)?"\?$/', $message)) {
+        if (\PHP_VERSION_ID >= 70300 && E_WARNING === $type && '"' === $message[0] && false !== strpos($message, '" targeting switch is equivalent to "break')) {
             $type = E_DEPRECATED;
         }
 
@@ -540,59 +538,70 @@ class ErrorHandler
     /**
      * Handles an exception by logging then forwarding it to another handler.
      *
-     * @param \Exception|\Throwable $exception An exception to handle
-     * @param array                 $error     An array as returned by error_get_last()
+     * @param array $error An array as returned by error_get_last()
      *
      * @internal
      */
-    public function handleException($exception, array $error = null)
+    public function handleException(\Throwable $exception, array $error = null)
     {
         if (null === $error) {
             self::$exitCode = 255;
         }
-        if (!$exception instanceof \Exception) {
-            $exception = new FatalThrowableError($exception);
-        }
-        $type = $exception instanceof FatalErrorException ? $exception->getSeverity() : E_ERROR;
+
+        $type = ThrowableUtils::getSeverity($exception);
         $handlerException = null;
 
-        if (($this->loggedErrors & $type) || $exception instanceof FatalThrowableError) {
+        if (($this->loggedErrors & $type) || $exception instanceof \Error) {
             if (false !== strpos($message = $exception->getMessage(), "class@anonymous\0")) {
                 $message = $this->parseAnonymousClass($message);
             }
+
             if ($exception instanceof FatalErrorException) {
-                if ($exception instanceof FatalThrowableError) {
-                    $error = [
-                        'type' => $type,
-                        'message' => $message,
-                        'file' => $exception->getFile(),
-                        'line' => $exception->getLine(),
-                    ];
-                } else {
-                    $message = 'Fatal '.$message;
-                }
+                $message = 'Fatal '.$message;
             } elseif ($exception instanceof \ErrorException) {
                 $message = 'Uncaught '.$message;
+            } elseif ($exception instanceof \Error) {
+                $error = [
+                    'type' => $type,
+                    'message' => $message,
+                    'file' => $exception->getFile(),
+                    'line' => $exception->getLine(),
+                ];
+                $message = 'Uncaught Error: '.$message;
             } else {
                 $message = 'Uncaught Exception: '.$message;
             }
         }
+
         if ($this->loggedErrors & $type) {
             try {
                 $this->loggers[$type][0]->log($this->loggers[$type][1], $message, ['exception' => $exception]);
             } catch (\Throwable $handlerException) {
             }
         }
+
+        // temporary until fatal error handlers rework
+        $originalException = $exception;
+        if (!$exception instanceof \Exception) {
+            $exception = new FatalErrorException($exception->getMessage(), $exception->getCode(), $type, $exception->getFile(), $exception->getLine(), null, true, $exception->getTrace());
+        }
+
         if ($exception instanceof FatalErrorException && !$exception instanceof OutOfMemoryException && $error) {
             foreach ($this->getFatalErrorHandlers() as $handler) {
                 if ($e = $handler->handleError($error, $exception)) {
-                    $exception = $e;
+                    $convertedException = $e;
                     break;
                 }
             }
         }
+
+        $exception = $convertedException ?? $originalException;
         $exceptionHandler = $this->exceptionHandler;
-        $this->exceptionHandler = null;
+        if ((!\is_array($exceptionHandler) || !$exceptionHandler[0] instanceof self || 'sendPhpResponse' !== $exceptionHandler[1]) && !\in_array(\PHP_SAPI, ['cli', 'phpdbg'], true)) {
+            $this->exceptionHandler = [$this, 'sendPhpResponse'];
+        } else {
+            $this->exceptionHandler = null;
+        }
         try {
             if (null !== $exceptionHandler) {
                 return $exceptionHandler($exception);
@@ -600,7 +609,7 @@ class ErrorHandler
             $handlerException = $handlerException ?: $exception;
         } catch (\Throwable $handlerException) {
         }
-        if ($exception === $handlerException) {
+        if ($exception === $handlerException && null === $this->exceptionHandler) {
             self::$reservedMemory = null; // Disable the fatal error handler
             throw $exception; // Give back $exception to the native handler
         }
@@ -696,18 +705,28 @@ class ErrorHandler
     private function sendPhpResponse(\Throwable $exception)
     {
         $charset = ini_get('default_charset') ?: 'UTF-8';
-
-        if (!headers_sent()) {
-            header('HTTP/1.0 500');
-            header(sprintf('Content-Type: text/html; charset=%s', $charset));
-        }
+        $statusCode = 500;
+        $headers = [];
 
         if (class_exists(HtmlErrorRenderer::class)) {
-            echo (new HtmlErrorRenderer(true))->render(FlattenException::createFromThrowable($exception));
+            $exception = FlattenException::createFromThrowable($exception);
+            $statusCode = $exception->getStatusCode();
+            $headers = $exception->getHeaders();
+            $response = (new HtmlErrorRenderer(0 !== $this->scopedErrors))->render($exception);
         } else {
             $message = htmlspecialchars($exception->getMessage(), ENT_COMPAT | ENT_SUBSTITUTE, $charset);
-            echo sprintf('<!DOCTYPE html><html><head><meta charset="%s" /><meta name="robots" content="noindex,nofollow" /></head><body>%s</body></html>', $charset, $message);
+            $response = sprintf('<!DOCTYPE html><html><head><meta charset="%s" /><meta name="robots" content="noindex,nofollow" /></head><body>%s</body></html>', $charset, $message);
         }
+
+        if (!headers_sent()) {
+            header(sprintf('HTTP/1.0 %s', $statusCode));
+            foreach ($headers as $name => $value) {
+                header($name.': '.$value, false);
+            }
+            header('Content-Type: text/html; charset='.$charset);
+        }
+
+        echo $response;
     }
 
     /**

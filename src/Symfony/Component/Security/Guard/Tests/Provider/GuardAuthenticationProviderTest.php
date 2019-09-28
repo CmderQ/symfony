@@ -12,10 +12,11 @@
 namespace Symfony\Component\Security\Guard\Tests\Provider;
 
 use PHPUnit\Framework\TestCase;
-use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
+use Symfony\Component\Security\Core\Exception\BadCredentialsException;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Security\Guard\AuthenticatorInterface;
 use Symfony\Component\Security\Guard\Provider\GuardAuthenticationProvider;
+use Symfony\Component\Security\Guard\Token\GuardTokenInterface;
 use Symfony\Component\Security\Guard\Token\PostAuthenticationGuardToken;
 use Symfony\Component\Security\Guard\Token\PreAuthenticationGuardToken;
 
@@ -68,7 +69,7 @@ class GuardAuthenticationProviderTest extends TestCase
             ->with($enteredCredentials, $mockedUser)
             // authentication works!
             ->willReturn(true);
-        $authedToken = $this->getMockBuilder(TokenInterface::class)->getMock();
+        $authedToken = $this->getMockBuilder(GuardTokenInterface::class)->getMock();
         $authenticatorB->expects($this->once())
             ->method('createAuthenticatedToken')
             ->with($mockedUser, $providerKey)
@@ -87,12 +88,12 @@ class GuardAuthenticationProviderTest extends TestCase
         $this->assertSame($authedToken, $actualAuthedToken);
     }
 
-    public function testCheckCredentialsReturningNonTrueFailsAuthentication()
+    public function testCheckCredentialsReturningFalseFailsAuthentication()
     {
-        $this->expectException('Symfony\Component\Security\Core\Exception\BadCredentialsException');
+        $this->expectException(BadCredentialsException::class);
         $providerKey = 'my_uncool_firewall';
 
-        $authenticator = $this->getMockBuilder(AuthenticatorInterface::class)->getMock();
+        $authenticator = $this->createMock(AuthenticatorInterface::class);
 
         // make sure the authenticator is used
         $this->preAuthenticationToken->expects($this->any())
@@ -104,7 +105,7 @@ class GuardAuthenticationProviderTest extends TestCase
             ->method('getCredentials')
             ->willReturn('non-null-value');
 
-        $mockedUser = $this->getMockBuilder('Symfony\Component\Security\Core\User\UserInterface')->getMock();
+        $mockedUser = $this->createMock(UserInterface::class);
         $authenticator->expects($this->once())
             ->method('getUser')
             ->willReturn($mockedUser);
@@ -112,7 +113,7 @@ class GuardAuthenticationProviderTest extends TestCase
         $authenticator->expects($this->once())
             ->method('checkCredentials')
             // authentication fails :(
-            ->willReturn(null);
+            ->willReturn(false);
 
         $provider = new GuardAuthenticationProvider([$authenticator], $this->userProvider, $providerKey, $this->userChecker);
         $provider->authenticate($this->preAuthenticationToken);

@@ -201,6 +201,7 @@ class FrameworkExtension extends Extension
         $container->setParameter('kernel.http_method_override', $config['http_method_override']);
         $container->setParameter('kernel.trusted_hosts', $config['trusted_hosts']);
         $container->setParameter('kernel.default_locale', $config['default_locale']);
+        $container->setParameter('kernel.error_controller', $config['error_controller']);
 
         if (!$container->hasParameter('debug.file_link_format')) {
             $links = [
@@ -292,6 +293,10 @@ class FrameworkExtension extends Extension
             $this->registerHttpClientConfiguration($config['http_client'], $container, $loader, $config['profiler']);
         }
 
+        if ($this->mailerConfigEnabled = $this->isConfigEnabled($container, $config['mailer'])) {
+            $this->registerMailerConfiguration($config['mailer'], $container, $loader);
+        }
+
         $propertyInfoEnabled = $this->isConfigEnabled($container, $config['property_info']);
         $this->registerValidationConfiguration($config['validation'], $container, $loader, $propertyInfoEnabled);
         $this->registerEsiConfiguration($config['esi'], $container, $loader);
@@ -320,10 +325,6 @@ class FrameworkExtension extends Extension
 
         if ($this->isConfigEnabled($container, $config['lock'])) {
             $this->registerLockConfiguration($config['lock'], $container, $loader);
-        }
-
-        if ($this->mailerConfigEnabled = $this->isConfigEnabled($container, $config['mailer'])) {
-            $this->registerMailerConfiguration($config['mailer'], $container, $loader);
         }
 
         if ($this->isConfigEnabled($container, $config['web_link'])) {
@@ -1019,7 +1020,7 @@ class FrameworkExtension extends Extension
         if (class_exists('Symfony\Component\Security\Core\Exception\AuthenticationException')) {
             $r = new \ReflectionClass('Symfony\Component\Security\Core\Exception\AuthenticationException');
 
-            $dirs[] = $transPaths[] = \dirname(\dirname($r->getFileName())).'/Resources/translations';
+            $dirs[] = $transPaths[] = \dirname($r->getFileName(), 2).'/Resources/translations';
         }
         $defaultDir = $container->getParameterBag()->resolveValue($config['default_path']);
         foreach ($container->getParameter('kernel.bundles_metadata') as $name => $bundle) {
@@ -1136,7 +1137,7 @@ class FrameworkExtension extends Extension
         }
 
         if (!$container->getParameter('kernel.debug')) {
-            $validatorBuilder->addMethodCall('setMetadataCache', [new Reference('validator.mapping.cache.symfony')]);
+            $validatorBuilder->addMethodCall('setMappingCache', [new Reference('validator.mapping.cache.adapter')]);
         }
 
         $container->setParameter('validator.auto_mapping', $config['auto_mapping']);
@@ -1812,7 +1813,12 @@ class FrameworkExtension extends Extension
 
         $loader->load('mailer.xml');
         $loader->load('mailer_transports.xml');
-        $container->getDefinition('mailer.default_transport')->setArgument(0, $config['dsn']);
+        if (!\count($config['transports']) && null === $config['dsn']) {
+            $config['dsn'] = 'smtp://null';
+        }
+        $transports = $config['dsn'] ? ['main' => $config['dsn']] : $config['transports'];
+        $container->getDefinition('mailer.transports')->setArgument(0, $transports);
+        $container->getDefinition('mailer.default_transport')->setArgument(0, current($transports));
 
         $classToServices = [
             SesTransportFactory::class => 'mailer.transport_factory.amazon',
@@ -1838,9 +1844,7 @@ class FrameworkExtension extends Extension
     }
 
     /**
-     * Returns the base path for the XSD files.
-     *
-     * @return string The XSD base path
+     * {@inheritdoc}
      */
     public function getXsdValidationBasePath()
     {

@@ -66,6 +66,7 @@ class XmlFileLoader extends FileLoader
             $this->parseDefinitions($xml, $path, $defaults);
         } finally {
             $this->instanceof = [];
+            $this->registerAliasesForSinglyImplementedInterfaces();
         }
     }
 
@@ -435,7 +436,7 @@ class XmlFileLoader extends FileLoader
         }
     }
 
-    private function getArgumentsAsPhp(\DOMElement $node, string $name, string $file, bool $isChildDefinition = false)
+    private function getArgumentsAsPhp(\DOMElement $node, string $name, string $file, bool $isChildDefinition = false): array
     {
         $arguments = [];
         foreach ($this->getChildren($node, $name) as $arg) {
@@ -703,7 +704,7 @@ EOF
      *
      * @param \DOMElement $element A \DOMElement instance
      *
-     * @return array A PHP array
+     * @return mixed
      */
     public static function convertDomElementToArray(\DOMElement $element)
     {

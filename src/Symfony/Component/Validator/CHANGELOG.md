@@ -15,6 +15,8 @@ CHANGELOG
  * removed `ValidatorBuilderInterface`
  * passing a null message when instantiating a `ConstraintViolation` is not allowed
  * changed the default value of `Length::$allowEmptyString` to `false` and made it optional
+ * removed `Symfony\Component\Validator\Mapping\Cache\CacheInterface` in favor of PSR-6.
+ * removed `ValidatorBuilder::setMetadataCache`, use `ValidatorBuilder::setMappingCache` instead.
 
 4.4.0
 -----
@@ -37,6 +39,8 @@ CHANGELOG
    be used in the violation builder when both `min` and `max` are not null
  * added ability to use stringable objects as violation messages
  * Overriding the methods `ConstraintValidatorTestCase::setUp()` and `ConstraintValidatorTestCase::tearDown()` without the `void` return-type is deprecated.
+ * deprecated `Symfony\Component\Validator\Mapping\Cache\CacheInterface` in favor of PSR-6.
+ * deprecated `ValidatorBuilder::setMetadataCache`, use `ValidatorBuilder::setMappingCache` instead.
 
 4.3.0
 -----

@@ -44,7 +44,7 @@ class Crawler implements \Countable, \IteratorAggregate
     private $document;
 
     /**
-     * @var \DOMElement[]
+     * @var \DOMNode[]
      */
     private $nodes = [];
 
@@ -61,7 +61,7 @@ class Crawler implements \Countable, \IteratorAggregate
     private $html5Parser;
 
     /**
-     * @param mixed $node A Node to use as the base for the crawling
+     * @param \DOMNodeList|\DOMNode|\DOMNode[]|string|null $node A Node to use as the base for the crawling
      */
     public function __construct($node = null, string $uri = null, string $baseHref = null)
     {
@@ -107,7 +107,7 @@ class Crawler implements \Countable, \IteratorAggregate
      * This method uses the appropriate specialized add*() method based
      * on the type of the argument.
      *
-     * @param \DOMNodeList|\DOMNode|array|string|null $node A node
+     * @param \DOMNodeList|\DOMNode|\DOMNode[]|string|null $node A node
      *
      * @throws \InvalidArgumentException when node is not the expected type
      */
@@ -569,15 +569,16 @@ class Crawler implements \Countable, \IteratorAggregate
     }
 
     /**
-     * Returns the node value of the first node of the list.
+     * Returns the text of the first node of the list.
      *
-     * @param mixed $default When provided and the current node is empty, this value is returned and no exception is thrown
+     * @param mixed $default             When provided and the current node is empty, this value is returned and no exception is thrown
+     * @param bool  $normalizeWhitespace Whether whitespaces should be trimmed and normalized to single spaces
      *
      * @return string The node value
      *
      * @throws \InvalidArgumentException When current node is empty
      */
-    public function text($default = null)
+    public function text($default = null, bool $normalizeWhitespace = false)
     {
         if (!$this->nodes) {
             if (0 < \func_num_args()) {
@@ -587,7 +588,13 @@ class Crawler implements \Countable, \IteratorAggregate
             throw new \InvalidArgumentException('The current node list is empty.');
         }
 
-        return $this->getNode(0)->nodeValue;
+        $text = $this->getNode(0)->nodeValue;
+
+        if (\func_num_args() > 1 && func_get_arg(1)) {
+            return trim(preg_replace('/(?:\s{2,}+|[^\S ])/', ' ', $text));
+        }
+
+        return $text;
     }
 
     /**
@@ -1058,7 +1065,7 @@ class Crawler implements \Countable, \IteratorAggregate
     }
 
     /**
-     * @return \DOMElement|null
+     * @return \DOMNode|null
      */
     public function getNode(int $position)
     {
@@ -1074,7 +1081,7 @@ class Crawler implements \Countable, \IteratorAggregate
     }
 
     /**
-     * @return \ArrayIterator|\DOMElement[]
+     * @return \ArrayIterator|\DOMNode[]
      */
     public function getIterator()
     {
@@ -1191,7 +1198,7 @@ class Crawler implements \Countable, \IteratorAggregate
     /**
      * Creates a crawler for some subnodes.
      *
-     * @param \DOMElement|\DOMElement[]|\DOMNodeList|null $nodes
+     * @param \DOMNodeList|\DOMNode|\DOMNode[]|string|null $nodes
      *
      * @return static
      */
@@ -1207,7 +1214,7 @@ class Crawler implements \Countable, \IteratorAggregate
     }
 
     /**
-     * @throws \RuntimeException If the CssSelector Component is not available
+     * @throws \LogicException If the CssSelector Component is not available
      */
     private function createCssSelectorConverter(): CssSelectorConverter
     {

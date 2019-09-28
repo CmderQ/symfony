@@ -323,7 +323,7 @@ class Container implements ContainerInterface, ResetInterface
      */
     public function getServiceIds()
     {
-        return array_map('strval', array_unique(array_merge(['service_container'], array_keys($this->fileMap), array_keys($this->methodMap), array_keys($this->services))));
+        return array_map('strval', array_unique(array_merge(['service_container'], array_keys($this->fileMap), array_keys($this->methodMap), array_keys($this->aliases), array_keys($this->services))));
     }
 
     /**
@@ -362,8 +362,6 @@ class Container implements ContainerInterface, ResetInterface
 
     /**
      * Creates a service by requiring its factory file.
-     *
-     * @return object The service created by the file
      */
     protected function load($file)
     {
@@ -415,9 +413,14 @@ class Container implements ContainerInterface, ResetInterface
     }
 
     /**
+     * @param string|false $registry
+     * @param string|bool  $load
+     *
+     * @return mixed
+     *
      * @internal
      */
-    final protected function getService($registry, $id, $method, $load)
+    final protected function getService($registry, string $id, ?string $method, $load)
     {
         if ('service_container' === $id) {
             return $this;

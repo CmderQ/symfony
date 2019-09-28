@@ -54,7 +54,7 @@ class LintCommand extends Command
     {
         $this
             ->setDescription('Lints a file and outputs encountered errors')
-            ->addArgument('filename', InputArgument::IS_ARRAY, 'A file or a directory or STDIN')
+            ->addArgument('filename', InputArgument::IS_ARRAY, 'A file, a directory or "-" for reading from STDIN')
             ->addOption('format', null, InputOption::VALUE_REQUIRED, 'The output format', 'txt')
             ->addOption('parse-tags', null, InputOption::VALUE_NONE, 'Parse custom tags')
             ->setHelp(<<<EOF
@@ -63,7 +63,7 @@ the first encountered syntax error.
 
 You can validates YAML contents passed from STDIN:
 
-  <info>cat filename | php %command.full_name%</info>
+  <info>cat filename | php %command.full_name% -</info>
 
 You can also validate the syntax of a file:
 
@@ -87,12 +87,12 @@ EOF
         $this->displayCorrectFiles = $output->isVerbose();
         $flags = $input->getOption('parse-tags') ? Yaml::PARSE_CUSTOM_TAGS : 0;
 
-        if (0 === \count($filenames)) {
-            if (!$stdin = $this->getStdin()) {
-                throw new RuntimeException('Please provide a filename or pipe file content to STDIN.');
-            }
+        if (['-'] === $filenames) {
+            return $this->display($io, [$this->validate($this->getStdin(), $flags)]);
+        }
 
-            return $this->display($io, [$this->validate($stdin, $flags)]);
+        if (!$filenames) {
+            throw new RuntimeException('Please provide a filename or pipe file content to STDIN.');
         }
 
         $filesInfo = [];
@@ -146,6 +146,7 @@ EOF
     {
         $countFiles = \count($filesInfo);
         $erroredFiles = 0;
+        $suggestTagOption = false;
 
         foreach ($filesInfo as $info) {
             if ($info['valid'] && $this->displayCorrectFiles) {
@@ -154,13 +155,17 @@ EOF
                 ++$erroredFiles;
                 $io->text('<error> ERROR </error>'.($info['file'] ? sprintf(' in %s', $info['file']) : ''));
                 $io->text(sprintf('<error> >> %s</error>', $info['message']));
+
+                if (false !== strpos($info['message'], 'PARSE_CUSTOM_TAGS')) {
+                    $suggestTagOption = true;
+                }
             }
         }
 
         if (0 === $erroredFiles) {
             $io->success(sprintf('All %d YAML files contain valid syntax.', $countFiles));
         } else {
-            $io->warning(sprintf('%d YAML files have valid syntax and %d contain errors.', $countFiles - $erroredFiles, $erroredFiles));
+            $io->warning(sprintf('%d YAML files have valid syntax and %d contain errors.%s', $countFiles - $erroredFiles, $erroredFiles, $suggestTagOption ? ' Use the --parse-tags option if you want parse custom tags.' : ''));
         }
 
         return min($erroredFiles, 1);
@@ -174,6 +179,10 @@ EOF
             $v['file'] = (string) $v['file'];
             if (!$v['valid']) {
                 ++$errors;
+            }
+
+            if (isset($v['message']) && false !== strpos($v['message'], 'PARSE_CUSTOM_TAGS')) {
+                $v['message'] .= ' Use the --parse-tags option if you want parse custom tags.';
             }
         });
 
@@ -199,18 +208,14 @@ EOF
         }
     }
 
-    private function getStdin(): ?string
+    private function getStdin(): string
     {
-        if (0 !== ftell(STDIN)) {
-            return null;
-        }
-
-        $inputs = '';
+        $yaml = '';
         while (!feof(STDIN)) {
-            $inputs .= fread(STDIN, 1024);
+            $yaml .= fread(STDIN, 1024);
         }
 
-        return $inputs;
+        return $yaml;
     }
 
     private function getParser()

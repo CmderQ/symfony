@@ -32,7 +32,7 @@ class ClassNotFoundFatalErrorHandlerTest extends TestCase
             }
 
             if ($function[0] instanceof ComposerClassLoader) {
-                $function[0]->add('Symfony_Component_ErrorHandler_Tests_Fixtures', \dirname(\dirname(\dirname(\dirname(\dirname(__DIR__))))));
+                $function[0]->add('Symfony_Component_ErrorHandler_Tests_Fixtures', \dirname(__DIR__, 5));
                 break;
             }
         }
@@ -41,7 +41,7 @@ class ClassNotFoundFatalErrorHandlerTest extends TestCase
     /**
      * @dataProvider provideClassNotFoundData
      */
-    public function testHandleClassNotFound($error, $translatedMessage, $autoloader = null)
+    public function testHandleClassNotFound(array $error, string $translatedMessage, callable $autoloader = null)
     {
         if ($autoloader) {
             // Unregister all autoloaders to ensure the custom provided
@@ -67,7 +67,7 @@ class ClassNotFoundFatalErrorHandlerTest extends TestCase
         $this->assertSame($error['line'], $exception->getLine());
     }
 
-    public function provideClassNotFoundData()
+    public function provideClassNotFoundData(): array
     {
         $autoloader = new ComposerClassLoader();
         $autoloader->add('Symfony\Component\ErrorHandler\Exception\\', realpath(__DIR__.'/../../Exception'));

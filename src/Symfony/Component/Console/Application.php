@@ -43,7 +43,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use Symfony\Component\ErrorHandler\ErrorHandler;
 use Symfony\Component\ErrorHandler\Exception\FatalThrowableError;
-use Symfony\Component\EventDispatcher\EventDispatcherInterface;
+use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 use Symfony\Contracts\Service\ResetInterface;
 
 /**
@@ -120,7 +120,7 @@ class Application implements ResetInterface
             $output = new ConsoleOutput();
         }
 
-        $renderException = function ($e) use ($output) {
+        $renderException = function (\Throwable $e) use ($output) {
             if (!$e instanceof \Exception) {
                 $e = class_exists(FatalThrowableError::class) ? new FatalThrowableError($e) : new \ErrorException($e->getMessage(), $e->getCode(), E_ERROR, $e->getFile(), $e->getLine());
             }
@@ -468,9 +468,8 @@ class Application implements ResetInterface
             return null;
         }
 
-        if (null === $command->getDefinition()) {
-            throw new LogicException(sprintf('Command class "%s" is not correctly initialized. You probably forgot to call the parent constructor.', \get_class($command)));
-        }
+        // Will throw if the command is not correctly initialized.
+        $command->getDefinition();
 
         if (!$command->getName()) {
             throw new LogicException(sprintf('The command defined in "%s" cannot have an empty name.', \get_class($command)));
@@ -947,7 +946,7 @@ class Application implements ResetInterface
     /**
      * Gets the name of the command based on input.
      *
-     * @return string The command name
+     * @return string|null
      */
     protected function getCommandName(InputInterface $input)
     {
@@ -1016,8 +1015,7 @@ class Application implements ResetInterface
      */
     public function extractNamespace(string $name, int $limit = null)
     {
-        $parts = explode(':', $name);
-        array_pop($parts);
+        $parts = explode(':', $name, -1);
 
         return implode(':', null === $limit ? $parts : \array_slice($parts, 0, $limit));
     }
@@ -1092,12 +1090,12 @@ class Application implements ResetInterface
     /**
      * @internal
      */
-    public function isSingleCommand()
+    public function isSingleCommand(): bool
     {
         return $this->singleCommand;
     }
 
-    private function splitStringByWidth(string $string, int $width)
+    private function splitStringByWidth(string $string, int $width): array
     {
         // str_split is not suitable for multi-byte characters, we should use preg_split to get char array properly.
         // additionally, array_slice() is not enough as some character has doubled width.

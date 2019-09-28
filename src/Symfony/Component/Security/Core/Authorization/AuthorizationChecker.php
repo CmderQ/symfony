@@ -14,6 +14,7 @@ namespace Symfony\Component\Security\Core\Authorization;
 use Symfony\Component\Security\Core\Authentication\AuthenticationManagerInterface;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 use Symfony\Component\Security\Core\Exception\AuthenticationCredentialsNotFoundException;
+use Symfony\Component\Security\Core\Exception\InvalidArgumentException;
 
 /**
  * AuthorizationChecker is the main authorization point of the Security component.
@@ -53,10 +54,10 @@ class AuthorizationChecker implements AuthorizationCheckerInterface
             $this->tokenStorage->setToken($token = $this->authenticationManager->authenticate($token));
         }
 
-        if (!\is_array($attributes)) {
-            $attributes = [$attributes];
+        if (\is_array($attributes)) {
+            throw new InvalidArgumentException(sprintf('Passing an array of Security attributes to %s() is not supported.', __METHOD__));
         }
 
-        return $this->accessDecisionManager->decide($token, $attributes, $subject);
+        return $this->accessDecisionManager->decide($token, [$attributes], $subject);
     }
 }

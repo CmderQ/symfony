@@ -45,6 +45,17 @@ class KernelTest extends TestCase
         $this->assertEquals($debug, $kernel->isDebug());
         $this->assertFalse($kernel->isBooted());
         $this->assertLessThanOrEqual(microtime(true), $kernel->getStartTime());
+    }
+
+    /**
+     * @group legacy
+     * @expectedDeprecation Getting the container from a non-booted kernel is deprecated since Symfony 4.4.
+     */
+    public function testGetContainerForANonBootedKernel()
+    {
+        $kernel = new KernelForTest('test_env', true);
+
+        $this->assertFalse($kernel->isBooted());
         $this->assertNull($kernel->getContainer());
     }
 
@@ -60,7 +71,6 @@ class KernelTest extends TestCase
         $this->assertEquals($debug, $clone->isDebug());
         $this->assertFalse($clone->isBooted());
         $this->assertLessThanOrEqual(microtime(true), $clone->getStartTime());
-        $this->assertNull($clone->getContainer());
     }
 
     public function testClassNameValidityGetter()
@@ -128,7 +138,7 @@ class KernelTest extends TestCase
     public function testBootSetsTheBootedFlagToTrue()
     {
         // use test kernel to access isBooted()
-        $kernel = $this->getKernelForTest(['initializeBundles', 'initializeContainer']);
+        $kernel = $this->getKernel(['initializeBundles', 'initializeContainer']);
         $kernel->boot();
 
         $this->assertTrue($kernel->isBooted());
@@ -358,64 +368,6 @@ EOF;
         $this->assertEquals(__DIR__.'/Fixtures/Bundle1Bundle/foo.txt', $kernel->locateResource('@Bundle1Bundle/foo.txt'));
     }
 
-    /**
-     * @group legacy
-     */
-    public function testLocateResourceIgnoresDirOnNonResource()
-    {
-        $kernel = $this->getKernel(['getBundle']);
-        $kernel
-            ->expects($this->once())
-            ->method('getBundle')
-            ->willReturn($this->getBundle(__DIR__.'/Fixtures/Bundle1Bundle'))
-        ;
-
-        $this->assertEquals(
-            __DIR__.'/Fixtures/Bundle1Bundle/foo.txt',
-            $kernel->locateResource('@Bundle1Bundle/foo.txt', __DIR__.'/Fixtures')
-        );
-    }
-
-    /**
-     * @group legacy
-     */
-    public function testLocateResourceReturnsTheDirOneForResources()
-    {
-        $kernel = $this->getKernel(['getBundle']);
-        $kernel
-            ->expects($this->once())
-            ->method('getBundle')
-            ->willReturn($this->getBundle(__DIR__.'/Fixtures/FooBundle', null, null, 'FooBundle'))
-        ;
-
-        $this->assertEquals(
-            __DIR__.'/Fixtures/Resources/FooBundle/foo.txt',
-            $kernel->locateResource('@FooBundle/Resources/foo.txt', __DIR__.'/Fixtures/Resources')
-        );
-    }
-
-    /**
-     * @group legacy
-     */
-    public function testLocateResourceOnDirectoriesWithOverwrite()
-    {
-        $kernel = $this->getKernel(['getBundle']);
-        $kernel
-            ->expects($this->exactly(2))
-            ->method('getBundle')
-            ->willReturn($this->getBundle(__DIR__.'/Fixtures/FooBundle', null, null, 'FooBundle'))
-        ;
-
-        $this->assertEquals(
-            __DIR__.'/Fixtures/Resources/FooBundle/',
-            $kernel->locateResource('@FooBundle/Resources/', __DIR__.'/Fixtures/Resources')
-        );
-        $this->assertEquals(
-            __DIR__.'/Fixtures/Resources/FooBundle',
-            $kernel->locateResource('@FooBundle/Resources', __DIR__.'/Fixtures/Resources')
-        );
-    }
-
     public function testLocateResourceOnDirectories()
     {
         $kernel = $this->getKernel(['getBundle']);
@@ -439,8 +391,8 @@ EOF;
     {
         $this->expectException('LogicException');
         $this->expectExceptionMessage('Trying to register two bundles with the same name "DuplicateName"');
-        $fooBundle = $this->getBundle(null, null, 'FooBundle', 'DuplicateName');
-        $barBundle = $this->getBundle(null, null, 'BarBundle', 'DuplicateName');
+        $fooBundle = $this->getBundle(__DIR__.'/Fixtures/FooBundle', null, 'FooBundle', 'DuplicateName');
+        $barBundle = $this->getBundle(__DIR__.'/Fixtures/BarBundle', null, 'BarBundle', 'DuplicateName');
 
         $kernel = $this->getKernel([], [$fooBundle, $barBundle]);
         $kernel->boot();
@@ -453,6 +405,18 @@ EOF;
             ->method('getHttpKernel');
 
         $kernel->terminate(Request::create('/'), new Response());
+    }
+
+    /**
+     * @group legacy
+     * @expectedDeprecation Getting the container from a non-booted kernel is deprecated since Symfony 4.4.
+     */
+    public function testDeprecatedNullKernel()
+    {
+        $kernel = $this->getKernel();
+        $kernel->shutdown();
+
+        $this->assertNull($kernel->getContainer());
     }
 
     public function testTerminateDelegatesTerminationOnlyForTerminableInterface()
@@ -577,7 +541,7 @@ EOF;
      */
     public function testKernelStartTimeIsResetWhileBootingAlreadyBootedKernel()
     {
-        $kernel = $this->getKernelForTest(['initializeBundles'], true);
+        $kernel = $this->getKernel(['initializeBundles'], [], true);
         $kernel->boot();
         $preReBoot = $kernel->getStartTime();
 
@@ -594,7 +558,7 @@ EOF;
     {
         $bundle = $this
             ->getMockBuilder('Symfony\Component\HttpKernel\Bundle\BundleInterface')
-            ->setMethods(['getPath', 'getParent', 'getName'])
+            ->setMethods(['getPath', 'getName'])
             ->disableOriginalConstructor()
         ;
 
@@ -616,12 +580,6 @@ EOF;
             ->willReturn($dir)
         ;
 
-        $bundle
-            ->expects($this->any())
-            ->method('getParent')
-            ->willReturn($parent)
-        ;
-
         return $bundle;
     }
 
@@ -631,30 +589,20 @@ EOF;
      * @param array $methods Additional methods to mock (besides the abstract ones)
      * @param array $bundles Bundles to register
      */
-    protected function getKernel(array $methods = [], array $bundles = []): Kernel
+    protected function getKernel(array $methods = [], array $bundles = [], bool $debug = false): Kernel
     {
         $methods[] = 'registerBundles';
 
         $kernel = $this
-            ->getMockBuilder('Symfony\Component\HttpKernel\Kernel')
+            ->getMockBuilder(KernelForTest::class)
             ->setMethods($methods)
-            ->setConstructorArgs(['test', false])
-            ->getMockForAbstractClass()
+            ->setConstructorArgs(['test', $debug])
+            ->getMock()
         ;
         $kernel->expects($this->any())
             ->method('registerBundles')
             ->willReturn($bundles)
         ;
-
-        return $kernel;
-    }
-
-    protected function getKernelForTest(array $methods = [], bool $debug = false)
-    {
-        $kernel = $this->getMockBuilder('Symfony\Component\HttpKernel\Tests\Fixtures\KernelForTest')
-            ->setConstructorArgs(['test', $debug])
-            ->setMethods($methods)
-            ->getMock();
 
         return $kernel;
     }
@@ -671,6 +619,11 @@ class TestKernel implements HttpKernelInterface
 
     public function handle(Request $request, int $type = self::MASTER_REQUEST, bool $catch = true): Response
     {
+    }
+
+    public function getProjectDir(): string
+    {
+        return __DIR__.'/Fixtures';
     }
 }
 

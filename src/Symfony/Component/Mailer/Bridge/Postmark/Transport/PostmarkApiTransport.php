@@ -12,8 +12,8 @@
 namespace Symfony\Component\Mailer\Bridge\Postmark\Transport;
 
 use Psr\Log\LoggerInterface;
+use Symfony\Component\Mailer\Envelope;
 use Symfony\Component\Mailer\Exception\HttpTransportException;
-use Symfony\Component\Mailer\SmtpEnvelope;
 use Symfony\Component\Mailer\Transport\AbstractApiTransport;
 use Symfony\Component\Mime\Email;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
@@ -25,7 +25,7 @@ use Symfony\Contracts\HttpClient\ResponseInterface;
  */
 class PostmarkApiTransport extends AbstractApiTransport
 {
-    private const ENDPOINT = 'http://api.postmarkapp.com/email';
+    private const HOST = 'api.postmarkapp.com';
 
     private $key;
 
@@ -36,14 +36,14 @@ class PostmarkApiTransport extends AbstractApiTransport
         parent::__construct($client, $dispatcher, $logger);
     }
 
-    public function getName(): string
+    public function __toString(): string
     {
-        return sprintf('api://postmark');
+        return sprintf('postmark+api://%s', $this->getEndpoint());
     }
 
-    protected function doSendApi(Email $email, SmtpEnvelope $envelope): ResponseInterface
+    protected function doSendApi(Email $email, Envelope $envelope): ResponseInterface
     {
-        $response = $this->client->request('POST', self::ENDPOINT, [
+        $response = $this->client->request('POST', 'https://'.$this->getEndpoint().'/email', [
             'headers' => [
                 'Accept' => 'application/json',
                 'X-Postmark-Server-Token' => $this->key,
@@ -60,7 +60,7 @@ class PostmarkApiTransport extends AbstractApiTransport
         return $response;
     }
 
-    private function getPayload(Email $email, SmtpEnvelope $envelope): array
+    private function getPayload(Email $email, Envelope $envelope): array
     {
         $payload = [
             'From' => $envelope->getSender()->toString(),
@@ -110,5 +110,10 @@ class PostmarkApiTransport extends AbstractApiTransport
         }
 
         return $attachments;
+    }
+
+    private function getEndpoint(): ?string
+    {
+        return ($this->host ?: self::HOST).($this->port ? ':'.$this->port : '');
     }
 }

@@ -16,41 +16,37 @@ Debug
 DependencyInjection
 -------------------
 
+ * Made singly-implemented interfaces detection be scoped by file
  * Deprecated support for short factories and short configurators in Yaml
 
    Before:
    ```yaml
    services:
-     my_service:
-       factory: factory_service:method
+       my_service:
+           factory: factory_service:method
    ```
 
    After:
    ```yaml
    services:
-     my_service:
-       factory: ['@factory_service', method]
+       my_service:
+           factory: ['@factory_service', method]
    ```
+
  * Deprecated `tagged` in favor of `tagged_iterator`
 
    Before:
    ```yaml
    services:
-       App\Handler:
-           tags: ['app.handler']
-
        App\HandlerCollection:
-           arguments: [!tagged app.handler]
+           arguments: [!tagged my_tag]
    ```
 
    After:
    ```yaml
    services:
-       App\Handler:
-       tags: ['app.handler']
-
-   App\HandlerCollection:
-       arguments: [!tagged_iterator app.handler]
+       App\HandlerCollection:
+           arguments: [!tagged_iterator my_tag]
    ```
 
  * Passing an instance of `Symfony\Component\DependencyInjection\Parameter` as class name to `Symfony\Component\DependencyInjection\Definition` is deprecated.
@@ -64,7 +60,7 @@ DependencyInjection
    ```php
    new Definition('%my_class%');
    ```
-   
+
 DoctrineBridge
 --------------
  * Deprecated injecting `ClassMetadataFactory` in `DoctrineExtractor`, an instance of `EntityManagerInterface` should be
@@ -72,6 +68,8 @@ DoctrineBridge
  * Deprecated passing an `IdReader` to the `DoctrineChoiceLoader` when the query cannot be optimized with single id field.
  * Deprecated not passing an `IdReader` to the `DoctrineChoiceLoader` when the query can be optimized with single id field.
  * Deprecated `RegistryInterface`, use `Doctrine\Common\Persistence\ManagerRegistry`.
+ * Added a new `getMetadataDriverClass` method to replace class parameters in `AbstractDoctrineExtension`. This method
+   will be abstract in Symfony 5 and must be declared in extending classes.
 
 Filesystem
 ----------
@@ -98,7 +96,7 @@ FrameworkBundle
  * Deprecated `routing.loader.service`, use `routing.loader.container` instead.
  * Not tagging service route loaders with `routing.route_loader` has been deprecated.
  * Overriding the methods `KernelTestCase::tearDown()` and `WebTestCase::tearDown()` without the `void` return-type is deprecated.
- 
+
 HttpClient
 ----------
 
@@ -141,14 +139,16 @@ HttpKernel
     }
     ```
 
-   As many bundles must be compatible with a range of Symfony versions, the current 
+   As many bundles must be compatible with a range of Symfony versions, the current
    directory convention is not deprecated yet, but it will be in the future.
+
  * Deprecated the second and third argument of `KernelInterface::locateResource`
  * Deprecated the second and third argument of `FileLocator::__construct`
  * Deprecated loading resources from `%kernel.root_dir%/Resources` and `%kernel.root_dir%` as
    fallback directories. Resources like service definitions are usually loaded relative to the
    current directory or with a glob pattern. The fallback directories have never been advocated
    so you likely do not use those in any app based on the SF Standard or Flex edition.
+ * Getting the container from a non-booted kernel is deprecated
 
 Lock
 ----
@@ -172,7 +172,7 @@ MonologBridge
 --------------
 
  * The `RouteProcessor` has been marked final.
- 
+
 Process
 -------
 
@@ -194,6 +194,25 @@ Security
 
  * The `LdapUserProvider` class has been deprecated, use `Symfony\Component\Ldap\Security\LdapUserProvider` instead.
  * Implementations of `PasswordEncoderInterface` and `UserPasswordEncoderInterface` should add a new `needsRehash()` method
+ * Deprecated returning a non-boolean value when implementing `Guard\AuthenticatorInterface::checkCredentials()`. Please explicitly return `false` to indicate invalid credentials.
+ * Deprecated passing more than one attribute to `AccessDecisionManager::decide()` and `AuthorizationChecker::isGranted()` (and indirectly the `is_granted()` Twig and ExpressionLanguage function)
+
+   **Before**
+   ```php
+   if ($this->authorizationChecker->isGranted(['ROLE_USER', 'ROLE_ADMIN'])) {
+       // ...
+   }
+   ```
+
+   **After**
+   ```php
+   if ($this->authorizationChecker->isGranted(new Expression("has_role('ROLE_USER') or has_role('ROLE_ADMIN')"))) {}
+
+   // or:
+   if ($this->authorizationChecker->isGranted('ROLE_USER')
+      || $this->authorizationChecker->isGranted('ROLE_ADMIN')
+   ) {}
+   ```
 
 Stopwatch
 ---------
@@ -204,76 +223,95 @@ Translation
 -----------
 
  * Deprecated support for using `null` as the locale in `Translator`.
+ * Deprecated accepting STDIN implicitly when using the `lint:xliff` command, use `lint:xliff -` (append a dash) instead to make it explicit.
 
 TwigBridge
 ----------
 
  * Deprecated to pass `$rootDir` and `$fileLinkFormatter` as 5th and 6th argument respectively to the
    `DebugCommand::__construct()` method, swap the variables position.
-   
+ * Deprecated accepting STDIN implicitly when using the `lint:twig` command, use `lint:twig -` (append a dash) instead to make it explicit.
+
 TwigBundle
 ----------
 
- * Deprecated default value `twig.controller.exception::showAction` of the `twig.exception_controller` configuration option, 
-   set it to `null` instead. This will also change the default error response format according to https://tools.ietf.org/html/rfc7807
-   for `json`, `xml`, `atom` and `txt` formats:
-   
+ * Deprecated `twig.exception_controller` configuration option, set it to "null" and use `framework.error_controller` instead:
+
+   Before:
+   ```yaml
+   twig:
+       exception_controller: 'App\Controller\MyExceptionController'
+   ```
+
+   After:
+   ```yaml
+   twig:
+       exception_controller: null
+
+   framework:
+       error_controller: 'App\Controller\MyExceptionController'
+   ```
+
+   The new default exception controller will also change the error response content according to
+   https://tools.ietf.org/html/rfc7807 for `json`, `xml`, `atom` and `txt` formats:
+
    Before:
    ```json
-   { 
-       "error": { 
-           "code": 404, 
-           "message": "Sorry, the page you are looking for could not be found" 
-       } 
+   {
+       "error": {
+           "code": 404,
+           "message": "Sorry, the page you are looking for could not be found"
+       }
    }
    ```
-   
+
    After:
    ```json
-   { 
+   {
        "title": "Not Found",
-       "status": 404, 
+       "status": 404,
        "detail": "Sorry, the page you are looking for could not be found"
    }
    ```
-   
- * Deprecated the `ExceptionController` and all built-in error templates, use the error renderer mechanism of the `ErrorRenderer` component
- * Deprecated loading custom error templates in non-html formats. Custom HTML error pages based on Twig keep working as before: 
+
+ * Deprecated the `ExceptionController` and `PreviewErrorController` controllers, use `ErrorController` from the HttpKernel component instead
+ * Deprecated all built-in error templates, use the error renderer mechanism of the `ErrorRenderer` component
+ * Deprecated loading custom error templates in non-html formats. Custom HTML error pages based on Twig keep working as before:
 
    Before (`templates/bundles/TwigBundle/Exception/error.jsonld.twig`):
    ```twig
-   { 
-     "@id": "https://example.com",
-     "@type": "error",
-     "@context": {
-         "title": "{{ status_text }}",
-         "code": {{ status_code }},
-         "message": "{{ exception.message }}"
-     }
+   {
+       "@id": "https://example.com",
+       "@type": "error",
+       "@context": {
+           "title": "{{ status_text }}",
+           "code": {{ status_code }},
+           "message": "{{ exception.message }}"
+       }
    }
    ```
-   
+
    After (`App\ErrorRenderer\JsonLdErrorRenderer`):
    ```php
    class JsonLdErrorRenderer implements ErrorRendererInterface
    {
-     public static function getFormat(): string
-     {
-         return 'jsonld';
-     }
-   
-     public function render(FlattenException $exception): string
-     {
-         return json_encode([
-             '@id' => 'https://example.com',
-             '@type' => 'error',
-             '@context' => [
-                 'title' => $exception->getTitle(),
-                 'code' => $exception->getStatusCode(),
-                 'message' => $exception->getMessage(),
-             ],
-         ]);
-     }
+       public static function getFormat(): string
+       {
+           return 'jsonld';
+       }
+
+       public function render(FlattenException $exception): string
+       {
+           return json_encode([
+               '@id' => 'https://example.com',
+               '@type' => 'error',
+               '@context' => [
+                   'title' => $exception->getTitle(),
+                   'code' => $exception->getStatusCode(),
+                   'message' => $exception->getMessage(),
+               ],
+           ]);
+       }
    }
    ```
 
@@ -286,13 +324,15 @@ Validator
  * Deprecated using anything else than a `string` as the code of a `ConstraintViolation`, a `string` type-hint will
    be added to the constructor of the `ConstraintViolation` class and to the `ConstraintViolationBuilder::setCode()`
    method in 5.0.
- * Deprecated passing an `ExpressionLanguage` instance as the second argument of `ExpressionValidator::__construct()`. 
+ * Deprecated passing an `ExpressionLanguage` instance as the second argument of `ExpressionValidator::__construct()`.
    Pass it as the first argument instead.
  * The `Length` constraint expects the `allowEmptyString` option to be defined
    when the `min` option is used.
    Set it to `true` to keep the current behavior and `false` to reject empty strings.
    In 5.0, it'll become optional and will default to `false`.
  * Overriding the methods `ConstraintValidatorTestCase::setUp()` and `ConstraintValidatorTestCase::tearDown()` without the `void` return-type is deprecated.
+ * deprecated `Symfony\Component\Validator\Mapping\Cache\CacheInterface` and all implementations in favor of PSR-6.
+ * deprecated `ValidatorBuilder::setMetadataCache`, use `ValidatorBuilder::setMappingCache` instead.
 
 WebProfilerBundle
 -----------------
@@ -304,3 +344,8 @@ WebServerBundle
 ---------------
 
  * The bundle is deprecated and will be removed in 5.0.
+
+Yaml
+----
+
+* Deprecated accepting STDIN implicitly when using the `lint:yaml` command, use `lint:yaml -` (append a dash) instead to make it explicit.

@@ -26,7 +26,10 @@ class PredisStoreTest extends AbstractRedisStoreTest
         }
     }
 
-    protected function getRedisConnection()
+    /**
+     * @return \Predis\Client
+     */
+    protected function getRedisConnection(): object
     {
         $redis = new \Predis\Client('tcp://'.getenv('REDIS_HOST').':6379');
         $redis->connect();

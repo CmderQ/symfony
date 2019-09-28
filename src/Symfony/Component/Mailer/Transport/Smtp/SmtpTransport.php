@@ -12,11 +12,11 @@
 namespace Symfony\Component\Mailer\Transport\Smtp;
 
 use Psr\Log\LoggerInterface;
+use Symfony\Component\Mailer\Envelope;
 use Symfony\Component\Mailer\Exception\LogicException;
 use Symfony\Component\Mailer\Exception\TransportException;
 use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
 use Symfony\Component\Mailer\SentMessage;
-use Symfony\Component\Mailer\SmtpEnvelope;
 use Symfony\Component\Mailer\Transport\AbstractTransport;
 use Symfony\Component\Mailer\Transport\Smtp\Stream\AbstractStream;
 use Symfony\Component\Mailer\Transport\Smtp\Stream\SocketStream;
@@ -102,20 +102,17 @@ class SmtpTransport extends AbstractTransport
         return $this->domain;
     }
 
-    public function send(RawMessage $message, SmtpEnvelope $envelope = null): ?SentMessage
+    public function send(RawMessage $message, Envelope $envelope = null): ?SentMessage
     {
-        $this->ping();
-        if (!$this->started) {
-            $this->start();
-        }
-
         try {
             $message = parent::send($message, $envelope);
         } catch (TransportExceptionInterface $e) {
-            try {
-                $this->executeCommand("RSET\r\n", [250]);
-            } catch (TransportExceptionInterface $_) {
-                // ignore this exception as it probably means that the server error was final
+            if ($this->started) {
+                try {
+                    $this->executeCommand("RSET\r\n", [250]);
+                } catch (TransportExceptionInterface $_) {
+                    // ignore this exception as it probably means that the server error was final
+                }
             }
 
             throw $e;
@@ -126,7 +123,7 @@ class SmtpTransport extends AbstractTransport
         return $message;
     }
 
-    public function getName(): string
+    public function __toString(): string
     {
         if ($this->stream instanceof SocketStream) {
             $name = sprintf('smtp%s://%s', ($tls = $this->stream->isTLS()) ? 's' : '', $this->stream->getHost());
@@ -163,11 +160,16 @@ class SmtpTransport extends AbstractTransport
 
     protected function doSend(SentMessage $message): void
     {
+        $this->ping();
+        if (!$this->started) {
+            $this->start();
+        }
+
         try {
             $envelope = $message->getEnvelope();
-            $this->doMailFromCommand($envelope->getSender()->toString());
+            $this->doMailFromCommand($envelope->getSender()->getAddress());
             foreach ($envelope->getRecipients() as $recipient) {
-                $this->doRcptToCommand($recipient->toString());
+                $this->doRcptToCommand($recipient->getAddress());
             }
 
             $this->executeCommand("DATA\r\n", [354]);

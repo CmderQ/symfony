@@ -32,13 +32,14 @@ CHANGELOG
  * The type guesser guesses the HTML accept attribute when a mime type is configured in the File or Image constraint.
  * Overriding the methods `FormIntegrationTestCase::setUp()`, `TypeTestCase::setUp()` and `TypeTestCase::tearDown()` without the `void` return-type is deprecated.
  * marked all dispatched event classes as `@final`
+ * Added the `validate` option to `SubmitType` to toggle the browser built-in form validation.
 
 4.3.0
 -----
 
  * added a `symbol` option to the `PercentType` that allows to disable or customize the output of the percent character
  * Using the `format` option of `DateType` and `DateTimeType` when the `html5` option is enabled is deprecated.
- * Using names for buttons that do not start with a letter, a digit, or an underscore is deprecated and will lead to an
+ * Using names for buttons that do not start with a lowercase letter, a digit, or an underscore is deprecated and will lead to an
    exception in 5.0.
  * Using names for buttons that do not contain only letters, digits, underscores, hyphens, and colons is deprecated and
    will lead to an exception in 5.0.

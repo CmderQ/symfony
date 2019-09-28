@@ -22,6 +22,10 @@ CHANGELOG
  * added method `getProjectDir()` to `KernelInterface`
  * removed methods `serialize` and `unserialize` from `DataCollector`, store the serialized state in the data property instead
  * made `ProfilerStorageInterface` internal
+ * removed the second and third argument of `KernelInterface::locateResource`
+ * removed the second and third argument of `FileLocator::__construct`
+ * removed loading resources from `%kernel.root_dir%/Resources` and `%kernel.root_dir%` as
+   fallback directories.
 
 4.4.0
 -----
@@ -35,6 +39,8 @@ CHANGELOG
    current directory or with a glob pattern. The fallback directories have never been advocated
    so you likely do not use those in any app based on the SF Standard or Flex edition.
  * Marked all dispatched event classes as `@final`
+ * Added `ErrorController` to enable the preview and error rendering mechanism
+ * Getting the container from a non-booted kernel is deprecated.
 
 4.3.0
 -----

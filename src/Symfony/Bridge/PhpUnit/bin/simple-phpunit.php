@@ -10,7 +10,7 @@
  */
 
 // Please update when phpunit needs to be reinstalled with fresh deps:
-// Cache-Id: 2019-08-09 13:00 UTC
+// Cache-Id: 2019-09-19 17:00 UTC
 
 error_reporting(-1);
 
@@ -49,7 +49,7 @@ $getEnvVar = function ($name, $default = false) {
 
 if (PHP_VERSION_ID >= 70200) {
     // PHPUnit 8 requires PHP 7.2+
-    $PHPUNIT_VERSION = $getEnvVar('SYMFONY_PHPUNIT_VERSION', '8.2');
+    $PHPUNIT_VERSION = $getEnvVar('SYMFONY_PHPUNIT_VERSION', '8.3');
 } elseif (PHP_VERSION_ID >= 70100) {
     // PHPUnit 7 requires PHP 7.1+
     $PHPUNIT_VERSION = $getEnvVar('SYMFONY_PHPUNIT_VERSION', '7.5');
@@ -96,10 +96,11 @@ foreach ($defaultEnvs as $envName => $envValue) {
     }
 }
 
-$COMPOSER = file_exists($COMPOSER = $oldPwd.'/composer.phar') || ($COMPOSER = rtrim('\\' === DIRECTORY_SEPARATOR ? preg_replace('/[\r\n].*/', '', `where.exe composer.phar`) : `which composer.phar 2> /dev/null`))
+$COMPOSER = file_exists($COMPOSER = $oldPwd.'/composer.phar')
+    || ($COMPOSER = rtrim('\\' === DIRECTORY_SEPARATOR ? preg_replace('/[\r\n].*/', '', `where.exe composer.phar`) : `which composer.phar 2> /dev/null`))
+    || ($COMPOSER = rtrim('\\' === DIRECTORY_SEPARATOR ? preg_replace('/[\r\n].*/', '', `where.exe composer`) : `which composer 2> /dev/null`))
     ? $PHP.' '.escapeshellarg($COMPOSER)
     : 'composer';
-
 
 $SYMFONY_PHPUNIT_REMOVE = $getEnvVar('SYMFONY_PHPUNIT_REMOVE', 'phpspec/prophecy'.($PHPUNIT_VERSION < 6.0 ? ' symfony/yaml': ''));
 $configurationHash = md5(implode(PHP_EOL, array(md5_file(__FILE__), $SYMFONY_PHPUNIT_REMOVE, (int) $PHPUNIT_REMOVE_RETURN_TYPEHINT)));

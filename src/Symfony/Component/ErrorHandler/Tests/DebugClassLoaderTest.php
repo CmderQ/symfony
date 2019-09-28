@@ -16,30 +16,32 @@ use Symfony\Component\ErrorHandler\DebugClassLoader;
 
 class DebugClassLoaderTest extends TestCase
 {
-    /**
-     * @var int Error reporting level before running tests
-     */
+    private $patchTypes;
     private $errorReporting;
-
     private $loader;
 
     protected function setUp(): void
     {
+        $this->patchTypes = getenv('SYMFONY_PATCH_TYPE_DECLARATIONS');
         $this->errorReporting = error_reporting(E_ALL);
-        $this->loader = new ClassLoader();
-        spl_autoload_register([$this->loader, 'loadClass'], true, true);
-        DebugClassLoader::enable();
+        putenv('SYMFONY_PATCH_TYPE_DECLARATIONS=deprecations=1');
+        $this->loader = [new DebugClassLoader([new ClassLoader(), 'loadClass']), 'loadClass'];
+        spl_autoload_register($this->loader, true, true);
     }
 
     protected function tearDown(): void
     {
-        DebugClassLoader::disable();
-        spl_autoload_unregister([$this->loader, 'loadClass']);
+        spl_autoload_unregister($this->loader);
         error_reporting($this->errorReporting);
+        putenv('SYMFONY_PATCH_TYPE_DECLARATIONS'.(false !== $this->patchTypes ? '='.$this->patchTypes : ''));
     }
 
+    /**
+     * @runInSeparateProcess
+     */
     public function testIdempotence()
     {
+        DebugClassLoader::enable();
         DebugClassLoader::enable();
 
         $functions = spl_autoload_functions();
@@ -76,6 +78,7 @@ class DebugClassLoaderTest extends TestCase
     public function testNameCaseMismatch()
     {
         $this->expectException('RuntimeException');
+        $this->expectExceptionMessage('Case mismatch between loaded and declared class names');
         class_exists(__NAMESPACE__.'\TestingCaseMismatch', true);
     }
 
@@ -93,6 +96,7 @@ class DebugClassLoaderTest extends TestCase
     public function testPsr4CaseMismatch()
     {
         $this->expectException('RuntimeException');
+        $this->expectExceptionMessage('Case mismatch between loaded and declared class names');
         class_exists(__NAMESPACE__.'\Fixtures\Psr4CaseMismatch', true);
     }
 
@@ -114,7 +118,7 @@ class DebugClassLoaderTest extends TestCase
     /**
      * @dataProvider provideDeprecatedSuper
      */
-    public function testDeprecatedSuper($class, $super, $type)
+    public function testDeprecatedSuper(string $class, string $super, string $type)
     {
         set_error_handler(function () { return false; });
         $e = error_reporting(0);
@@ -136,7 +140,7 @@ class DebugClassLoaderTest extends TestCase
         $this->assertSame($xError, $lastError);
     }
 
-    public function provideDeprecatedSuper()
+    public function provideDeprecatedSuper(): array
     {
         return [
             ['DeprecatedInterfaceClass', 'DeprecatedInterface', 'implements'],

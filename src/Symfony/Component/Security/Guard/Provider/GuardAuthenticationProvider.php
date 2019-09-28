@@ -113,7 +113,11 @@ class GuardAuthenticationProvider implements AuthenticationProviderInterface
         }
 
         $this->userChecker->checkPreAuth($user);
-        if (true !== $guardAuthenticator->checkCredentials($token->getCredentials(), $user)) {
+        if (true !== $checkCredentialsResult = $guardAuthenticator->checkCredentials($token->getCredentials(), $user)) {
+            if (false !== $checkCredentialsResult) {
+                throw new \TypeError(sprintf('%s::checkCredentials() must return a boolean value.', \get_class($guardAuthenticator)));
+            }
+
             throw new BadCredentialsException(sprintf('Authentication failed because %s::checkCredentials() did not return true.', \get_class($guardAuthenticator)));
         }
         if ($this->userProvider instanceof PasswordUpgraderInterface && $guardAuthenticator instanceof PasswordAuthenticatedInterface && null !== $this->passwordEncoder && (null !== $password = $guardAuthenticator->getPassword($token->getCredentials())) && method_exists($this->passwordEncoder, 'needsRehash') && $this->passwordEncoder->needsRehash($user)) {

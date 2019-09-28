@@ -17,8 +17,8 @@
     ],
     "require": {
         "php": "^7.2.9",
-        "symfony/translation-contracts": "^1.1",
-        "twig/twig": "^2.10|^3"
+        "symfony/translation-contracts": "^1.1|^2",
+        "twig/twig": "^2.10|^3.0"
     },
     "require-dev": {
         "egulias/email-validator": "^2.1.10",
@@ -42,7 +42,10 @@
         "symfony/var-dumper": "^4.4|^5.0",
         "symfony/expression-language": "^4.4|^5.0",
         "symfony/web-link": "^4.4|^5.0",
-        "symfony/workflow": "^4.4|^5.0"
+        "symfony/workflow": "^4.4|^5.0",
+        "twig/cssinliner-extra": "^2.12",
+        "twig/inky-extra": "^2.12",
+        "twig/markdown-extra": "^2.12"
     },
     "conflict": {
         "symfony/console": "<4.4",
