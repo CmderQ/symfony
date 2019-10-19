@@ -23,10 +23,6 @@
             <parameter key="Symfony\Component\HttpKernel\Event\ViewEvent">kernel.view</parameter>
             <parameter key="Symfony\Component\HttpKernel\Event\ExceptionEvent">kernel.exception</parameter>
             <parameter key="Symfony\Component\HttpKernel\Event\TerminateEvent">kernel.terminate</parameter>
-            <parameter key="Symfony\Component\Security\Core\Event\AuthenticationSuccessEvent">security.authentication.success</parameter>
-            <parameter key="Symfony\Component\Security\Core\Event\AuthenticationFailureEvent">security.authentication.failure</parameter>
-            <parameter key="Symfony\Component\Security\Http\Event\InteractiveLoginEvent">security.interactive_login</parameter>
-            <parameter key="Symfony\Component\Security\Http\Event\SwitchUserEvent">security.switch_user</parameter>
             <parameter key="Symfony\Component\Workflow\Event\GuardEvent">workflow.guard</parameter>
             <parameter key="Symfony\Component\Workflow\Event\LeaveEvent">workflow.leave</parameter>
             <parameter key="Symfony\Component\Workflow\Event\TransitionEvent">workflow.transition</parameter>
@@ -120,5 +116,11 @@
             <argument type="service" id="request_stack" />
             <tag name="kernel.event_subscriber" />
         </service>
+
+        <service id="slugger" class="Symfony\Component\String\Slugger\AsciiSlugger">
+            <argument>%kernel.default_locale%</argument>
+            <tag name="kernel.locale_aware" />
+        </service>
+        <service id="Symfony\Component\String\Slugger\SluggerInterface" alias="slugger" />
     </services>
 </container>

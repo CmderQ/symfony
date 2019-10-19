@@ -277,10 +277,10 @@ class YamlFileLoaderTest extends TestCase
         $this->assertCount(1, $container->getDefinition('foo_service_tagged_iterator')->getArguments());
         $this->assertCount(1, $container->getDefinition('foo_service_tagged_locator')->getArguments());
 
-        $taggedIterator = new TaggedIteratorArgument('foo', 'barfoo', 'foobar');
+        $taggedIterator = new TaggedIteratorArgument('foo', 'barfoo', 'foobar', false, 'getPriority');
         $this->assertEquals($taggedIterator, $container->getDefinition('foo_service_tagged_iterator')->getArgument(0));
 
-        $taggedIterator = new TaggedIteratorArgument('foo', 'barfoo', 'foobar', true);
+        $taggedIterator = new TaggedIteratorArgument('foo', 'barfoo', 'foobar', true, 'getPriority');
         $this->assertEquals(new ServiceLocatorArgument($taggedIterator), $container->getDefinition('foo_service_tagged_locator')->getArgument(0));
 
         $taggedIterator = new TaggedIteratorArgument('foo', null, null, true);
@@ -810,6 +810,19 @@ class YamlFileLoaderTest extends TestCase
         $this->assertNull($iteratorArgument->getIndexAttribute());
     }
 
+    public function testReturnsClone()
+    {
+        $container = new ContainerBuilder();
+        $loader = new YamlFileLoader($container, new FileLocator(self::$fixturesPath.'/yaml'));
+        $loader->load('returns_clone.yaml');
+
+        $expected = [
+            ['bar', [1], true],
+            ['bar', [2], true],
+        ];
+        $this->assertSame($expected, $container->getDefinition('foo')->getMethodCalls());
+    }
+
     public function testSinglyImplementedInterfacesInMultipleResources()
     {
         $container = new ContainerBuilder();
@@ -854,5 +867,20 @@ class YamlFileLoaderTest extends TestCase
         $alias = $container->getAlias(Prototype\SinglyImplementedInterface\Port\PortInterface::class);
 
         $this->assertSame(Prototype\SinglyImplementedInterface\Adapter\Adapter::class, (string) $alias);
+    }
+
+    public function testAlternativeMethodCalls()
+    {
+        $container = new ContainerBuilder();
+
+        $loader = new YamlFileLoader($container, new FileLocator(self::$fixturesPath.'/yaml'));
+        $loader->load('alt_call.yaml');
+
+        $expected = [
+            ['foo', [1, 2, 3]],
+            ['bar', [1, 2, 3], true],
+        ];
+
+        $this->assertSame($expected, $container->getDefinition('foo')->getMethodCalls());
     }
 }

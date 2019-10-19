@@ -31,11 +31,13 @@ Config
 Console
 -------
 
+ * Removed support for finding hidden commands using an abbreviation, use the full name instead
  * Removed the `setCrossingChar()` method in favor of the `setDefaultCrossingChar()` method in `TableStyle`.
  * Removed the `setHorizontalBorderChar()` method in favor of the `setDefaultCrossingChars()` method in `TableStyle`.
  * Removed the `getHorizontalBorderChar()` method in favor of the `getBorderChars()` method in `TableStyle`.
  * Removed the `setVerticalBorderChar()` method in favor of the `setVerticalBorderChars()` method in `TableStyle`.
  * Removed the `getVerticalBorderChar()` method in favor of the `getBorderChars()` method in `TableStyle`.
+ * Removed support for returning `null` from `Command::execute()`, return `0` instead
  * The `ProcessHelper::run()` method takes the command as an array of arguments.
 
    Before:
@@ -535,6 +537,11 @@ Serializer
  * The `AbstractNormalizer::handleCircularReference()` method has two new `$format` and `$context` arguments.
  * Removed support for instantiating a `DataUriNormalizer` with a default MIME type guesser when the `symfony/mime` component isn't installed.
 
+Serializer
+----------
+
+* Removed the `XmlEncoder::TYPE_CASE_ATTRIBUTES` constant. Use `XmlEncoder::TYPE_CAST_ATTRIBUTES` instead.
+
 Stopwatch
 ---------
 
@@ -604,6 +611,7 @@ Workflow
  * `add` method has been removed use `addWorkflow` method in `Workflow\Registry` instead.
  * `SupportStrategyInterface` has been removed, use `WorkflowSupportStrategyInterface` instead.
  * `ClassInstanceSupportStrategy` has been removed, use `InstanceOfSupportStrategy` instead.
+ * `WorkflowInterface::apply()` has a third argument: `array $context = []`.
  * `MarkingStoreInterface::setMarking()` has a third argument: `array $context = []`.
  * Removed support of `initial_place`. Use `initial_places` instead.
  * `MultipleStateMarkingStore` has been removed. Use `MethodMarkingStore` instead.

@@ -15,7 +15,7 @@ use Symfony\Bundle\WebProfilerBundle\Profiler\TemplateManager;
 use Symfony\Bundle\WebProfilerBundle\Tests\TestCase;
 use Symfony\Component\HttpKernel\Profiler\Profile;
 use Twig\Environment;
-use Twig\Source;
+use Twig\Loader\LoaderInterface;
 
 /**
  * Test for TemplateManager class.
@@ -102,11 +102,14 @@ class TemplateManagerTest extends TestCase
 
     protected function mockTwigEnvironment()
     {
-        $loader = $this->getMockBuilder('Twig\Loader\LoaderInterface')->getMock();
-        $loader->method('getSourceContext')->willReturn(new Source('source-code', 'source-name'));
-        $loader->method('exists')->willReturn(true);
-
         $this->twigEnvironment = $this->getMockBuilder('Twig\Environment')->disableOriginalConstructor()->getMock();
+
+        $loader = $this->createMock(LoaderInterface::class);
+        $loader
+            ->expects($this->any())
+            ->method('exists')
+            ->willReturn(true);
+
         $this->twigEnvironment->expects($this->any())->method('getLoader')->willReturn($loader);
 
         return $this->twigEnvironment;
@@ -129,7 +132,7 @@ class ProfileDummy extends Profile
         parent::__construct('token');
     }
 
-    public function hasCollector($name): bool
+    public function hasCollector(string $name): bool
     {
         switch ($name) {
             case 'foo':

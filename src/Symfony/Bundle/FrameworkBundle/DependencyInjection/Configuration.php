@@ -27,6 +27,7 @@ use Symfony\Component\Lock\Lock;
 use Symfony\Component\Lock\Store\SemaphoreStore;
 use Symfony\Component\Mailer\Mailer;
 use Symfony\Component\Messenger\MessageBusInterface;
+use Symfony\Component\Notifier\Notifier;
 use Symfony\Component\PropertyInfo\PropertyInfoExtractorInterface;
 use Symfony\Component\Serializer\Serializer;
 use Symfony\Component\Translation\Translator;
@@ -114,6 +115,7 @@ class Configuration implements ConfigurationInterface
         $this->addRobotsIndexSection($rootNode);
         $this->addHttpClientSection($rootNode);
         $this->addMailerSection($rootNode);
+        $this->addNotifierSection($rootNode);
 
         return $treeBuilder;
     }
@@ -493,7 +495,7 @@ class Configuration implements ConfigurationInterface
                         ->scalarNode('cookie_domain')->end()
                         ->enumNode('cookie_secure')->values([true, false, 'auto'])->end()
                         ->booleanNode('cookie_httponly')->defaultTrue()->end()
-                        ->enumNode('cookie_samesite')->values([null, Cookie::SAMESITE_LAX, Cookie::SAMESITE_STRICT])->defaultNull()->end()
+                        ->enumNode('cookie_samesite')->values([null, Cookie::SAMESITE_LAX, Cookie::SAMESITE_STRICT, Cookie::SAMESITE_NONE])->defaultNull()->end()
                         ->booleanNode('use_cookies')->end()
                         ->scalarNode('gc_divisor')->end()
                         ->scalarNode('gc_probability')->defaultValue(1)->end()
@@ -1467,6 +1469,52 @@ class Configuration implements ConfigurationInterface
                                         })
                                     ->end()
                                     ->prototype('scalar')->end()
+                                ->end()
+                            ->end()
+                        ->end()
+                    ->end()
+                ->end()
+            ->end()
+        ;
+    }
+
+    private function addNotifierSection(ArrayNodeDefinition $rootNode)
+    {
+        $rootNode
+            ->children()
+                ->arrayNode('notifier')
+                    ->info('Notifier configuration')
+                    ->{!class_exists(FullStack::class) && class_exists(Notifier::class) ? 'canBeDisabled' : 'canBeEnabled'}()
+                    ->fixXmlConfig('chatter_transport')
+                    ->children()
+                        ->arrayNode('chatter_transports')
+                            ->useAttributeAsKey('name')
+                            ->prototype('scalar')->end()
+                        ->end()
+                    ->end()
+                    ->fixXmlConfig('texter_transport')
+                    ->children()
+                        ->arrayNode('texter_transports')
+                            ->useAttributeAsKey('name')
+                            ->prototype('scalar')->end()
+                        ->end()
+                    ->end()
+                    ->children()
+                        ->arrayNode('channel_policy')
+                            ->useAttributeAsKey('name')
+                            ->prototype('array')
+                                ->beforeNormalization()->ifString()->then(function (string $v) { return [$v]; })->end()
+                                ->prototype('scalar')->end()
+                            ->end()
+                        ->end()
+                    ->end()
+                    ->fixXmlConfig('admin_recipient')
+                    ->children()
+                        ->arrayNode('admin_recipients')
+                            ->prototype('array')
+                                ->children()
+                                    ->scalarNode('email')->cannotBeEmpty()->end()
+                                    ->scalarNode('phone')->defaultNull()->end()
                                 ->end()
                             ->end()
                         ->end()

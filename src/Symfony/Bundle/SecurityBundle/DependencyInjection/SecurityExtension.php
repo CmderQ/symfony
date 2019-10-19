@@ -237,7 +237,8 @@ class SecurityExtension extends Extension implements PrependExtensionInterface
             list($matcher, $listeners, $exceptionListener, $logoutListener) = $this->createFirewall($container, $name, $firewall, $authenticationProviders, $providerIds, $configId);
 
             $contextId = 'security.firewall.map.context.'.$name;
-            $context = $container->setDefinition($contextId, new ChildDefinition('security.firewall.context'));
+            $context = new ChildDefinition($firewall['stateless'] || empty($firewall['anonymous']['lazy']) ? 'security.firewall.context' : 'security.firewall.lazy_context');
+            $context = $container->setDefinition($contextId, $context);
             $context
                 ->replaceArgument(0, new IteratorArgument($listeners))
                 ->replaceArgument(1, $exceptionListener)
@@ -403,7 +404,9 @@ class SecurityExtension extends Extension implements PrependExtensionInterface
         }
 
         // Access listener
-        $listeners[] = new Reference('security.access_listener');
+        if ($firewall['stateless'] || empty($firewall['anonymous']['lazy'])) {
+            $listeners[] = new Reference('security.access_listener');
+        }
 
         // Exception listener
         $exceptionListener = new Reference($this->createExceptionListener($container, $firewall, $id, $configuredEntryPoint ?: $defaultEntryPoint, $firewall['stateless']));
@@ -557,7 +560,7 @@ class SecurityExtension extends Extension implements PrependExtensionInterface
     }
 
     // Parses user providers and returns an array of their ids
-    private function createUserProviders(array $config, ContainerBuilder $container)
+    private function createUserProviders(array $config, ContainerBuilder $container): array
     {
         $providerIds = [];
         foreach ($config['providers'] as $name => $provider) {
@@ -569,7 +572,7 @@ class SecurityExtension extends Extension implements PrependExtensionInterface
     }
 
     // Parses a <provider> tag and returns the id for the related user provider service
-    private function createUserDaoProvider(string $name, array $provider, ContainerBuilder $container)
+    private function createUserDaoProvider(string $name, array $provider, ContainerBuilder $container): string
     {
         $name = $this->getUserProviderId($name);
 
@@ -608,12 +611,12 @@ class SecurityExtension extends Extension implements PrependExtensionInterface
         throw new InvalidConfigurationException(sprintf('Unable to create definition for "%s" user provider', $name));
     }
 
-    private function getUserProviderId(string $name)
+    private function getUserProviderId(string $name): string
     {
         return 'security.user.provider.concrete.'.strtolower($name);
     }
 
-    private function createExceptionListener(ContainerBuilder $container, array $config, string $id, ?string $defaultEntryPoint, bool $stateless)
+    private function createExceptionListener(ContainerBuilder $container, array $config, string $id, ?string $defaultEntryPoint, bool $stateless): string
     {
         $exceptionListenerId = 'security.exception_listener.'.$id;
         $listener = $container->setDefinition($exceptionListenerId, new ChildDefinition('security.exception_listener'));
@@ -631,7 +634,7 @@ class SecurityExtension extends Extension implements PrependExtensionInterface
         return $exceptionListenerId;
     }
 
-    private function createSwitchUserListener(ContainerBuilder $container, string $id, array $config, string $defaultProvider, bool $stateless)
+    private function createSwitchUserListener(ContainerBuilder $container, string $id, array $config, string $defaultProvider, bool $stateless): string
     {
         $userProvider = isset($config['provider']) ? $this->getUserProviderId($config['provider']) : $defaultProvider;
 
@@ -651,7 +654,7 @@ class SecurityExtension extends Extension implements PrependExtensionInterface
         return $switchUserListenerId;
     }
 
-    private function createExpression(ContainerBuilder $container, string $expression)
+    private function createExpression(ContainerBuilder $container, string $expression): Reference
     {
         if (isset($this->expressions[$id = '.security.expression.'.ContainerBuilder::hash($expression)])) {
             return $this->expressions[$id];
@@ -670,7 +673,7 @@ class SecurityExtension extends Extension implements PrependExtensionInterface
         return $this->expressions[$id] = new Reference($id);
     }
 
-    private function createRequestMatcher(ContainerBuilder $container, string $path = null, string $host = null, int $port = null, array $methods = [], array $ips = null, array $attributes = [])
+    private function createRequestMatcher(ContainerBuilder $container, string $path = null, string $host = null, int $port = null, array $methods = [], array $ips = null, array $attributes = []): Reference
     {
         if ($methods) {
             $methods = array_map('strtoupper', (array) $methods);

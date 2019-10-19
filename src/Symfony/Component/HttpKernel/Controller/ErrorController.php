@@ -41,7 +41,7 @@ class ErrorController
     {
         try {
             return new Response($this->errorRenderer->render($exception, $request->getPreferredFormat()), $exception->getStatusCode(), $exception->getHeaders());
-        } catch (ErrorRendererNotFoundException $e) {
+        } catch (ErrorRendererNotFoundException $_) {
             return new Response($this->errorRenderer->render($exception), $exception->getStatusCode(), $exception->getHeaders());
         }
     }

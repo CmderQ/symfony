@@ -97,12 +97,16 @@ EOF
 
         switch ($input->getOption('format')) {
             case 'text':
-                return $name ? $this->displayPathsText($io, $name) : $this->displayGeneralText($io, $filter);
+                $name ? $this->displayPathsText($io, $name) : $this->displayGeneralText($io, $filter);
+                break;
             case 'json':
-                return $name ? $this->displayPathsJson($io, $name) : $this->displayGeneralJson($io, $filter);
+                $name ? $this->displayPathsJson($io, $name) : $this->displayGeneralJson($io, $filter);
+                break;
             default:
                 throw new InvalidArgumentException(sprintf('The format "%s" is not supported.', $input->getOption('format')));
         }
+
+        return 0;
     }
 
     private function displayPathsText(SymfonyStyle $io, string $name)
@@ -346,7 +350,7 @@ EOF
         return null;
     }
 
-    private function getPrettyMetadata(string $type, $entity, bool $decorated)
+    private function getPrettyMetadata(string $type, $entity, bool $decorated): ?string
     {
         if ('tests' === $type) {
             return '';

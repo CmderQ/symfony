@@ -6,6 +6,12 @@ Cache
 
  * Added argument `$prefix` to `AdapterInterface::clear()`
 
+Console
+-------
+
+ * Deprecated finding hidden commands using an abbreviation, use the full name instead
+ * Deprecated returning `null` from `Command::execute()`, return `0` instead
+
 Debug
 -----
 
@@ -214,6 +220,11 @@ Security
    ) {}
    ```
 
+Serializer
+----------
+
+ * Deprecated the `XmlEncoder::TYPE_CASE_ATTRIBUTES` constant. Use `XmlEncoder::TYPE_CAST_ATTRIBUTES` instead.
+
 Stopwatch
 ---------
 
@@ -333,6 +344,8 @@ Validator
  * Overriding the methods `ConstraintValidatorTestCase::setUp()` and `ConstraintValidatorTestCase::tearDown()` without the `void` return-type is deprecated.
  * deprecated `Symfony\Component\Validator\Mapping\Cache\CacheInterface` and all implementations in favor of PSR-6.
  * deprecated `ValidatorBuilder::setMetadataCache`, use `ValidatorBuilder::setMappingCache` instead.
+ * The `Range` constraint has a new message option `notInRangeMessage` that is used when both `min` and `max` values are set.
+   In case you are using custom translations make sure to add one for this new message.
 
 WebProfilerBundle
 -----------------

@@ -73,52 +73,69 @@ abstract class AbstractUnicodeString extends AbstractString
      *
      * Install the intl extension for best results.
      *
-     * @param string[] $rules See "*-Latin" rules from Transliterator::listIDs()
+     * @param string[]|\Transliterator[] $rules See "*-Latin" rules from Transliterator::listIDs()
      */
     public function ascii(array $rules = []): self
     {
         $str = clone $this;
         $s = $str->string;
         $str->string = '';
-        $step = 0;
 
         if (\function_exists('transliterator_transliterate')) {
-            $rules[] = '[:nonspacing mark:] remove';
-            $rules[] = 'any-latin';
+            array_unshift($rules, 'nfd');
+            $rules[] = 'any-latin/bgn';
+            $rules[] = 'nfkd';
+        } else {
+            array_unshift($rules, 'nfkd');
         }
 
-        while (\strlen($s) !== $i = strspn($s, self::ASCII)) {
-            if (0 !== $i) {
+        $rules[] = '[:nonspacing mark:] remove';
+
+        while (\strlen($s) - 1 > $i = strspn($s, self::ASCII)) {
+            if (0 < --$i) {
                 $str->string .= substr($s, 0, $i);
                 $s = substr($s, $i);
             }
 
-            if (1 === ++$step) {
-                if (!normalizer_is_normalized($s, self::NFKD)) {
-                    $s = normalizer_normalize($s, self::NFKD);
-                }
-            } elseif (2 === $step) {
-                $s = str_replace(self::TRANSLIT_FROM, self::TRANSLIT_TO, $s);
-            } elseif (3 === $step && '' !== $rule = strtolower(array_shift($rules))) {
-                $step = 2;
+            if (!$rule = array_shift($rules)) {
+                $rules = []; // An empty rule interrupts the next ones
+            }
 
-                if ('[:nonspacing mark:] remove' === $rule) {
+            if ($rule instanceof \Transliterator) {
+                $s = $rule->transliterate($s);
+            } elseif ($rule) {
+                if ('nfd' === $rule = strtolower($rule)) {
+                    normalizer_is_normalized($s, self::NFD) ?: $s = normalizer_normalize($s, self::NFD);
+                } elseif ('nfkd' === $rule) {
+                    normalizer_is_normalized($s, self::NFKD) ?: $s = normalizer_normalize($s, self::NFKD);
+                } elseif ('[:nonspacing mark:] remove' === $rule) {
                     $s = preg_replace('/\p{Mn}++/u', '', $s);
                 } elseif ('de-ascii' === $rule) {
                     $s = preg_replace("/([AUO])\u{0308}(?=\p{Ll})/u", '$1e', $s);
                     $s = str_replace(["a\u{0308}", "o\u{0308}", "u\u{0308}", "A\u{0308}", "O\u{0308}", "U\u{0308}"], ['ae', 'oe', 'ue', 'AE', 'OE', 'UE'], $s);
                 } elseif (\function_exists('transliterator_transliterate')) {
                     if (null === $transliterator = self::$transliterators[$rule] ?? self::$transliterators[$rule] = \Transliterator::create($rule)) {
-                        throw new InvalidArgumentException(sprintf('Unknown transliteration rule "%s".', $rule));
+                        if ('any-latin/bgn' === $rule) {
+                            $rule = 'any-latin';
+                            $transliterator = self::$transliterators[$rule] ?? self::$transliterators[$rule] = \Transliterator::create($rule);
+                        }
+
+                        if (null === $transliterator) {
+                            throw new InvalidArgumentException(sprintf('Unknown transliteration rule "%s".', $rule));
+                        }
+
+                        self::$transliterators['any-latin/bgn'] = $transliterator;
                     }
 
                     $s = $transliterator->transliterate($s);
                 }
             } elseif (!\function_exists('iconv')) {
+                $s = str_replace(self::TRANSLIT_FROM, self::TRANSLIT_TO, $s);
                 $s = preg_replace('/[^\x00-\x7F]/u', '?', $s);
             } elseif (\ICONV_IMPL === 'glibc') {
                 $s = iconv('UTF-8', 'ASCII//TRANSLIT', $s);
             } else {
+                $s = str_replace(self::TRANSLIT_FROM, self::TRANSLIT_TO, $s);
                 $s = preg_replace_callback('/[^\x00-\x7F]/u', static function ($c) {
                     $c = iconv('UTF-8', 'ASCII//IGNORE//TRANSLIT', $c[0]);
 
@@ -142,11 +159,14 @@ abstract class AbstractUnicodeString extends AbstractString
         return $str;
     }
 
-    public function codePoint(int $offset = 0): ?int
+    /**
+     * @return int[]
+     */
+    public function codePointsAt(int $offset): array
     {
-        $str = $offset ? $this->slice($offset, 1) : $this;
+        $str = $this->slice($offset, 1);
 
-        return '' === $str->string ? null : mb_ord($str->string);
+        return '' === $str->string ? [] : array_map('mb_ord', preg_split('//u', $str->string, -1, PREG_SPLIT_NO_EMPTY));
     }
 
     public function folded(bool $compat = true): parent
@@ -163,10 +183,12 @@ abstract class AbstractUnicodeString extends AbstractString
         return $str;
     }
 
-    public function join(array $strings): parent
+    public function join(array $strings, string $lastGlue = null): parent
     {
         $str = clone $this;
-        $str->string = implode($this->string, $strings);
+
+        $tail = null !== $lastGlue && 1 < \count($strings) ? $lastGlue.array_pop($strings) : '';
+        $str->string = implode($this->string, $strings).$tail;
 
         if (!preg_match('//u', $str->string)) {
             throw new InvalidArgumentException('Invalid UTF-8 string.');
@@ -183,18 +205,18 @@ abstract class AbstractUnicodeString extends AbstractString
         return $str;
     }
 
-    public function match(string $pattern, int $flags = 0, int $offset = 0): array
+    public function match(string $regexp, int $flags = 0, int $offset = 0): array
     {
         $match = ((\PREG_PATTERN_ORDER | \PREG_SET_ORDER) & $flags) ? 'preg_match_all' : 'preg_match';
 
         if ($this->ignoreCase) {
-            $pattern .= 'i';
+            $regexp .= 'i';
         }
 
         set_error_handler(static function ($t, $m) { throw new InvalidArgumentException($m); });
 
         try {
-            if (false === $match($pattern.'u', $this->string, $matches, $flags | PREG_UNMATCHED_AS_NULL, $offset)) {
+            if (false === $match($regexp.'u', $this->string, $matches, $flags | PREG_UNMATCHED_AS_NULL, $offset)) {
                 $lastError = preg_last_error();
 
                 foreach (get_defined_constants(true)['pcre'] as $k => $v) {
@@ -263,10 +285,10 @@ abstract class AbstractUnicodeString extends AbstractString
         return $this->pad($length, $pad, STR_PAD_LEFT);
     }
 
-    public function replaceMatches(string $fromPattern, $to): parent
+    public function replaceMatches(string $fromRegexp, $to): parent
     {
         if ($this->ignoreCase) {
-            $fromPattern .= 'i';
+            $fromRegexp .= 'i';
         }
 
         if (\is_array($to) || $to instanceof \Closure) {
@@ -293,7 +315,7 @@ abstract class AbstractUnicodeString extends AbstractString
         set_error_handler(static function ($t, $m) { throw new InvalidArgumentException($m); });
 
         try {
-            if (null === $string = $replace($fromPattern.'u', $to, $this->string)) {
+            if (null === $string = $replace($fromRegexp.'u', $to, $this->string)) {
                 $lastError = preg_last_error();
 
                 foreach (get_defined_constants(true)['pcre'] as $k => $v) {
@@ -312,18 +334,6 @@ abstract class AbstractUnicodeString extends AbstractString
         $str->string = $string;
 
         return $str;
-    }
-
-    /**
-     * @return static
-     */
-    public function slug(string $separator = '-'): self
-    {
-        return $this
-            ->ascii()
-            ->replace('@', $separator.'at'.$separator)
-            ->replaceMatches('/[^A-Za-z0-9]++/', $separator)
-            ->trim($separator);
     }
 
     public function snake(): parent

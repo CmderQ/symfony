@@ -22,7 +22,7 @@ use Symfony\Component\Workflow\Exception\LogicException;
 use Symfony\Component\Workflow\Exception\NotEnabledTransitionException;
 use Symfony\Component\Workflow\Exception\UndefinedTransitionException;
 use Symfony\Component\Workflow\MarkingStore\MarkingStoreInterface;
-use Symfony\Component\Workflow\MarkingStore\MultipleStateMarkingStore;
+use Symfony\Component\Workflow\MarkingStore\MethodMarkingStore;
 use Symfony\Component\Workflow\Metadata\MetadataStoreInterface;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
@@ -41,7 +41,7 @@ class Workflow implements WorkflowInterface
     public function __construct(Definition $definition, MarkingStoreInterface $markingStore = null, EventDispatcherInterface $dispatcher = null, string $name = 'unnamed')
     {
         $this->definition = $definition;
-        $this->markingStore = $markingStore ?: new MultipleStateMarkingStore();
+        $this->markingStore = $markingStore ?: new MethodMarkingStore();
         $this->dispatcher = $dispatcher;
         $this->name = $name;
     }
@@ -249,7 +249,7 @@ class Workflow implements WorkflowInterface
         return $this->definition->getMetadataStore();
     }
 
-    private function buildTransitionBlockerListForTransition(object $subject, Marking $marking, Transition $transition)
+    private function buildTransitionBlockerListForTransition(object $subject, Marking $marking, Transition $transition): TransitionBlockerList
     {
         foreach ($transition->getFroms() as $place) {
             if (!$marking->has($place)) {

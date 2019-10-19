@@ -14,8 +14,10 @@ namespace Symfony\Component\Mailer\Bridge\Mailchimp\Transport;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Mailer\Envelope;
 use Symfony\Component\Mailer\Exception\HttpTransportException;
+use Symfony\Component\Mailer\SentMessage;
 use Symfony\Component\Mailer\Transport\AbstractApiTransport;
 use Symfony\Component\Mime\Email;
+use Symfony\Component\Mime\NamedAddress;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 use Symfony\Contracts\HttpClient\ResponseInterface;
@@ -41,20 +43,22 @@ class MandrillApiTransport extends AbstractApiTransport
         return sprintf('mandrill+api://%s', $this->getEndpoint());
     }
 
-    protected function doSendApi(Email $email, Envelope $envelope): ResponseInterface
+    protected function doSendApi(SentMessage $sentMessage, Email $email, Envelope $envelope): ResponseInterface
     {
         $response = $this->client->request('POST', 'https://'.$this->getEndpoint().'/api/1.0/messages/send.json', [
             'json' => $this->getPayload($email, $envelope),
         ]);
 
+        $result = $response->toArray(false);
         if (200 !== $response->getStatusCode()) {
-            $result = $response->toArray(false);
             if ('error' === ($result['status'] ?? false)) {
                 throw new HttpTransportException(sprintf('Unable to send an email: %s (code %s).', $result['message'], $result['code']), $response);
             }
 
             throw new HttpTransportException(sprintf('Unable to send an email (code %s).', $result['code']), $response);
         }
+
+        $sentMessage->setMessageId($result['_id']);
 
         return $response;
     }
@@ -72,10 +76,14 @@ class MandrillApiTransport extends AbstractApiTransport
                 'html' => $email->getHtmlBody(),
                 'text' => $email->getTextBody(),
                 'subject' => $email->getSubject(),
-                'from_email' => $envelope->getSender()->toString(),
+                'from_email' => $envelope->getSender()->getAddress(),
                 'to' => $this->getRecipients($email, $envelope),
             ],
         ];
+
+        if ($envelope->getSender() instanceof NamedAddress) {
+            $payload['message']['from_name'] = $envelope->getSender()->getName();
+        }
 
         foreach ($email->getAttachments() as $attachment) {
             $headers = $attachment->getPreparedHeaders();
@@ -116,10 +124,16 @@ class MandrillApiTransport extends AbstractApiTransport
                 $type = 'cc';
             }
 
-            $recipients[] = [
-                'email' => $recipient->toString(),
+            $recipientPayload = [
+                'email' => $recipient->getAddress(),
                 'type' => $type,
             ];
+
+            if ($recipient instanceof NamedAddress) {
+                $recipientPayload['name'] = $recipient->getName();
+            }
+
+            $recipients[] = $recipientPayload;
         }
 
         return $recipients;

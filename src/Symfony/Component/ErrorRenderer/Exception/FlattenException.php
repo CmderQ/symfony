@@ -11,7 +11,7 @@
 
 namespace Symfony\Component\ErrorRenderer\Exception;
 
-use Symfony\Component\ErrorHandler\Exception\FatalThrowableError;
+use Symfony\Component\ErrorHandler\Exception\ErrorException;
 use Symfony\Component\HttpFoundation\Exception\RequestExceptionInterface;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
@@ -23,7 +23,7 @@ use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
  *
  * @author Fabien Potencier <fabien@symfony.com>
  */
-class FlattenException
+final class FlattenException
 {
     private $title;
     private $message;
@@ -36,6 +36,11 @@ class FlattenException
     private $headers;
     private $file;
     private $line;
+
+    public static function create(\Throwable $exception, $statusCode = null, array $headers = []): self
+    {
+        return static::createFromThrowable($exception, $statusCode, $headers);
+    }
 
     public static function createFromThrowable(\Throwable $exception, int $statusCode = null, array $headers = []): self
     {
@@ -64,7 +69,7 @@ class FlattenException
         $e->setStatusCode($statusCode);
         $e->setHeaders($headers);
         $e->setTraceFromThrowable($exception);
-        $e->setClass($exception instanceof FatalThrowableError ? $exception->getOriginalClassName() : \get_class($exception));
+        $e->setClass($exception instanceof ErrorException ? $exception->getOriginalClassName() : \get_class($exception));
         $e->setFile($exception->getFile());
         $e->setLine($exception->getLine());
 
@@ -99,7 +104,7 @@ class FlattenException
     /**
      * @return $this
      */
-    public function setStatusCode($code)
+    public function setStatusCode($code): self
     {
         $this->statusCode = $code;
 
@@ -114,7 +119,7 @@ class FlattenException
     /**
      * @return $this
      */
-    public function setHeaders(array $headers)
+    public function setHeaders(array $headers): self
     {
         $this->headers = $headers;
 
@@ -129,7 +134,7 @@ class FlattenException
     /**
      * @return $this
      */
-    public function setClass($class)
+    public function setClass($class): self
     {
         $this->class = 'c' === $class[0] && 0 === strpos($class, "class@anonymous\0") ? get_parent_class($class).'@anonymous' : $class;
 
@@ -144,7 +149,7 @@ class FlattenException
     /**
      * @return $this
      */
-    public function setFile($file)
+    public function setFile($file): self
     {
         $this->file = $file;
 
@@ -159,7 +164,7 @@ class FlattenException
     /**
      * @return $this
      */
-    public function setLine($line)
+    public function setLine($line): self
     {
         $this->line = $line;
 
@@ -186,7 +191,7 @@ class FlattenException
     /**
      * @return $this
      */
-    public function setMessage($message)
+    public function setMessage($message): self
     {
         if (false !== strpos($message, "class@anonymous\0")) {
             $message = preg_replace_callback('/class@anonymous\x00.*?\.php0x?[0-9a-fA-F]++/', function ($m) {
@@ -207,7 +212,7 @@ class FlattenException
     /**
      * @return $this
      */
-    public function setCode($code)
+    public function setCode($code): self
     {
         $this->code = $code;
 
@@ -222,7 +227,7 @@ class FlattenException
     /**
      * @return $this
      */
-    public function setPrevious(self $previous)
+    public function setPrevious(self $previous): self
     {
         $this->previous = $previous;
 
@@ -255,7 +260,7 @@ class FlattenException
     /**
      * @return $this
      */
-    public function setTrace($trace, $file, $line)
+    public function setTrace($trace, $file, $line): self
     {
         $this->trace = [];
         $this->trace[] = [

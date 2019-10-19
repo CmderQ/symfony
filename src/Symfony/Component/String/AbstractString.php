@@ -75,11 +75,9 @@ abstract class AbstractString implements \JsonSerializable
         $keys = null;
 
         foreach ($values as $k => $v) {
-            ++$i;
-
             if (\is_string($k) && '' !== $k && $k !== $j = (string) new static($k)) {
                 $keys = $keys ?? array_keys($values);
-                array_splice($keys, $i, 1, [$j]);
+                $keys[$i] = $j;
             }
 
             if (\is_string($v)) {
@@ -87,6 +85,8 @@ abstract class AbstractString implements \JsonSerializable
             } elseif (\is_array($v) && $values[$k] !== $v = static::wrap($v)) {
                 $values[$k] = $v;
             }
+
+            ++$i;
         }
 
         return null !== $keys ? array_combine($keys, $values) : $values;
@@ -139,7 +139,7 @@ abstract class AbstractString implements \JsonSerializable
             $n = (string) $n;
             $j = $this->indexOfLast($n, $offset);
 
-            if (null !== $j && $j > $i) {
+            if (null !== $j && $j >= $i) {
                 $i = $offset = $j;
                 $str->string = $n;
             }
@@ -208,7 +208,7 @@ abstract class AbstractString implements \JsonSerializable
             $n = (string) $n;
             $j = $this->indexOfLast($n, $offset);
 
-            if (null !== $j && $j > $i) {
+            if (null !== $j && $j >= $i) {
                 $i = $offset = $j;
                 $str->string = $n;
             }
@@ -223,6 +223,16 @@ abstract class AbstractString implements \JsonSerializable
         }
 
         return $this->slice(0, $i);
+    }
+
+    /**
+     * @return int[]
+     */
+    public function bytesAt(int $offset): array
+    {
+        $str = $this->slice($offset, 1);
+
+        return '' === $str->string ? [] : array_values(unpack('C*', $str->string));
     }
 
     /**
@@ -387,7 +397,7 @@ abstract class AbstractString implements \JsonSerializable
     /**
      * @return static
      */
-    abstract public function join(array $strings): self;
+    abstract public function join(array $strings, string $lastGlue = null): self;
 
     public function jsonSerialize(): string
     {
@@ -404,11 +414,11 @@ abstract class AbstractString implements \JsonSerializable
     /**
      * Matches the string using a regular expression.
      *
-     * Pass PREG_PATTERN_ORDER or PREG_SET_ORDER as $flags to get all occurrences matching the pattern.
+     * Pass PREG_PATTERN_ORDER or PREG_SET_ORDER as $flags to get all occurrences matching the regular expression.
      *
      * @return array All matches in a multi-dimensional array ordered according to flags
      */
-    abstract public function match(string $pattern, int $flags = 0, int $offset = 0): array;
+    abstract public function match(string $regexp, int $flags = 0, int $offset = 0): array;
 
     /**
      * @return static
@@ -455,7 +465,7 @@ abstract class AbstractString implements \JsonSerializable
      *
      * @return static
      */
-    abstract public function replaceMatches(string $fromPattern, $to): self;
+    abstract public function replaceMatches(string $fromRegexp, $to): self;
 
     /**
      * @return static
@@ -543,9 +553,9 @@ abstract class AbstractString implements \JsonSerializable
      */
     abstract public function title(bool $allWords = false): self;
 
-    public function toBinary(string $toEncoding = null): BinaryString
+    public function toByteString(string $toEncoding = null): ByteString
     {
-        $b = new BinaryString();
+        $b = new ByteString();
 
         $toEncoding = \in_array($toEncoding, ['utf8', 'utf-8', 'UTF8'], true) ? 'UTF-8' : $toEncoding;
 
@@ -574,14 +584,19 @@ abstract class AbstractString implements \JsonSerializable
         return $b;
     }
 
-    public function toGrapheme(): GraphemeString
+    public function toCodePointString(): CodePointString
     {
-        return new GraphemeString($this->string);
+        return new CodePointString($this->string);
     }
 
-    public function toUtf8(): Utf8String
+    public function toString(): string
     {
-        return new Utf8String($this->string);
+        return $this->string;
+    }
+
+    public function toUnicodeString(): UnicodeString
+    {
+        return new UnicodeString($this->string);
     }
 
     /**

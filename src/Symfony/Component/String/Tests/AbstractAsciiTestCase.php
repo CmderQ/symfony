@@ -4,10 +4,10 @@ namespace Symfony\Component\String\Tests;
 
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\String\AbstractString;
-use Symfony\Component\String\BinaryString;
+use Symfony\Component\String\ByteString;
+use Symfony\Component\String\CodePointString;
 use Symfony\Component\String\Exception\InvalidArgumentException;
-use Symfony\Component\String\GraphemeString;
-use Symfony\Component\String\Utf8String;
+use Symfony\Component\String\UnicodeString;
 
 abstract class AbstractAsciiTestCase extends TestCase
 {
@@ -32,6 +32,52 @@ abstract class AbstractAsciiTestCase extends TestCase
         $this->assertSame('', (string) $instance);
         $this->assertSame(0, $instance->length());
         $this->assertTrue($instance->isEmpty());
+    }
+
+    /**
+     * @dataProvider provideBytesAt
+     */
+    public function testBytesAt(array $expected, string $string, int $offset, int $form = null)
+    {
+        $instance = static::createFromString($string);
+        $instance = $form ? $instance->normalize($form) : $instance;
+
+        $this->assertSame($expected, $instance->bytesAt($offset));
+    }
+
+    public static function provideBytesAt(): array
+    {
+        return [
+            [[], '', 0],
+            [[], 'a', 1],
+            [[0x62], 'abc', 1],
+            [[0x63], 'abcde', -3],
+        ];
+    }
+
+    /**
+     * @dataProvider provideWrap
+     */
+    public function testWrap(array $expected, array $values)
+    {
+        $s = static::createFromString('');
+
+        $this->assertEquals($expected, $s::wrap($values));
+    }
+
+    public static function provideWrap(): array
+    {
+        return [
+            [[], []],
+            [
+                ['abc' => static::createFromString('foo'), 1, static::createFromString('bar'), 'baz' => true],
+                ['abc' => 'foo', 1, 'bar', 'baz' => true],
+            ],
+            [
+                ['a' => ['b' => static::createFromString('c'), [static::createFromString('d')]], static::createFromString('e')],
+                ['a' => ['b' => 'c', ['d']], 'e'],
+            ],
+        ];
     }
 
     /**
@@ -711,6 +757,7 @@ abstract class AbstractAsciiTestCase extends TestCase
             ['orld', 'o', 'hello world', 0, false],
             ['abacab', 'ab', 'abacabab', 1, true],
             ['ab', 'ab', 'abacabab', 1, false],
+            ['hello world', 'hello', 'hello world', 0, false],
         ];
     }
 
@@ -787,6 +834,34 @@ abstract class AbstractAsciiTestCase extends TestCase
     }
 
     /**
+     * @dataProvider provideReplaceMatches
+     */
+    public function testReplaceMatches(string $expectedString, string $origin, string $fromRegexp, $to)
+    {
+        $origin = static::createFromString($origin);
+        $result = $origin->replaceMatches($fromRegexp, $to);
+
+        $this->assertEquals(static::createFromString($expectedString), $result);
+    }
+
+    public static function provideReplaceMatches()
+    {
+        return [
+            ['April,15,2003', 'April 15, 2003', '/(\w+) (\d+), (\d+)/i', '${1},$2,$3'],
+            ['5/27/1999', '1999-5-27', '/(19|20)(\d{2})-(\d{1,2})-(\d{1,2})/', '\3/\4/\1\2'],
+            ['Copyright 2000', 'Copyright 1999', '([0-9]+)', '2000'],
+            ['hello world! this is a test', 'HELLO WORLD! THIS is a test', '/\b([A-Z]+)\b/', function ($word) {
+                return strtolower($word[1]);
+            }],
+            ['COPYRIGHT 1999', 'Copyright 1999', '/[a-z]/', function ($matches) {
+                foreach ($matches as $match) {
+                    return strtoupper($match);
+                }
+            }],
+        ];
+    }
+
+    /**
      * @dataProvider provideReplaceIgnoreCase
      */
     public function testReplaceIgnoreCase(string $expectedString, int $expectedCount, string $origin, string $from, string $to)
@@ -858,9 +933,12 @@ abstract class AbstractAsciiTestCase extends TestCase
     /**
      * @dataProvider provideStartsWith
      */
-    public function testStartsWith(bool $expected, string $origin, $prefix)
+    public function testStartsWith(bool $expected, string $origin, $prefix, int $form = null)
     {
-        $this->assertSame($expected, static::createFromString($origin)->startsWith($prefix));
+        $instance = static::createFromString($origin);
+        $instance = $form ? $instance->normalize($form) : $instance;
+
+        $this->assertSame($expected, $instance->startsWith($prefix));
     }
 
     public static function provideStartsWith()
@@ -874,9 +952,9 @@ abstract class AbstractAsciiTestCase extends TestCase
             [false, "\nfoo", 'f'],
             [true, 'foo', 'f'],
             [true, 'foo', 'fo'],
-            [true, 'foo', new BinaryString('f')],
-            [true, 'foo', new Utf8String('f')],
-            [true, 'foo', new GraphemeString('f')],
+            [true, 'foo', new ByteString('f')],
+            [true, 'foo', new CodePointString('f')],
+            [true, 'foo', new UnicodeString('f')],
             [true, 'foo', ['e', 'f', 'g']],
         ];
     }
@@ -899,9 +977,9 @@ abstract class AbstractAsciiTestCase extends TestCase
             [false, "\nfoo", 'f'],
             [true, 'foo', 'F'],
             [true, 'FoO', 'foo'],
-            [true, 'foo', new BinaryString('F')],
-            [true, 'foo', new Utf8String('F')],
-            [true, 'foo', new GraphemeString('F')],
+            [true, 'foo', new ByteString('F')],
+            [true, 'foo', new CodePointString('F')],
+            [true, 'foo', new UnicodeString('F')],
             [true, 'foo', ['E', 'F', 'G']],
         ];
     }
@@ -909,9 +987,12 @@ abstract class AbstractAsciiTestCase extends TestCase
     /**
      * @dataProvider provideEndsWith
      */
-    public function testEndsWith(bool $expected, string $origin, $suffix)
+    public function testEndsWith(bool $expected, string $origin, $suffix, int $form = null)
     {
-        $this->assertSame($expected, static::createFromString($origin)->endsWith($suffix));
+        $instance = static::createFromString($origin);
+        $instance = $form ? $instance->normalize($form) : $instance;
+
+        $this->assertSame($expected, $instance->endsWith($suffix));
     }
 
     public static function provideEndsWith()
@@ -925,9 +1006,9 @@ abstract class AbstractAsciiTestCase extends TestCase
             [false, "foo\n", 'o'],
             [true, 'foo', 'o'],
             [true, 'foo', 'foo'],
-            [true, 'foo', new BinaryString('o')],
-            [true, 'foo', new Utf8String('o')],
-            [true, 'foo', new GraphemeString('o')],
+            [true, 'foo', new ByteString('o')],
+            [true, 'foo', new CodePointString('o')],
+            [true, 'foo', new UnicodeString('o')],
             [true, 'foo', ['a', 'o', 'u']],
         ];
     }
@@ -950,9 +1031,9 @@ abstract class AbstractAsciiTestCase extends TestCase
             [false, "foo\n", 'o'],
             [true, 'foo', 'O'],
             [true, 'Foo', 'foo'],
-            [true, 'foo', new BinaryString('O')],
-            [true, 'foo', new Utf8String('O')],
-            [true, 'foo', new GraphemeString('O')],
+            [true, 'foo', new ByteString('O')],
+            [true, 'foo', new CodePointString('O')],
+            [true, 'foo', new UnicodeString('O')],
             [true, 'foo', ['A', 'O', 'U']],
         ];
     }
@@ -1097,9 +1178,9 @@ abstract class AbstractAsciiTestCase extends TestCase
             [false, 'foo', 'Foo'],
             [false, "foo\n", 'foo'],
             [true, 'Foo bar', 'Foo bar'],
-            [true, 'Foo bar', new BinaryString('Foo bar')],
-            [true, 'Foo bar', new Utf8String('Foo bar')],
-            [true, 'Foo bar', new GraphemeString('Foo bar')],
+            [true, 'Foo bar', new ByteString('Foo bar')],
+            [true, 'Foo bar', new CodePointString('Foo bar')],
+            [true, 'Foo bar', new UnicodeString('Foo bar')],
             [false, '', []],
             [false, 'foo', ['bar', 'baz']],
             [true, 'foo', ['bar', 'foo', 'baz']],
@@ -1122,9 +1203,9 @@ abstract class AbstractAsciiTestCase extends TestCase
             [false, 'foo', ''],
             [false, "foo\n", 'foo'],
             [true, 'foo Bar', 'FOO bar'],
-            [true, 'foo Bar', new BinaryString('FOO bar')],
-            [true, 'foo Bar', new Utf8String('FOO bar')],
-            [true, 'foo Bar', new GraphemeString('FOO bar')],
+            [true, 'foo Bar', new ByteString('FOO bar')],
+            [true, 'foo Bar', new CodePointString('FOO bar')],
+            [true, 'foo Bar', new UnicodeString('FOO bar')],
             [false, '', []],
             [false, 'Foo', ['bar', 'baz']],
             [true, 'Foo', ['bar', 'foo', 'baz']],
@@ -1157,6 +1238,11 @@ abstract class AbstractAsciiTestCase extends TestCase
         $instance = static::createFromString($origin)->join($join);
 
         $this->assertEquals(static::createFromString($expected), $instance);
+    }
+
+    public function testJoinWithLastGlue()
+    {
+        $this->assertSame('foo, bar and baz', (string) static::createFromString(', ')->join(['foo', 'bar', 'baz'], ' and '));
     }
 
     public static function provideJoin()
@@ -1283,5 +1369,12 @@ abstract class AbstractAsciiTestCase extends TestCase
             ['...', 'foobar', 3, '...'],
             ['fo...', 'foobar', 5, '...'],
         ];
+    }
+
+    public function testToString()
+    {
+        $instance = static::createFromString('foobar');
+
+        self::assertSame('foobar', $instance->toString());
     }
 }
